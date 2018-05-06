@@ -18,6 +18,7 @@ func main() {
 	defer db.CloseDB()
 
 	// initialization
+	// Default With the Logger and Recovery middleware already attached
 	g := gin.Default() // gin.New()
 
 	// register middleware
