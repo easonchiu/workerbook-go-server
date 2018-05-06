@@ -5,11 +5,11 @@ import (
 	"net/http"
 )
 
-type Resp struct {
+type Response struct {
 	ctx *gin.Context
 }
 
-func (r *Resp) Success(data gin.H) {
+func (r *Response) Success(data gin.H) {
 	r.ctx.JSON(http.StatusOK, gin.H{
 		"msg": "ok",
 		"code": 0,
@@ -17,7 +17,7 @@ func (r *Resp) Success(data gin.H) {
 	})
 }
 
-func (r *Resp) Error(err error) {
+func (r *Response) Error(err error) {
 	r.ctx.JSON(http.StatusOK, gin.H{
 		"msg": "error",
 		"code": 1,

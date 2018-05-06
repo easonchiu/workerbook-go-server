@@ -6,7 +6,7 @@ import (
 )
 
 func GetUserInfo(c *gin.Context) {
-	resp := Resp{c}
+	resp := Response{c}
 
 	id := c.Params.ByName("id")
 

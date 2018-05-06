@@ -2,17 +2,23 @@ package service
 
 import (
 	"github.com/gin-gonic/gin"
-	"errors"
+	"web/db"
+	"web/model"
+	"gopkg.in/mgo.v2/bson"
 )
 
 func GetUserInfoById(id string) (gin.H, error) {
-	if id != "123" {
-		return nil, errors.New("cant find")
+
+	mongo := db.MuseDB()
+
+	data := []model.User{}
+	err := mongo.C(model.UserCollection).Find(bson.M{}).All(&data)
+
+	if err != nil {
+		return nil, err
 	}
 
 	return gin.H{
-		"id": id,
-		"name": "eason.chiu",
-		"age": 18,
+		"list": data,
 	}, nil
 }
