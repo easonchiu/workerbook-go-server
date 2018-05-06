@@ -6,21 +6,33 @@ import (
 )
 
 type Response struct {
-	ctx *gin.Context
+	Ctx *gin.Context
 }
 
+// success
 func (r *Response) Success(data gin.H) {
-	r.ctx.JSON(http.StatusOK, gin.H{
+	r.Ctx.JSON(http.StatusOK, gin.H{
 		"msg": "ok",
 		"code": 0,
 		"data": data,
 	})
 }
 
+// error
 func (r *Response) Error(err error) {
-	r.ctx.JSON(http.StatusOK, gin.H{
+	r.Ctx.JSON(http.StatusOK, gin.H{
 		"msg": "error",
 		"code": 1,
 		"data": err.Error(),
 	})
+}
+
+// forbidden
+func (r *Response) Forbidden() {
+	r.Ctx.JSON(http.StatusForbidden, gin.H{
+		"msg": "forbidden",
+		"code": http.StatusForbidden,
+		"data": nil,
+	})
+	r.Ctx.Abort()
 }

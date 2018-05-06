@@ -17,16 +17,16 @@ func main() {
 	// close db before unmount
 	defer db.CloseDB()
 
-	// 初始化
+	// initialization
 	g := gin.Default() // gin.New()
 
-	// 注册中间件
+	// register middleware
 	middleware.Register(g)
 
-	// 添加路由
+	// register router
 	router.Register(g)
 
-	// 获取port参数
+	// get port args
 	port := ""
 	if len(os.Args) >= 2 {
 		port = os.Args[1]
@@ -37,7 +37,7 @@ func main() {
 		port = ":" + port
 	}
 
-	// 启动服务
+	// start
 	g.Run(port)
 
 }
