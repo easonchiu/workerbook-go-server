@@ -4,20 +4,20 @@ import (
 	"gopkg.in/mgo.v2"
 	"fmt"
 	"errors"
+	"net/http"
+	"workerbook/conf"
 )
 
 var (
 	Session *mgo.Session
 	Mongo *mgo.DialInfo
-	Connecting bool = false
+	Connecting = false
 )
 
-const dburl = "mongodb://localhost:27017/workerbook"
-
 func ConnectDB () {
-	mongo, err := mgo.ParseURL(dburl)
+	mongo, err := mgo.ParseURL(conf.DBUrl)
 
-	s, err := mgo.Dial(dburl)
+	s, err := mgo.Dial(conf.DBUrl)
 
 	if err != nil {
 		panic(err)
@@ -32,12 +32,19 @@ func ConnectDB () {
 	Connecting = true
 }
 
-// get database
-func MuseDB() *mgo.Database {
+// get db with clone session
+// must close the session after use !!!
+//   e.g.  defer session.close()
+func CloneDB() (*mgo.Database, func(), error) {
 	if Connecting {
-		return Session.DB(Mongo.Database)
+		session := Session.Clone()
+		closeFn := func() {
+			session.Close()
+		}
+		return session.DB(Mongo.Database), closeFn, nil
 	}
-	panic(errors.New("Database is not connected."))
+
+	return nil, nil, errors.New(http.StatusText(http.StatusBadGateway))
 }
 
 // close db

@@ -3,7 +3,7 @@ package middleware
 import (
 	"github.com/gin-gonic/gin"
 	"fmt"
-	"web/controller"
+	"workerbook/controller"
 )
 
 func Register(g *gin.Engine) {
@@ -15,15 +15,15 @@ func Jwt(c *gin.Context) {
 	auth, prefix, token := c.Request.Header.Get("authorization"), "Bearer ", ""
 
 	if len(auth) > len(prefix) {
-		token = auth[len("Bearer "):]
-		fmt.Println(token)
+		token = auth[len(prefix):]
 
+		fmt.Println(token)
 		// check up your token here...
 
 		c.Next()
 	} else {
-		resp := controller.Response{c}
-		resp.Forbidden()
+		ctx := controller.CreateCtx(c)
+		ctx.Forbidden()
 	}
 }
 

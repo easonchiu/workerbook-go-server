@@ -2,9 +2,9 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"web/middleware"
-	"web/router"
-	"web/db"
+	"workerbook/middleware"
+	"workerbook/router"
+	"workerbook/db"
 	"os"
 )
 
