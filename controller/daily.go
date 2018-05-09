@@ -8,8 +8,8 @@ import (
 	"workerbook/model"
 )
 
-// 获取用户列表
-func GetUsersList(c *gin.Context) {
+// 获取日报列表
+func GetDailiesList(c *gin.Context) {
 	ctx := CreateCtx(c)
 
 	skip, _ := c.GetQuery("skip")
@@ -27,44 +27,35 @@ func GetUsersList(c *gin.Context) {
 		intLimit = 10
 	}
 
-	usersList, err := service.GetUsersList(intSkip, intLimit)
+	dailiesList, err := service.GetDailiesList(intSkip, intLimit)
 	if err != nil {
 		ctx.Error(err, 1)
 		return
 	}
 
-	ctx.Success(usersList)
+	ctx.Success(dailiesList)
 }
 
-// 获取单个用户的信息
-func GetUserInfo(c *gin.Context) {
+// 获取单个日报的信息
+func GetDailyInfo(c *gin.Context) {
 	ctx := CreateCtx(c)
 
 	id := ctx.getParam("id")
 
-	userInfo, err := service.GetUserInfoById(bson.ObjectIdHex(id))
+	dailyInfo, err := service.GetDailyInfoById(bson.ObjectIdHex(id))
 	if err != nil {
 		ctx.Error(err, 1)
 		return
 	}
 
-	ctx.Success(userInfo)
+	ctx.Success(dailyInfo)
 }
 
-// 创建用户
-func CreateUser(c *gin.Context) {
+// 创建日报
+func CreateDaily(c *gin.Context) {
 	ctx := CreateCtx(c)
 
-	data := model.User{
-		NickName: ctx.getRaw("nickname"),
-		Email: ctx.getRaw("email"),
-		UserName: ctx.getRaw("username"),
-		Gid: ctx.getRaw("gid"),
-		Mobile: ctx.getRaw("mobile"),
-		Password: ctx.getRaw("password"),
-	}
-
-	err := service.CreateUser(data)
+	err := service.CreateDaily(model.Daily{})
 	if err != nil {
 		ctx.Error(err, 1)
 		return

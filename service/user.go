@@ -6,6 +6,7 @@ import (
 	"workerbook/model"
 	"gopkg.in/mgo.v2/bson"
 	"errors"
+	"time"
 )
 
 // Insert user info into database.
@@ -28,6 +29,10 @@ func CreateUser(data model.User) error {
 	} else if !bson.IsObjectIdHex(data.Gid) {
 		return errors.New("分组号错误")
 	}
+
+	// supplement other data.
+	data.Role = 1
+	data.CreateTime = time.Now()
 
 	// username must be the only.
 	count, err := db.C(model.UserCollection).Find(bson.M{"username": data.UserName}).Count()

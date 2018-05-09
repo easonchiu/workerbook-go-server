@@ -49,9 +49,8 @@ func (c *Context) Error(err error, errCode int) {
 	}
 
 	c.Ctx.JSON(http.StatusOK, gin.H{
-		"msg": "error",
+		"msg": err.Error(),
 		"code": errCode,
-		"data": err.Error(),
 	})
 }
 
