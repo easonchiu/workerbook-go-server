@@ -93,7 +93,7 @@ func GetUsersList(skip int, limit int) (gin.H, error) {
 		defer close()
 	}
 
-	data := make([]model.User, limit)
+	data := make([]model.UserResult, limit)
 
 	err = db.C(model.UserCollection).Find(bson.M{}).Skip(skip).Limit(limit).All(&data)
 
