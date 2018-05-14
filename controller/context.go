@@ -7,7 +7,7 @@ import (
 )
 
 type Context struct {
-	Ctx *gin.Context
+	Ctx     *gin.Context
 	RawData []byte
 }
 
@@ -16,7 +16,7 @@ func CreateCtx(c *gin.Context) *Context {
 	bytes, _ := c.GetRawData()
 
 	ctx := &Context{
-		Ctx: c,
+		Ctx:     c,
 		RawData: bytes,
 	}
 
@@ -26,7 +26,7 @@ func CreateCtx(c *gin.Context) *Context {
 // success handle
 func (c *Context) Success(data gin.H) {
 	respH := gin.H{
-		"msg": "ok",
+		"msg":  "ok",
 		"code": 0,
 	}
 
@@ -49,7 +49,7 @@ func (c *Context) Error(err error, errCode int) {
 	}
 
 	c.Ctx.JSON(http.StatusOK, gin.H{
-		"msg": err.Error(),
+		"msg":  err.Error(),
 		"code": errCode,
 	})
 }
@@ -57,7 +57,7 @@ func (c *Context) Error(err error, errCode int) {
 // forbidden handle
 func (c *Context) Forbidden() {
 	c.Ctx.JSON(http.StatusForbidden, gin.H{
-		"msg": "forbidden",
+		"msg":  "forbidden",
 		"code": http.StatusForbidden,
 		"data": nil,
 	})

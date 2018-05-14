@@ -9,7 +9,6 @@ import (
 	"errors"
 )
 
-
 // Query daily info by id.
 func GetDailyInfoById(id bson.ObjectId) (model.Daily, error) {
 	db, close, err := db.CloneDB()
@@ -43,7 +42,13 @@ func GetDailiesList(skip int, limit int) ([]model.Daily, error) {
 
 	data := make([]model.Daily, limit)
 
-	err = db.C(model.DailyCollection).Find(bson.M{}).Skip(skip).Limit(limit).All(&data)
+	err = db.C(model.DailyCollection).Find(bson.M{
+		"dailyList": bson.M{
+			"$not": bson.M{
+				"$size": 0,
+			},
+		},
+	}).Skip(skip).Limit(limit).All(&data)
 
 	if err != nil {
 		return nil, err
@@ -111,6 +116,30 @@ func AppendDailyItemIntoUsersDailyList(data model.DailyItem, id bson.ObjectId) e
 	err = db.C(model.DailyCollection).UpdateId(id, bson.M{
 		"$push": bson.M{
 			"dailyList": data,
+		},
+	})
+
+	return err
+}
+
+// delete daily item from users daily list.
+func DeleteDailyItemFromUsersDailyList(uid bson.ObjectId, itemId bson.ObjectId) error {
+	db, close, err := db.CloneDB()
+
+	if err != nil {
+		return err
+	} else {
+		defer close()
+	}
+
+	// 找到用户今天的日报内容(找不到会创建一个空内容的日报数据)
+	dailyInfo, err := GetUserTodayDailyByUid(uid)
+
+	err = db.C(model.DailyCollection).UpdateId(dailyInfo.Id, bson.M{
+		"$pull": bson.M{
+			"dailyList": bson.M{
+				"_id": itemId,
+			},
 		},
 	})
 

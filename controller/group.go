@@ -6,6 +6,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"workerbook/service"
 	"workerbook/model"
+	"errors"
 )
 
 // 获取分组列表
@@ -13,7 +14,7 @@ func GetGroupsList(c *gin.Context) {
 	ctx := CreateCtx(c)
 
 	skip, _ := c.GetQuery("skip")
-	limit, _  := c.GetQuery("limit")
+	limit, _ := c.GetQuery("limit")
 
 	intSkip, err := strconv.Atoi(skip)
 
@@ -44,6 +45,11 @@ func GetGroupInfo(c *gin.Context) {
 
 	id := ctx.getParam("id")
 
+	if !bson.IsObjectIdHex(id) {
+		ctx.Error(errors.New("无效的id号"), 1)
+		return
+	}
+
 	groupInfo, err := service.GetGroupInfoById(bson.ObjectIdHex(id))
 	if err != nil {
 		ctx.Error(err, 1)
@@ -71,4 +77,3 @@ func CreateGroup(c *gin.Context) {
 
 	ctx.Success(nil)
 }
-

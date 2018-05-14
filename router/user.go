@@ -7,9 +7,11 @@ import (
 
 func registerUserRouter(g *gin.RouterGroup) {
 
-	g.GET("list", /*middleware.Jwt,*/ controller.GetUsersList)
+	g.GET("", /*middleware.Jwt,*/ controller.GetUsersList)
 
-	g.GET("/detail/:id", /*middleware.Jwt,*/ controller.GetUserInfo)
+	g.GET("/:id", /*middleware.Jwt,*/ controller.GetUserInfo)
+
+	g.GET("/:id/todayDaily", /*middleware.Jwt,*/ controller.GetTodayDaily)
 
 	g.POST("", /*middleware.Jwt,*/ controller.CreateUser)
 

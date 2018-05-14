@@ -6,6 +6,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"strconv"
 	"workerbook/model"
+	"errors"
 )
 
 // 获取用户列表
@@ -43,6 +44,11 @@ func GetUserInfo(c *gin.Context) {
 	ctx := CreateCtx(c)
 
 	id := ctx.getParam("id")
+
+	if !bson.IsObjectIdHex(id) {
+		ctx.Error(errors.New("无效的id号"), 1)
+		return
+	}
 
 	userInfo, err := service.GetUserInfoById(bson.ObjectIdHex(id))
 	if err != nil {
