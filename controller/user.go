@@ -33,7 +33,9 @@ func GetUsersList(c *gin.Context) {
 		return
 	}
 
-	ctx.Success(usersList)
+	ctx.Success(gin.H{
+		"list": usersList,
+	})
 }
 
 // 获取单个用户的信息
@@ -48,7 +50,9 @@ func GetUserInfo(c *gin.Context) {
 		return
 	}
 
-	ctx.Success(userInfo)
+	ctx.Success(gin.H{
+		"data": userInfo,
+	})
 }
 
 // 创建用户

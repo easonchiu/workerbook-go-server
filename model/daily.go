@@ -9,11 +9,16 @@ import (
 const DailyCollection = "dailies"
 
 // daily schema
-type DailyList struct {
+type DailyItem struct {
+	Id				bson.ObjectId	`json:"id" bson:"_id"`
 	// 项目归属
 	Record			string			`json:"record"`
 	// 进度
-	Process			int				`json:"process"`
+	Progress		int				`json:"progress"`
+	// 项目归属名称
+	Pname			string			`json:"pname"`
+	// 项目归属id
+	Pid				string			`json:"pid"`
 }
 
 // collection schema
@@ -26,7 +31,7 @@ type Daily struct {
 	// 日期
 	Day				string			`json:"day"`
 	// 日报数据
-	DailyList		[]DailyList		`json:"dailyList"`
+	DailyList		[]DailyItem		`json:"dailyList" bson:"dailyList"`
 	// 发布时间
 	CreateTime		time.Time		`json:"createTime"`
 	// 更新时间

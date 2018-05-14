@@ -1,7 +1,6 @@
 package service
 
 import (
-	"github.com/gin-gonic/gin"
 	"workerbook/db"
 	"workerbook/model"
 	"gopkg.in/mgo.v2/bson"
@@ -61,30 +60,28 @@ func CreateUser(data model.User) error {
 }
 
 // Query user info by id.
-func GetUserInfoById(id bson.ObjectId) (gin.H, error) {
+func GetUserInfoById(id bson.ObjectId) (model.UserResult, error) {
 	db, close, err := db.CloneDB()
 
+	data := model.UserResult{}
+
 	if err != nil {
-		return nil, err
+		return data, err
 	} else {
 		defer close()
 	}
 
-	data := model.User{}
-
 	err = db.C(model.UserCollection).FindId(id).One(&data)
 
 	if err != nil {
-		return nil, err
+		return data, err
 	}
 
-	return gin.H{
-		"data": data,
-	}, nil
+	return data, nil
 }
 
 // Query users list with skip and limit.
-func GetUsersList(skip int, limit int) (gin.H, error) {
+func GetUsersList(skip int, limit int) ([]model.UserResult, error) {
 	db, close, err := db.CloneDB()
 
 	if err != nil {
@@ -101,7 +98,5 @@ func GetUsersList(skip int, limit int) (gin.H, error) {
 		return nil, err
 	}
 
-	return gin.H{
-		"list": data,
-	}, nil
+	return data, nil
 }

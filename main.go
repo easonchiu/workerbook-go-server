@@ -5,7 +5,7 @@ import (
 	"workerbook/middleware"
 	"workerbook/router"
 	"workerbook/db"
-	"os"
+	"flag"
 )
 
 func init() {
@@ -28,15 +28,10 @@ func main() {
 	router.Register(g)
 
 	// get port args
+	// e.g.  go run main.go --port=:8080
 	port := ""
-	if len(os.Args) >= 2 {
-		port = os.Args[1]
-	}
-	if port == "" {
-		port = ":8080"
-	} else {
-		port = ":" + port
-	}
+	flag.StringVar(&port, "port", ":8080", "port addr")
+	flag.Parse()
 
 	// start
 	g.Run(port)

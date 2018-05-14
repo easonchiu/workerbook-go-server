@@ -1,7 +1,6 @@
 package service
 
 import (
-	"github.com/gin-gonic/gin"
 	"workerbook/db"
 	"workerbook/model"
 	"gopkg.in/mgo.v2/bson"
@@ -55,30 +54,28 @@ func CreateGroup(data model.Group) error {
 }
 
 // Query group info by id.
-func GetGroupInfoById(id bson.ObjectId) (gin.H, error) {
+func GetGroupInfoById(id bson.ObjectId) (model.Group, error) {
 	db, close, err := db.CloneDB()
 
+	data := model.Group{}
+
 	if err != nil {
-		return nil, err
+		return data, err
 	} else {
 		defer close()
 	}
 
-	data := model.Group{}
-
 	err = db.C(model.GroupCollection).FindId(id).One(&data)
 
 	if err != nil {
-		return nil, err
+		return data, err
 	}
 
-	return gin.H{
-		"data": data,
-	}, nil
+	return data, nil
 }
 
 // Query groups list with skip and limit.
-func GetGroupsList(skip int, limit int) (gin.H, error) {
+func GetGroupsList(skip int, limit int) ([]model.Group, error) {
 	db, close, err := db.CloneDB()
 
 	if err != nil {
@@ -95,7 +92,5 @@ func GetGroupsList(skip int, limit int) (gin.H, error) {
 		return nil, err
 	}
 
-	return gin.H{
-		"list": data,
-	}, nil
+	return data, nil
 }

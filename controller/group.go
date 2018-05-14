@@ -33,7 +33,9 @@ func GetGroupsList(c *gin.Context) {
 		return
 	}
 
-	ctx.Success(groupsList)
+	ctx.Success(gin.H{
+		"list": groupsList,
+	})
 }
 
 // 获取单个分组的信息
@@ -48,7 +50,9 @@ func GetGroupInfo(c *gin.Context) {
 		return
 	}
 
-	ctx.Success(groupInfo)
+	ctx.Success(gin.H{
+		"data": groupInfo,
+	})
 }
 
 // 创建分组

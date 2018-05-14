@@ -7,9 +7,9 @@ import (
 
 func registerGroupRouter(g *gin.RouterGroup) {
 
-	g.GET("", /*middleware.Jwt,*/ controller.GetGroupsList)
+	g.GET("/list", /*middleware.Jwt,*/ controller.GetGroupsList)
 
-	g.GET("/:id", /*middleware.Jwt,*/ controller.GetGroupInfo)
+	g.GET("/detail/:id", /*middleware.Jwt,*/ controller.GetGroupInfo)
 
 	g.POST("", /*middleware.Jwt,*/ controller.CreateGroup)
 

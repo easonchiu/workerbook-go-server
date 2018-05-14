@@ -28,12 +28,15 @@ func GetDailiesList(c *gin.Context) {
 	}
 
 	dailiesList, err := service.GetDailiesList(intSkip, intLimit)
+
 	if err != nil {
 		ctx.Error(err, 1)
 		return
 	}
 
-	ctx.Success(dailiesList)
+	ctx.Success(gin.H{
+		"list": dailiesList,
+	})
 }
 
 // 获取单个日报的信息
@@ -43,23 +46,74 @@ func GetDailyInfo(c *gin.Context) {
 	id := ctx.getParam("id")
 
 	dailyInfo, err := service.GetDailyInfoById(bson.ObjectIdHex(id))
+
 	if err != nil {
 		ctx.Error(err, 1)
 		return
 	}
 
-	ctx.Success(dailyInfo)
+	ctx.Success(gin.H{
+		"data": dailyInfo,
+	})
 }
 
 // 创建日报
-func CreateDaily(c *gin.Context) {
+func CreateDailyItem(c *gin.Context) {
 	ctx := CreateCtx(c)
 
-	err := service.CreateDaily(model.Daily{})
+	id := ctx.getRaw("id")
+
+	// 找到用户今天的日报内容(找不到会创建一个空内容的日报数据)
+	dailyInfo, err := service.GetUserTodayDailyByUid(bson.ObjectIdHex(id))
+
 	if err != nil {
 		ctx.Error(err, 1)
 		return
 	}
 
-	ctx.Success(nil)
+	// 一条日报数据
+	data := model.DailyItem{
+		Id: bson.NewObjectId(),
+		Record: "写了啥写了啥",
+		Progress: 50,
+		Pname: "某项目",
+		Pid: "5af501c4421aa996bd7a7733",
+	}
+
+	// 插入数据
+	err = service.AppendDailyItemIntoUsersDailyList(data, dailyInfo.Id)
+
+	if err != nil {
+		ctx.Error(err, 1)
+		return
+	}
+
+	ctx.Success(gin.H{
+		"data": dailyInfo,
+	})
+}
+
+// 删除日报
+func DeleteDailyItem(c *gin.Context) {
+	ctx := CreateCtx(c)
+
+	ctx.Success(gin.H{})
+}
+
+// 获取今天的日报
+func GetTodayDaily(c *gin.Context) {
+	ctx := CreateCtx(c)
+
+	uid := ctx.getParam("uid")
+
+	dailyInfo, err := service.GetUserTodayDailyByUid(bson.ObjectIdHex(uid))
+
+	if err != nil {
+		ctx.Error(err, 1)
+		return
+	}
+
+	ctx.Success(gin.H{
+		"data": dailyInfo,
+	})
 }
