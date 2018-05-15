@@ -11,8 +11,8 @@ func registerDailyRouter(g *gin.RouterGroup) {
 
 	g.GET("/:id", /*middleware.Jwt,*/ controller.GetDailyInfo)
 
-	g.PUT("/item", /*middleware.Jwt,*/ controller.CreateDailyItem)
+	g.PUT("/item", /*middleware.Jwt,*/ controller.CreateTodayDailyItem)
 
-	g.DELETE("/item/:itemId", controller.DeleteDailyItem)
+	g.DELETE("/item/:itemId", controller.DeleteTodayDailyItem)
 
 }

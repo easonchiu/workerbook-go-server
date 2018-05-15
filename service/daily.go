@@ -122,8 +122,8 @@ func AppendDailyItemIntoUsersDailyList(data model.DailyItem, id bson.ObjectId) e
 	return err
 }
 
-// delete daily item from users daily list.
-func DeleteDailyItemFromUsersDailyList(uid bson.ObjectId, itemId bson.ObjectId) error {
+// delete daily item in today from users daily list.
+func DeleteTodayDailyItemFromUsersDailyList(uid bson.ObjectId, itemId bson.ObjectId) error {
 	db, close, err := db.CloneDB()
 
 	if err != nil {
@@ -132,9 +132,23 @@ func DeleteDailyItemFromUsersDailyList(uid bson.ObjectId, itemId bson.ObjectId) 
 		defer close()
 	}
 
-	// 找到用户今天的日报内容(找不到会创建一个空内容的日报数据)
+	// find user's daily in today (if not, create it.)
 	dailyInfo, err := GetUserTodayDailyByUid(uid)
 
+	// find the data is in today's daily or not.
+	include := false
+	for _, i := range dailyInfo.DailyList {
+		if i.Id == itemId {
+			include = true
+			break
+		}
+	}
+
+	if !include {
+		return errors.New("没有相关的日报内容")
+	}
+
+	// has related data, find and delete it.
 	err = db.C(model.DailyCollection).UpdateId(dailyInfo.Id, bson.M{
 		"$pull": bson.M{
 			"dailyList": bson.M{

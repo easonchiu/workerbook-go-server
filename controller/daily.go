@@ -64,7 +64,7 @@ func GetDailyInfo(c *gin.Context) {
 }
 
 // 创建日报
-func CreateDailyItem(c *gin.Context) {
+func CreateTodayDailyItem(c *gin.Context) {
 	ctx := CreateCtx(c)
 
 	uid := ctx.getRaw("uid")
@@ -104,8 +104,8 @@ func CreateDailyItem(c *gin.Context) {
 	})
 }
 
-// 删除日报
-func DeleteDailyItem(c *gin.Context) {
+// 删除今天的日报
+func DeleteTodayDailyItem(c *gin.Context) {
 	ctx := CreateCtx(c)
 
 	uid := ctx.getRaw("uid")
@@ -116,8 +116,8 @@ func DeleteDailyItem(c *gin.Context) {
 		return
 	}
 
-	// 删除该天中相应的日报
-	err := service.DeleteDailyItemFromUsersDailyList(bson.ObjectIdHex(uid), bson.ObjectIdHex(itemId))
+	// 删除今天中相应的日报
+	err := service.DeleteTodayDailyItemFromUsersDailyList(bson.ObjectIdHex(uid), bson.ObjectIdHex(itemId))
 
 	if err != nil {
 		ctx.Error(err, 1)
