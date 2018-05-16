@@ -1,11 +1,13 @@
 package service
 
 import (
-	"workerbook/db"
-	"workerbook/model"
-	"gopkg.in/mgo.v2/bson"
-	"errors"
-	"time"
+
+"errors"
+"gopkg.in/mgo.v2/bson"
+"time"
+"workerbook/db"
+"workerbook/model"
+
 )
 
 // Insert user info into database.
@@ -57,6 +59,30 @@ func CreateUser(data model.User) error {
 	}
 
 	return nil
+}
+
+// user login by username and password
+func UserLogin(username string, password string) (string, error) {
+	db, close, err := db.CloneDB()
+
+	if err != nil {
+		return "", err
+	} else {
+		defer close()
+	}
+
+	data := model.UserResult{}
+
+  err = db.C(model.UserCollection).Find(bson.M{
+    "username": username,
+    "password": password,
+  }).One(&data)
+
+	if err != nil {
+    return "", err
+  } else {
+    return data.Id.Hex(), nil
+  }
 }
 
 // Query user info by id.

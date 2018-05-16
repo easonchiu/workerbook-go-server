@@ -10,11 +10,11 @@ const GroupCollection = "groups"
 
 // collection schema
 type Group struct {
-	Id				bson.ObjectId	`json:"id" bson:"_id"`
+	Id bson.ObjectId `json:"id" bson:"_id"`
 	// 分组名
-	Name			string			`json:"name"`
+	Name string `json:"name"`
 	// 分组下的用户数
-	Count			int				`json:"count"`
+	Count int `json:"count"`
 	// 创建时间
-	CreateTime		time.Time		`json:"createTime"`
+	CreateTime time.Time `json:"createTime"`
 }

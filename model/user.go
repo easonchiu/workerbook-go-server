@@ -10,34 +10,34 @@ const UserCollection = "users"
 
 // collection schema
 type User struct {
-	Id			bson.ObjectId	`json:"id" bson:"_id"`
+	Id bson.ObjectId `json:"id" bson:"_id"`
 	// 昵称
-	NickName	string			`json:"nickname"`
+	NickName string `json:"nickname"`
 	// 邮箱
-	Email		string			`json:"email"`
+	Email string `json:"email"`
 	// 用户名
-	UserName	string			`json:"username"`
+	UserName string `json:"username"`
 	// 分组id
-	Gid			string			`json:"gid"`
+	Gid string `json:"gid"`
 	// 手机号
-	Mobile		string			`json:"mobile"`
+	Mobile string `json:"mobile"`
 	// 密码
-	Password	string			`json:"password"`
+	Password string `json:"password"`
 	// 1：管理员， 2：普通用户
-	Role		int				`json:"role"`
+	Role int `json:"role"`
 	// 创建时间
-	CreateTime	time.Time		`json:"createTime"`
+	CreateTime time.Time `json:"createTime"`
 }
 
 // user result
 type UserResult struct {
-	Id			bson.ObjectId	`json:"id" bson:"_id"`
+	Id bson.ObjectId `json:"id" bson:"_id"`
 	// 昵称
-	NickName	string			`json:"nickname"`
+	NickName string `json:"nickname"`
 	// 分组id
-	Gid			string			`json:"gid"`
+	Gid string `json:"gid"`
 	// 1：管理员， 2：普通用户
-	Role		int				`json:"role"`
+	Role int `json:"role"`
 	// 创建时间
-	CreateTime	time.Time		`json:"createTime"`
+	CreateTime time.Time `json:"createTime"`
 }
