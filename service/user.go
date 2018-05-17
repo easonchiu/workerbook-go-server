@@ -3,7 +3,8 @@ package service
 import (
 
 "errors"
-"gopkg.in/mgo.v2/bson"
+	`gopkg.in/mgo.v2`
+	"gopkg.in/mgo.v2/bson"
 "time"
 "workerbook/db"
 "workerbook/model"
@@ -79,6 +80,9 @@ func UserLogin(username string, password string) (string, error) {
   }).One(&data)
 
 	if err != nil {
+		if err == mgo.ErrNotFound {
+			return "", errors.New("用户名或密码错误")
+		}
     return "", err
   } else {
     return data.Id.Hex(), nil
