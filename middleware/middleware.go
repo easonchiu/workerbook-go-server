@@ -5,6 +5,7 @@ import (
   "fmt"
   "github.com/gin-gonic/gin"
   `gopkg.in/mgo.v2/bson`
+  `regexp`
   "workerbook/controller"
 )
 
@@ -14,22 +15,23 @@ func Register(g *gin.Engine) {
 
 // check up json web token
 func Jwt(c *gin.Context) {
-  auth, prefix, token := c.Request.Header.Get("authorization"), "Bearer ", ""
+  auth, token := c.Request.Header.Get("authorization"), ""
+  ctx := controller.CreateCtx(c)
 
-  if len(auth) > len(prefix) {
-    token = auth[len(prefix):]
+  jwtReg := regexp.MustCompile(`^Bearer\s\S+$`)
+
+  if jwtReg.MatchString(auth) {
+    token = auth[len("Bearer "):]
 
     // check up your token here...
     if bson.IsObjectIdHex(token) {
       c.Next()
     } else {
-      ctx := controller.CreateCtx(c)
       ctx.Error(errors.New("bad token."), 401)
       return
     }
 
   } else {
-    ctx := controller.CreateCtx(c)
     ctx.Forbidden()
   }
 }

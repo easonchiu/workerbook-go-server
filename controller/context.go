@@ -50,7 +50,12 @@ func (c *Context) Error(err error, errCode int) {
   }
 
   fmt.Println()
-  fmt.Println(" >>> ERROR: ", err.Error())
+  fmt.Println(" >>> ERROR:", err.Error())
+  fmt.Println(" >>> ERROR CODE:", errCode)
+  fmt.Println(" >>> REQUEST METHOD:", c.Ctx.Request.Method)
+  fmt.Println(" >>> REQUEST URL:", c.Ctx.Request.URL.String())
+  fmt.Println(" >>> USER AGENT:", c.Ctx.Request.UserAgent())
+  fmt.Println(" >>> USER AUTH:", c.Ctx.Request.Header.Get("authorization"))
   fmt.Println()
 
   c.Ctx.JSON(http.StatusOK, gin.H{
