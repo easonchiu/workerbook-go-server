@@ -8,6 +8,7 @@ const Login = AsyncComponent(() => import('src/views/login'))
 const Index = AsyncComponent(() => import('src/views/index'))
 const CreateUser = AsyncComponent(() => import('src/views/createUser'))
 const CreateGroup = AsyncComponent(() => import('src/views/createGroup'))
+const CreateProject = AsyncComponent(() => import('src/views/createProject'))
 
 // 配置路由
 const Routes = () => {
@@ -18,6 +19,7 @@ const Routes = () => {
         <Route exact path="/index" component={Index} />
         <Route exact path="/createUser" component={CreateUser} />
         <Route exact path="/createGroup" component={CreateGroup} />
+        <Route exact path="/createProject" component={CreateProject} />
         <Redirect to="/index" />
       </Switch>
     </BrowserRouter>

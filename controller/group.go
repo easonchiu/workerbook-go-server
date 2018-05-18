@@ -4,7 +4,6 @@ import (
   "errors"
   "github.com/gin-gonic/gin"
   "gopkg.in/mgo.v2/bson"
-  "strconv"
   "workerbook/model"
   "workerbook/service"
 )
@@ -13,22 +12,10 @@ import (
 func GetGroupsList(c *gin.Context) {
   ctx := CreateCtx(c)
 
-  skip, _ := c.GetQuery("skip")
-  limit, _ := c.GetQuery("limit")
+  skip := ctx.getQuery("skip", true).(int)
+  limit := ctx.getQuery("limit", true).(int)
 
-  intSkip, err := strconv.Atoi(skip)
-
-  if err != nil {
-    intSkip = 0
-  }
-
-  intLimit, err := strconv.Atoi(limit)
-
-  if err != nil {
-    intLimit = 10
-  }
-
-  groupsList, err := service.GetGroupsList(intSkip, intLimit)
+  groupsList, err := service.GetGroupsList(skip, limit)
   if err != nil {
     ctx.Error(err, 1)
     return
@@ -43,7 +30,7 @@ func GetGroupsList(c *gin.Context) {
 func GetGroupInfo(c *gin.Context) {
   ctx := CreateCtx(c)
 
-  id := ctx.getParam("id")
+  id := ctx.getParam("id").(string)
 
   if !bson.IsObjectIdHex(id) {
     ctx.Error(errors.New("无效的id号"), 1)
@@ -66,7 +53,7 @@ func CreateGroup(c *gin.Context) {
   ctx := CreateCtx(c)
 
   data := model.Group{
-    Name: ctx.getRaw("name"),
+    Name: ctx.getRaw("name").(string),
   }
 
   err := service.CreateGroup(data)

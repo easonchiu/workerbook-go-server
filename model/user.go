@@ -38,7 +38,7 @@ type User struct {
 	Role int `json:"role"`
 
 	// 创建时间
-	CreateTime time.Time `json:"createTime"`
+	CreateTime time.Time `json:"createTime" bson:"createTime"`
 
 	// 用户是否存在
 	Exist bool `json:"exist"`
@@ -65,5 +65,5 @@ type UserResult struct {
 	Role int `json:"role"`
 
 	// 创建时间
-	CreateTime time.Time `json:"createTime"`
+	CreateTime time.Time `json:"createTime" bson:"createTime"`
 }

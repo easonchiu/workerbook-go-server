@@ -40,7 +40,11 @@ func GetDailiesList(skip int, limit int) ([]model.Daily, error) {
 		defer close()
 	}
 
-	data := make([]model.Daily, limit)
+	data := []model.Daily{}
+
+	if limit < 0 {
+		limit = 0
+	}
 
 	err = db.C(model.DailyCollection).Find(bson.M{
 		"dailyList": bson.M{

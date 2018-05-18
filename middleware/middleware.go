@@ -25,6 +25,7 @@ func Jwt(c *gin.Context) {
 
     // check up your token here...
     if bson.IsObjectIdHex(token) {
+      c.Set("uid", token)
       c.Next()
     } else {
       ctx.Error(errors.New("bad token."), 401)

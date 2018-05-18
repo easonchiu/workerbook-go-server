@@ -86,7 +86,11 @@ func GetGroupsList(skip int, limit int) ([]model.Group, error) {
 		defer close()
 	}
 
-	data := make([]model.Group, limit)
+	data := []model.Group{}
+
+	if limit < 0 {
+		limit = 0
+	}
 
 	err = db.C(model.GroupCollection).Find(bson.M{}).Skip(skip).Limit(limit).All(&data)
 

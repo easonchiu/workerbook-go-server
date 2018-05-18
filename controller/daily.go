@@ -4,7 +4,6 @@ import (
   "errors"
   "github.com/gin-gonic/gin"
   "gopkg.in/mgo.v2/bson"
-  "strconv"
   "workerbook/model"
   "workerbook/service"
 )
@@ -13,22 +12,10 @@ import (
 func GetDailiesList(c *gin.Context) {
   ctx := CreateCtx(c)
 
-  skip, _ := c.GetQuery("skip")
-  limit, _ := c.GetQuery("limit")
+  skip := ctx.getQuery("skip", true).(int)
+  limit := ctx.getQuery("limit", true).(int)
 
-  intSkip, err := strconv.Atoi(skip)
-
-  if err != nil {
-    intSkip = 0
-  }
-
-  intLimit, err := strconv.Atoi(limit)
-
-  if err != nil {
-    intLimit = 10
-  }
-
-  dailiesList, err := service.GetDailiesList(intSkip, intLimit)
+  dailiesList, err := service.GetDailiesList(skip, limit)
 
   if err != nil {
     ctx.Error(err, 1)
@@ -44,7 +31,7 @@ func GetDailiesList(c *gin.Context) {
 func GetDailyInfo(c *gin.Context) {
   ctx := CreateCtx(c)
 
-  id := ctx.getParam("id")
+  id := ctx.getParam("id").(string)
 
   if !bson.IsObjectIdHex(id) {
     ctx.Error(errors.New("无效的id号"), 1)
@@ -63,35 +50,51 @@ func GetDailyInfo(c *gin.Context) {
   })
 }
 
-// 创建日报
+// create daily item at today.
 func CreateTodayDailyItem(c *gin.Context) {
   ctx := CreateCtx(c)
 
-  uid := ctx.getRaw("uid")
+  pid := ctx.getRaw("project").(string)
+  progress := ctx.getRaw("progress").(int)
+  record := ctx.getRaw("record").(string)
+  uid, _ := c.Get("uid")
 
-  if !bson.IsObjectIdHex(uid) {
-    ctx.Error(errors.New("无效的id号"), 1)
+  if !bson.IsObjectIdHex(pid) {
+    ctx.Error(errors.New("无效的项目"), 1)
+    return
+  }
+
+  // find the project info.
+  project, err := service.GetProjectInfoById(bson.ObjectIdHex(pid))
+
+  if err != nil {
+    ctx.Error(errors.New("找不到相关项目"), 1)
     return
   }
 
   // 找到用户今天的日报内容(找不到会创建一个空内容的日报数据)
-  dailyInfo, err := service.GetUserTodayDailyByUid(bson.ObjectIdHex(uid))
+  dailyInfo, err := service.GetUserTodayDailyByUid(bson.ObjectIdHex(uid.(string)))
 
   if err != nil {
     ctx.Error(err, 1)
     return
   }
 
-  // 一条日报数据
-  data := model.DailyItem{
-    Id:       bson.NewObjectId(),
-    Record:   "写了啥写了啥",
-    Progress: 50,
-    Pname:    "某项目",
-    Pid:      "5af501c4421aa996bd7a7733",
+  if err != nil {
+    ctx.Error(errors.New("请设置正确的项目进度"), 1)
+    return
   }
 
-  // 插入数据
+  // create record data.
+  data := model.DailyItem{
+    Id:       bson.NewObjectId(),
+    Record:   record,
+    Progress: progress,
+    Pname:    project.Name,
+    Pid:      project.Id.Hex(),
+  }
+
+  // insert it.
   err = service.AppendDailyItemIntoUsersDailyList(data, dailyInfo.Id)
 
   if err != nil {
@@ -108,8 +111,8 @@ func CreateTodayDailyItem(c *gin.Context) {
 func DeleteTodayDailyItem(c *gin.Context) {
   ctx := CreateCtx(c)
 
-  uid := ctx.getRaw("uid")
-  itemId := ctx.getParam("itemId")
+  uid := ctx.getRaw("uid").(string)
+  itemId := ctx.getParam("itemId").(string)
 
   if !bson.IsObjectIdHex(uid) {
     ctx.Error(errors.New("无效的id号"), 1)
@@ -130,7 +133,7 @@ func DeleteTodayDailyItem(c *gin.Context) {
 func GetTodayDaily(c *gin.Context) {
   ctx := CreateCtx(c)
 
-  uid := ctx.getParam("id")
+  uid := ctx.getParam("id").(string)
 
   dailyInfo, err := service.GetUserTodayDailyByUid(bson.ObjectIdHex(uid))
 

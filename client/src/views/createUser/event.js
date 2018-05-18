@@ -1,4 +1,3 @@
-
 export default class Event {
 
   fetchData = async () => {
@@ -26,11 +25,11 @@ export default class Event {
         email: this.state.email,
         mobile: this.state.mobile,
       })
+      this.props.history.goBack()
     }
     catch (err) {
       alert(err.message)
     }
-
   }
 
 }

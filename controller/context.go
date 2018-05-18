@@ -5,6 +5,7 @@ import (
   "github.com/gin-gonic/gin"
   "github.com/tidwall/gjson"
   "net/http"
+  `strconv`
 )
 
 type Context struct {
@@ -77,13 +78,54 @@ func (c *Context) Forbidden() {
 }
 
 // get post data
-func (c *Context) getRaw(key string) string {
+func (c *Context) getRaw(key string, isInt... bool) interface{} {
+  intType := false
+
+  if len(isInt) == 1 {
+    intType = isInt[0]
+  }
+
   res := gjson.GetBytes(c.RawData, key)
-  return res.Str
+
+  if intType {
+    return int(res.Int())
+  } else {
+    return res.Str
+  }
 }
 
 // get params
-func (c *Context) getParam(key string) string {
+func (c *Context) getParam(key string, isInt... bool) interface{} {
+  intType := false
+
+  if len(isInt) == 1 {
+    intType = isInt[0]
+  }
+
   res := c.Ctx.Param(key)
-  return res
+
+  if intType {
+    intRes, _ := strconv.Atoi(res)
+    return intRes
+  } else {
+    return res
+  }
+}
+
+// get query
+func (c *Context) getQuery(key string, isInt... bool) interface{} {
+  intType := false
+
+  if len(isInt) == 1 {
+    intType = isInt[0]
+  }
+
+  res, _ := c.Ctx.GetQuery(key)
+
+  if intType {
+    intRes, _ := strconv.Atoi(res)
+    return intRes
+  } else {
+    return res
+  }
 }

@@ -1,4 +1,3 @@
-
 export default class Event {
 
   formValueChange = e => {
@@ -13,7 +12,7 @@ export default class Event {
   onSubmit = async e => {
     e.preventDefault()
     try {
-      await this.props.$group.create({
+      await this.props.$project.create({
         name: this.state.name,
       })
       this.props.history.goBack()

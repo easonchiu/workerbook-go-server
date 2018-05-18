@@ -13,4 +13,7 @@ func Register(g *gin.Engine) {
 	// 注册日报相关的路由
 	registerDailyRouter(g.Group("/daily"))
 
+	// 注册项目相关的路由
+	registerProjectRouter(g.Group("/project"))
+
 }

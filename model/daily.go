@@ -50,8 +50,8 @@ type Daily struct {
   DailyList []DailyItem `json:"dailyList" bson:"dailyList"`
 
   // 发布时间
-  CreateTime time.Time `json:"createTime"`
+  CreateTime time.Time `json:"createTime" bson:"createTime"`
 
   // 更新时间
-  UpdateTime time.Time `json:"updateTime"`
+  UpdateTime time.Time `json:"updateTime" bson:"updateTime"`
 }

@@ -5,7 +5,7 @@ const initialState = {
 }
 
 export default handleActions({
-  GROUP_LIST(state, action) {
+  PROJECT_LIST(state, action) {
     return {
       ...state,
       list: action.payload.list,

@@ -2,22 +2,23 @@ import { createAction } from 'easy-action'
 import http from 'src/utils/http'
 
 // fetch group list.
-const fetchList = ({ skip, limit } = {}) => async dispatch => {
+const fetchList = ({ status, skip, limit } = {}) => async dispatch => {
   const res = await http.request({
-    url: '/group',
+    url: '/project',
     method: 'GET',
     params: {
+      status,
       skip,
       limit,
     }
   })
-  dispatch(createAction('GROUP_LIST')(res))
+  dispatch(createAction('PROJECT_LIST')(res))
 }
 
 // create group
 const create = payload => async () => {
   const res = await http.request({
-    url: '/group',
+    url: '/project',
     method: 'POST',
     data: payload
   })

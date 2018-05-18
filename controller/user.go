@@ -4,7 +4,6 @@ import (
   "errors"
   "github.com/gin-gonic/gin"
   "gopkg.in/mgo.v2/bson"
-  "strconv"
   "workerbook/model"
   "workerbook/service"
 )
@@ -13,8 +12,8 @@ import (
 func UserLogin(c *gin.Context) {
   ctx := CreateCtx(c)
 
-  username := ctx.getRaw("username")
-  password := ctx.getRaw("password")
+  username := ctx.getRaw("username").(string)
+  password := ctx.getRaw("password").(string)
 
   // check the raw data.
   if username == "" {
@@ -42,22 +41,11 @@ func UserLogin(c *gin.Context) {
 func GetUsersList(c *gin.Context) {
   ctx := CreateCtx(c)
 
-  skip, _ := c.GetQuery("skip")
-  limit, _ := c.GetQuery("limit")
+  gid := ctx.getQuery("gid").(string)
+  skip := ctx.getQuery("skip", true).(int)
+  limit := ctx.getQuery("limit", true).(int)
 
-  intSkip, err := strconv.Atoi(skip)
-
-  if err != nil {
-    intSkip = 0
-  }
-
-  intLimit, err := strconv.Atoi(limit)
-
-  if err != nil {
-    intLimit = 10
-  }
-
-  usersList, err := service.GetUsersList(intSkip, intLimit)
+  usersList, err := service.GetUsersList(gid, skip, limit)
   if err != nil {
     ctx.Error(err, 1)
     return
@@ -72,7 +60,7 @@ func GetUsersList(c *gin.Context) {
 func GetUserInfo(c *gin.Context) {
   ctx := CreateCtx(c)
 
-  id := ctx.getParam("id")
+  id := ctx.getParam("id").(string)
 
   if !bson.IsObjectIdHex(id) {
     ctx.Error(errors.New("无效的id号"), 1)
@@ -95,12 +83,13 @@ func CreateUser(c *gin.Context) {
   ctx := CreateCtx(c)
 
   data := model.User{
-    NickName: ctx.getRaw("nickname"),
-    Email:    ctx.getRaw("email"),
-    UserName: ctx.getRaw("username"),
-    Gid:      ctx.getRaw("gid"),
-    Mobile:   ctx.getRaw("mobile"),
-    Password: ctx.getRaw("password"),
+    NickName: ctx.getRaw("nickname").(string),
+    Email:    ctx.getRaw("email").(string),
+    UserName: ctx.getRaw("username").(string),
+    Gid:      ctx.getRaw("gid").(string),
+    Role:     ctx.getRaw("role", true).(int),
+    Mobile:   ctx.getRaw("mobile").(string),
+    Password: ctx.getRaw("password").(string),
   }
 
   err := service.CreateUser(data)

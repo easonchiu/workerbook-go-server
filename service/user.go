@@ -31,7 +31,9 @@ func CreateUser(data model.User) error {
   }
 
   // supplement other data.
-  data.Role = 1
+  if data.Role == 0 {
+    data.Role = 1
+  }
   data.CreateTime = time.Now()
 
   // username must be the only.
@@ -124,7 +126,8 @@ func GetUserInfoById(id bson.ObjectId) (model.UserResult, error) {
 }
 
 // Query users list with skip and limit.
-func GetUsersList(skip int, limit int) ([]model.UserResult, error) {
+// it will find all of users when 'gid' is empty.
+func GetUsersList(gid string, skip int, limit int) ([]model.UserResult, error) {
   db, close, err := db.CloneDB()
 
   if err != nil {
@@ -133,9 +136,20 @@ func GetUsersList(skip int, limit int) ([]model.UserResult, error) {
     defer close()
   }
 
-  data := make([]model.UserResult, limit)
+  data := []model.UserResult{}
 
-  err = db.C(model.UserCollection).Find(bson.M{}).Skip(skip).Limit(limit).All(&data)
+  if limit < 0 {
+    limit = 0
+  }
+
+  // create condition sql
+  sql := bson.M{}
+  if gid != "" {
+    sql["gid"] = gid
+  }
+
+  // find it
+  err = db.C(model.UserCollection).Find(sql).Skip(skip).Limit(limit).All(&data)
 
   if err != nil {
     return nil, err
