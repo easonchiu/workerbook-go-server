@@ -1,28 +1,27 @@
-// import { createAction } from 'easy-action'
+import { createAction } from 'easy-action'
 import http from 'src/utils/http'
 
-// user login
-const login = payload => async () => {
+// fetch group list.
+const fetchList = payload => async dispatch => {
   const res =  await http.request({
-    url: '/user/login',
-    method: 'POST',
+    url: '/group',
+    method: 'GET',
     data: payload
   })
-  return res
+  dispatch(createAction('GROUP_LIST')(res))
 }
 
-// create user
+// create group
 const create = payload => async () => {
   const res =  await http.request({
-    url: '/user',
+    url: '/group',
     method: 'POST',
     data: payload
   })
   return res
 }
 
-
 export default {
-  login,
+  fetchList,
   create,
 }

@@ -2,7 +2,10 @@
 export default class Event {
 
   fetchData = async () => {
-    await this.props.$daily.fetchUsersDailyList()
+    await Promise.all([
+      this.props.$daily.fetchDailyListByDay(),
+      this.props.$group.fetchList(),
+    ])
   }
 
 }

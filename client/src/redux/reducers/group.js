@@ -5,7 +5,7 @@ const initialState = {
 }
 
 export default handleActions({
-  DAILY_LIST_BY_DAY(state, action) {
+  GROUP_LIST(state, action) {
     return Object.assign({}, state, {
       list: action.payload.list,
     })

@@ -1,11 +1,13 @@
 package service
 
 import (
-	"workerbook/db"
-	"workerbook/model"
-	"gopkg.in/mgo.v2/bson"
-	"errors"
-	"time"
+
+"errors"
+"gopkg.in/mgo.v2/bson"
+"time"
+"workerbook/db"
+"workerbook/model"
+
 )
 
 // Insert group info into database.
@@ -93,4 +95,31 @@ func GetGroupsList(skip int, limit int) ([]model.Group, error) {
 	}
 
 	return data, nil
+}
+
+// refresh group count
+func RefreshGroupCount(gid bson.ObjectId) error {
+	db, close, err := db.CloneDB()
+
+	if err != nil {
+		return err
+	} else {
+		defer close()
+	}
+
+	count, err := db.C(model.UserCollection).Find(bson.M{
+		"gid": gid.Hex(),
+	}).Count()
+
+	if err != nil {
+		return err
+	}
+
+	db.C(model.GroupCollection).UpdateId(gid, bson.M{
+		"$set": bson.M{
+			"count": count,
+		},
+	})
+
+	return nil
 }

@@ -19,40 +19,57 @@ export default class View extends PureComponent {
     this.evt.fetchData()
   }
 
+  renderDailyList() {
+    const list = this.props.daily$.list
+
+    return (
+      <article>
+        {
+          list.map(item => {
+            return (
+              <section key={item.id}>
+                <h2>uid: {item.uid}</h2>
+                <ul>
+                  {
+                    item.dailyList.map(i => {
+                      return (
+                        <li key={i.id}>
+                          {i.progress}%,
+                          {i.pname}
+                          {i.record}
+                        </li>
+                      )
+                    })
+                  }
+                </ul>
+              </section>
+            )
+          })
+        }
+      </article>
+    )
+  }
+
+  renderGroupList() {
+    const list = this.props.group$.list
+    return (
+      <ul>
+        {
+          list.map(item => <li key={item.id}>{item.name}-{item.count}</li>)
+        }
+      </ul>
+    )
+  }
+
   render(props, state) {
-
-    const list = props.daily$.list
-
-    console.log(list)
-
     return (
       <main className={'view-index'}>
 
-        <article>
-          {
-            list.map(item => {
-              return (
-                <section key={item.id}>
-                  <h2>uid: {item.uid}</h2>
-                  <ul>
-                    {
-                      item.dailyList.map(i => {
-                        return (
-                          <li key={i.id}>
-                            {i.progress}%,
-                            {i.pname}
-                            {i.record}
-                          </li>
-                        )
-                      })
-                    }
-                  </ul>
-                </section>
-              )
-            })
-          }
+        <h2>Daily list.</h2>
+        {this.renderDailyList()}
 
-        </article>
+        <h2>Group list.</h2>
+        {this.renderGroupList()}
 
       </main>
     )
