@@ -77,55 +77,89 @@ func (c *Context) Forbidden() {
   c.Ctx.Abort()
 }
 
-// get post data
-func (c *Context) getRaw(key string, isInt... bool) interface{} {
-  intType := false
-
-  if len(isInt) == 1 {
-    intType = isInt[0]
-  }
-
+// get post data by string
+func (c *Context) getRaw(key string) string {
   res := gjson.GetBytes(c.RawData, key)
-
-  if intType {
-    return int(res.Int())
-  } else {
-    return res.Str
-  }
+  return res.Str
 }
 
-// get params
-func (c *Context) getParam(key string, isInt... bool) interface{} {
-  intType := false
+// get post data by int
+func (c *Context) getRawInt(key string) int {
+  res := gjson.GetBytes(c.RawData, key)
+  return int(res.Int())
+}
 
-  if len(isInt) == 1 {
-    intType = isInt[0]
-  }
+// get post data by bool
+func (c *Context) getRawBool(key string) bool {
+  res := gjson.GetBytes(c.RawData, key)
+  return res.Str == "true"
+}
 
+// get params by string
+func (c *Context) getParam(key string) string {
   res := c.Ctx.Param(key)
-
-  if intType {
-    intRes, _ := strconv.Atoi(res)
-    return intRes
-  } else {
-    return res
-  }
+  return res
 }
 
-// get query
-func (c *Context) getQuery(key string, isInt... bool) interface{} {
-  intType := false
+// get params by int
+func (c *Context) getParamInt(key string) int {
+  res := c.Ctx.Param(key)
+  intRes, _ := strconv.Atoi(res)
+  return intRes
+}
 
-  if len(isInt) == 1 {
-    intType = isInt[0]
-  }
+// get params by bool
+func (c *Context) getParamBool(key string) bool {
+  res := c.Ctx.Param(key)
+  return res == "true"
+}
 
+// get query by string
+func (c *Context) getQuery(key string) string {
   res, _ := c.Ctx.GetQuery(key)
+  return res
+}
 
-  if intType {
-    intRes, _ := strconv.Atoi(res)
-    return intRes
-  } else {
-    return res
+// get query by int
+func (c *Context) getQueryInt(key string) int {
+  res, _ := c.Ctx.GetQuery(key)
+  intRes, _ := strconv.Atoi(res)
+  return intRes
+}
+
+// get query by bool
+func (c *Context) getQueryBool(key string) bool {
+  res, exist := c.Ctx.GetQuery(key)
+  if !exist {
+    return false
   }
+  return res == "true"
+}
+
+// get value by string
+func (c *Context) get(key string) string {
+  res, exist := c.Ctx.Get(key)
+  if !exist {
+    return ""
+  }
+  return res.(string)
+}
+
+// get value by string
+func (c *Context) getInt(key string) int {
+  res, exist := c.Ctx.Get(key)
+  if !exist {
+    return 0
+  }
+  intRes, _ := strconv.Atoi(res.(string))
+  return intRes
+}
+
+// get value by string
+func (c *Context) getBool(key string) bool {
+  res, exist := c.Ctx.Get(key)
+  if !exist {
+    return false
+  }
+  return res.(string) == "true"
 }

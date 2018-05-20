@@ -11,9 +11,9 @@ import (
 func GetProjectsList(c *gin.Context) {
   ctx := CreateCtx(c)
 
-  skip := ctx.getQuery("skip", true).(int)
-  limit := ctx.getQuery("limit", true).(int)
-  status := ctx.getQuery("status", true).(int)
+  skip := ctx.getQueryInt("skip")
+  limit := ctx.getQueryInt("limit")
+  status := ctx.getQueryInt("status")
 
   // create search sql
   search := bson.M{}
@@ -39,7 +39,7 @@ func CreateProject(c *gin.Context) {
   ctx := CreateCtx(c)
 
   data := model.Project{
-    Name: ctx.getRaw("name").(string),
+    Name: ctx.getRaw("name"),
   }
 
   err := service.CreateProject(data)

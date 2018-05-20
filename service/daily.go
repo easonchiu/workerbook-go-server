@@ -1,12 +1,12 @@
 package service
 
 import (
-	"workerbook/db"
-	"workerbook/model"
+	"errors"
+	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"time"
-	"gopkg.in/mgo.v2"
-	"errors"
+	"workerbook/db"
+	"workerbook/model"
 )
 
 // Query daily info by id.
@@ -52,7 +52,7 @@ func GetDailiesList(skip int, limit int) ([]model.Daily, error) {
 				"$size": 0,
 			},
 		},
-	}).Skip(skip).Limit(limit).All(&data)
+	}).Sort("-updateTime").Skip(skip).Limit(limit).All(&data)
 
 	if err != nil {
 		return nil, err
@@ -62,7 +62,7 @@ func GetDailiesList(skip int, limit int) ([]model.Daily, error) {
 }
 
 // Query today's daily with some user, if not, create it and return.
-func GetUserTodayDailyByUid(uid bson.ObjectId) (model.Daily, error) {
+func GetUserTodayDaily(uid bson.ObjectId) (model.Daily, error) {
 	db, close, err := db.CloneDB()
 
 	data := model.Daily{}
@@ -74,7 +74,8 @@ func GetUserTodayDailyByUid(uid bson.ObjectId) (model.Daily, error) {
 	}
 
 	// check user is existed first.
-	_, err = GetUserInfoById(uid)
+	userInfo, err := GetUserInfoById(uid)
+
 	if err != nil {
 		return data, errors.New("没有相关的用户")
 	}
@@ -90,12 +91,16 @@ func GetUserTodayDailyByUid(uid bson.ObjectId) (model.Daily, error) {
 		if err == mgo.ErrNotFound {
 			data := model.Daily{
 				Id:         bson.NewObjectId(),
-				Uid:        uid.Hex(),
+				Uid:        userInfo.Id.Hex(),
+				NickName:		userInfo.NickName,
+				GroupName:	userInfo.GroupName,
+				Gid:				userInfo.Gid,
 				Day:        today,
 				DailyList:  []model.DailyItem{},
 				CreateTime: time.Now(),
 				UpdateTime: time.Now(),
 			}
+
 			err = db.C(model.DailyCollection).Insert(data)
 
 			return data, err
@@ -119,7 +124,12 @@ func AppendDailyItemIntoUsersDailyList(data model.DailyItem, id bson.ObjectId) e
 
 	err = db.C(model.DailyCollection).UpdateId(id, bson.M{
 		"$push": bson.M{
-			"dailyList": data,
+			"dailyList": bson.M{
+				"$each": []model.DailyItem{
+					data,
+				},
+				"$position": 0,
+			},
 		},
 	})
 
@@ -137,7 +147,7 @@ func DeleteTodayDailyItemFromUsersDailyList(uid bson.ObjectId, itemId bson.Objec
 	}
 
 	// find user's daily in today (if not, create it.)
-	dailyInfo, err := GetUserTodayDailyByUid(uid)
+	dailyInfo, err := GetUserTodayDaily(uid)
 
 	// find the data is in today's daily or not.
 	include := false

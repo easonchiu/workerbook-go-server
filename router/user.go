@@ -1,21 +1,23 @@
 package router
 
 import (
-	"github.com/gin-gonic/gin"
-	"workerbook/controller"
+	`github.com/gin-gonic/gin`
+	`workerbook/controller`
 	`workerbook/middleware`
 )
 
 func registerUserRouter(g *gin.RouterGroup) {
 
-	g.POST("/login", controller.UserLogin)
-
 	g.GET("", middleware.Jwt, controller.GetUsersList)
 
-	g.GET("/:id", /*middleware.Jwt,*/ controller.GetUserInfo)
+	g.GET("/:id", middleware.Jwt, controller.GetUserOne)
 
-	g.GET("/:id/todayDaily", /*middleware.Jwt,*/ controller.GetTodayDaily)
+	g.POST("/:id/dailies/today/items", middleware.Jwt, controller.CreateMyTodayDailyItem)
 
-	g.POST("", /*middleware.Jwt,*/ controller.CreateUser)
+	g.DELETE("/:id/dailies/today/items/:itemId", middleware.Jwt, controller.DeleteUserTodayDailyItem)
+
+	g.GET("/:id/dailies/today", middleware.Jwt, controller.GetMyTodayDaily)
+
+	g.POST("", middleware.Jwt, controller.CreateUser)
 
 }

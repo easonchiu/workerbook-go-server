@@ -17,7 +17,7 @@ export default class View extends PureComponent {
 
   render(props, state) {
     return (
-      <main className={'view-create-project'}>
+      <main className="view-create-project">
         <form>
           <input
             type="text"

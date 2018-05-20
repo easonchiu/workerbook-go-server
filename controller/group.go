@@ -12,8 +12,8 @@ import (
 func GetGroupsList(c *gin.Context) {
   ctx := CreateCtx(c)
 
-  skip := ctx.getQuery("skip", true).(int)
-  limit := ctx.getQuery("limit", true).(int)
+  skip := ctx.getQueryInt("skip")
+  limit := ctx.getQueryInt("limit")
 
   groupsList, err := service.GetGroupsList(skip, limit)
   if err != nil {
@@ -27,13 +27,13 @@ func GetGroupsList(c *gin.Context) {
 }
 
 // 获取单个分组的信息
-func GetGroupInfo(c *gin.Context) {
+func GetGroupOne(c *gin.Context) {
   ctx := CreateCtx(c)
 
-  id := ctx.getParam("id").(string)
+  id := ctx.getParam("id")
 
   if !bson.IsObjectIdHex(id) {
-    ctx.Error(errors.New("无效的id号"), 1)
+    ctx.Error(errors.New("无效的分组ID"), 1)
     return
   }
 
@@ -52,8 +52,10 @@ func GetGroupInfo(c *gin.Context) {
 func CreateGroup(c *gin.Context) {
   ctx := CreateCtx(c)
 
+  name := ctx.getRaw("name")
+
   data := model.Group{
-    Name: ctx.getRaw("name").(string),
+    Name: name,
   }
 
   err := service.CreateGroup(data)

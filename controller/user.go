@@ -12,8 +12,8 @@ import (
 func UserLogin(c *gin.Context) {
   ctx := CreateCtx(c)
 
-  username := ctx.getRaw("username").(string)
-  password := ctx.getRaw("password").(string)
+  username := ctx.getRaw("username")
+  password := ctx.getRaw("password")
 
   // check the raw data.
   if username == "" {
@@ -41,9 +41,9 @@ func UserLogin(c *gin.Context) {
 func GetUsersList(c *gin.Context) {
   ctx := CreateCtx(c)
 
-  gid := ctx.getQuery("gid").(string)
-  skip := ctx.getQuery("skip", true).(int)
-  limit := ctx.getQuery("limit", true).(int)
+  gid := ctx.getQuery("gid")
+  skip := ctx.getQueryInt("skip")
+  limit := ctx.getQueryInt("limit")
 
   usersList, err := service.GetUsersList(gid, skip, limit)
   if err != nil {
@@ -57,13 +57,17 @@ func GetUsersList(c *gin.Context) {
 }
 
 // query user info
-func GetUserInfo(c *gin.Context) {
+func GetUserOne(c *gin.Context) {
   ctx := CreateCtx(c)
 
-  id := ctx.getParam("id").(string)
+  id := ctx.getParam("id")
+
+  if id == "my" {
+    id = ctx.get("uid")
+  }
 
   if !bson.IsObjectIdHex(id) {
-    ctx.Error(errors.New("无效的id号"), 1)
+    ctx.Error(errors.New("无效的用户ID"), 1)
     return
   }
 
@@ -83,13 +87,13 @@ func CreateUser(c *gin.Context) {
   ctx := CreateCtx(c)
 
   data := model.User{
-    NickName: ctx.getRaw("nickname").(string),
-    Email:    ctx.getRaw("email").(string),
-    UserName: ctx.getRaw("username").(string),
-    Gid:      ctx.getRaw("gid").(string),
-    Role:     ctx.getRaw("role", true).(int),
-    Mobile:   ctx.getRaw("mobile").(string),
-    Password: ctx.getRaw("password").(string),
+    NickName: ctx.getRaw("nickname"),
+    Email:    ctx.getRaw("email"),
+    UserName: ctx.getRaw("username"),
+    Gid:      ctx.getRaw("gid"),
+    Role:     ctx.getRawInt("role"),
+    Mobile:   ctx.getRaw("mobile"),
+    Password: ctx.getRaw("password"),
   }
 
   err := service.CreateUser(data)

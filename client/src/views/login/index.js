@@ -18,21 +18,21 @@ export default class View extends PureComponent {
 
   render() {
     return (
-      <main className={'view-login'}>
+      <main className="view-login">
         <form>
 
           <input
             type="text"
-            placeholder={'用户名'}
-            className={'username'}
+            placeholder="用户名"
+            className="username"
             value={this.state.username}
             onChange={this.evt.usernameChange}
           />
 
           <input
             type="text"
-            placeholder={'密码'}
-            className={'password'}
+            placeholder="密码"
+            className="password"
             value={this.state.password}
             onChange={this.evt.passwordChange}
           />

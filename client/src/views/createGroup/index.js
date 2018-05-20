@@ -17,7 +17,7 @@ export default class View extends PureComponent {
 
   render(props, state) {
     return (
-      <main className={'view-create-group'}>
+      <main className="view-create-group">
         <form>
           <input
             type="text"

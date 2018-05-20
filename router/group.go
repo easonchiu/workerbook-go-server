@@ -1,16 +1,17 @@
 package router
 
 import (
-	"github.com/gin-gonic/gin"
-	"workerbook/controller"
+	`github.com/gin-gonic/gin`
+	`workerbook/controller`
+	`workerbook/middleware`
 )
 
 func registerGroupRouter(g *gin.RouterGroup) {
 
-	g.GET("", /*middleware.Jwt,*/ controller.GetGroupsList)
+	g.GET("", middleware.Jwt, controller.GetGroupsList)
 
-	g.GET("/:id", /*middleware.Jwt,*/ controller.GetGroupInfo)
+	g.GET("/:id", middleware.Jwt, controller.GetGroupOne)
 
-	g.POST("", /*middleware.Jwt,*/ controller.CreateGroup)
+	g.POST("", middleware.Jwt, controller.CreateGroup)
 
 }

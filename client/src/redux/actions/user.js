@@ -1,11 +1,10 @@
 import http from 'src/utils/http'
-import { getToken } from 'src/utils/token'
 import { createAction } from 'easy-action'
 
 // user login
 const login = payload => async () => {
   const res = await http.request({
-    url: '/user/login',
+    url: '/login',
     method: 'POST',
     data: payload,
   })
@@ -15,18 +14,31 @@ const login = payload => async () => {
 // create user
 const create = payload => async () => {
   const res = await http.request({
-    url: '/user',
+    url: '/users',
     method: 'POST',
     data: payload,
   })
   return res
 }
 
+// append daily item.
+const appendDailyItem = ({ record, progress, project }) => async () => {
+  const res = await http.request({
+    url: '/users/my/dailies/today/items',
+    method: 'POST',
+    data: {
+      record,
+      progress,
+      project,
+    }
+  })
+  return res
+}
+
 // my profile
 const myProfile = () => async dispatch => {
-  const token = getToken() || '0'
   const res = await http.request({
-    url: '/user/' + token,
+    url: '/users/my',
     method: 'GET',
   })
   dispatch(createAction('USER_PROFILE')(res))
@@ -35,7 +47,7 @@ const myProfile = () => async dispatch => {
 // fetch list
 const fetchList = ({ gid, skip, limit } = {}) => async dispatch => {
   const res = await http.request({
-    url: '/user',
+    url: '/users',
     method: 'GET',
     params: {
       gid,
@@ -51,4 +63,5 @@ export default {
   create,
   fetchList,
   myProfile,
+  appendDailyItem,
 }

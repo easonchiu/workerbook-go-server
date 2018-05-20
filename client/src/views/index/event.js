@@ -5,7 +5,8 @@ export default class Event {
     try {
       await Promise.all([
         this.props.$user.myProfile(),
-        this.props.$daily.fetchDailyListByDay(),
+        this.props.$daily.mine(),
+        this.props.$daily.fetchListByDay(),
         this.props.$group.fetchList(),
         this.props.$user.fetchList(),
         this.props.$project.fetchList({
@@ -30,6 +31,12 @@ export default class Event {
     })
   }
 
+  progressChange = e => {
+    this.setState({
+      progress: e.target.value
+    })
+  }
+
   dailyProjectChange = e => {
     this.setState({
       project: e.target.value
@@ -38,8 +45,9 @@ export default class Event {
 
   appendDaily = async () => {
     try {
-      await this.props.$daily.append({
+      await this.props.$user.appendDailyItem({
         record: this.state.record,
+        progress: this.state.progress,
         project: this.state.project,
       })
     }

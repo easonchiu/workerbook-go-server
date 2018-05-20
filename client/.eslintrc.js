@@ -975,7 +975,8 @@ module.exports = {
     'react/jsx-closing-bracket-location': 'error',
     //使用的组件必须引入
     'react/jsx-no-undef': 'off',
-    'react/prop-types': 'off'
+    'react/prop-types': 'off',
+    'react/display-name': 'off'
   },
   'settings': {
     'react': {

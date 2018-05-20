@@ -16,7 +16,6 @@ func Register(g *gin.Engine) {
 // check up json web token
 func Jwt(c *gin.Context) {
   auth, token := c.Request.Header.Get("authorization"), ""
-  ctx := controller.CreateCtx(c)
 
   jwtReg := regexp.MustCompile(`^Bearer\s\S+$`)
 
@@ -26,13 +25,16 @@ func Jwt(c *gin.Context) {
     // check up your token here...
     if bson.IsObjectIdHex(token) {
       c.Set("uid", token)
+
       c.Next()
     } else {
+      ctx := controller.CreateCtx(c)
       ctx.Error(errors.New("bad token."), 401)
       return
     }
 
   } else {
+    ctx := controller.CreateCtx(c)
     ctx.Forbidden()
   }
 }

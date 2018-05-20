@@ -4,7 +4,7 @@ import http from 'src/utils/http'
 // fetch group list.
 const fetchList = ({ status, skip, limit } = {}) => async dispatch => {
   const res = await http.request({
-    url: '/project',
+    url: '/projects',
     method: 'GET',
     params: {
       status,
@@ -18,7 +18,7 @@ const fetchList = ({ status, skip, limit } = {}) => async dispatch => {
 // create group
 const create = payload => async () => {
   const res = await http.request({
-    url: '/project',
+    url: '/projects',
     method: 'POST',
     data: payload
   })

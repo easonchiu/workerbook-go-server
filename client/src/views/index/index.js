@@ -1,9 +1,11 @@
 import './style'
 import React, { PureComponent } from 'react'
-import { Link } from 'react-router-dom'
 import VIEW from 'src/hoc/view'
 import ComponentEvent from 'src/hoc/componentEvent'
 import Event from './event'
+
+import Wrapper from 'src/containers/wrapper'
+import DailyList from 'src/containers/dailyList'
 
 @VIEW
 @ComponentEvent('evt', Event)
@@ -13,6 +15,7 @@ export default class View extends PureComponent {
 
     this.state = {
       record: '',
+      progress: 0,
       project: '',
     }
   }
@@ -31,16 +34,42 @@ export default class View extends PureComponent {
     )
   }
 
+  renderMyDaily() {
+    const list = this.props.daily$.mine
+    return (
+      <ul>
+        {
+          list.map(i => (
+            <li key={i.id}>
+              {i.progress}%{' - '}
+              {
+                i.pname ? i.pname + ' - ' : null
+              }
+              {i.record}
+            </li>
+          ))
+        }
+      </ul>
+    )
+  }
+
   renderDailyWriter() {
     const list = this.props.project$.list
 
     return (
       <div>
         <input
-          type={'text'}
-          placeholder={'writer'}
+          type="text"
+          placeholder="writer"
           value={this.state.record}
           onChange={this.evt.dailyWriterChange}
+        />
+
+        <input
+          type="text"
+          placeholder="progress"
+          value={this.state.progress}
+          onChange={this.evt.progressChange}
         />
 
         <select
@@ -69,38 +98,11 @@ export default class View extends PureComponent {
 
   renderDailyList() {
     const list = this.props.daily$.list
-
-    return (
-      <article>
-        {
-          list.map(item => {
-            return (
-              <section key={item.id}>
-                <h2>uid: {item.uid}</h2>
-                <ul>
-                  {
-                    item.dailyList.map(i => {
-                      return (
-                        <li key={i.id}>
-                          {i.progress}%,
-                          {i.pname}
-                          {i.record}
-                        </li>
-                      )
-                    })
-                  }
-                </ul>
-              </section>
-            )
-          })
-        }
-      </article>
-    )
+    return <DailyList list={list} />
   }
 
   renderGroupList() {
     const list = this.props.group$.list
-
     return (
       <ul>
         <li>
@@ -159,33 +161,34 @@ export default class View extends PureComponent {
 
   render(props, state) {
     return (
-      <main className={'view-index'}>
+      <div className="view-index">
+        <Wrapper.Header />
 
-        <Link to={'/createGroup'}>Create Group</Link>
-        {' | '}
-        <Link to={'/createUser'}>Create User</Link>
-        {' | '}
-        <Link to={'/createProject'}>Create Project</Link>
+        <div className="app-body">
+          <main className="app-body__main">
+            {this.renderMyProfile()}
+            {this.renderMyDaily()}
 
-        <h2>My profile.</h2>
-        {this.renderMyProfile()}
+            <h2>Write daily.</h2>
+            {this.renderDailyWriter()}
 
-        <h2>Write daily.</h2>
-        {this.renderDailyWriter()}
+            <h2>Daily list.</h2>
+            {this.renderDailyList()}
+          </main>
 
-        <h2>Daily list.</h2>
-        {this.renderDailyList()}
+          <aside className="app-body__aside">
+            <h2>Group list.</h2>
+            {this.renderGroupList()}
 
-        <h2>Group list.</h2>
-        {this.renderGroupList()}
+            <h2>User list.</h2>
+            {this.renderUserList()}
 
-        <h2>User list.</h2>
-        {this.renderUserList()}
+            <h2>Project list.</h2>
+            {this.renderProjectList()}
+          </aside>
+        </div>
 
-        <h2>Project list.</h2>
-        {this.renderProjectList()}
-
-      </main>
+      </div>
     )
   }
 }

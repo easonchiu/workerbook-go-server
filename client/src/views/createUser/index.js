@@ -29,7 +29,7 @@ export default class View extends PureComponent {
     const groups = props.group$.list
 
     return (
-      <main className={'view-create-user'}>
+      <main className="view-create-user">
         <form>
           <input
             type="text"

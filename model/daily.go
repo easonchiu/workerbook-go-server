@@ -35,7 +35,7 @@ type Daily struct {
   Uid string `json:"uid"`
 
   // 用户名
-  Username string `json:"username"`
+  NickName string `json:"nickname"`
 
   // 用户的分组id
   Gid string `json:"gid"`

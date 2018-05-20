@@ -1,24 +1,19 @@
 import { createAction } from 'easy-action'
 import http from 'src/utils/http'
 
-// append daily.
-const append = ({ record, project }) => async () => {
+// my daily
+const mine = () => async dispatch => {
   const res = await http.request({
-    url: '/daily',
-    method: 'POST',
-    data: {
-      record,
-      progress: 50,
-      pid: project,
-    }
+    url: '/users/my/dailies/today',
+    method: 'GET',
   })
-  return res
+  dispatch(createAction('DAILY_MY')(res))
 }
 
 // fetch daily list by day.
-const fetchDailyListByDay = ({ skip, limit } = {}) => async dispatch => {
+const fetchListByDay = ({ skip, limit } = {}) => async dispatch => {
   const res = await http.request({
-    url: '/daily',
+    url: '/dailies',
     method: 'GET',
     params: {
       skip,
@@ -28,8 +23,7 @@ const fetchDailyListByDay = ({ skip, limit } = {}) => async dispatch => {
   dispatch(createAction('DAILY_LIST_BY_DAY')(res))
 }
 
-
 export default {
-  append,
-  fetchDailyListByDay,
+  mine,
+  fetchListByDay,
 }

@@ -12,8 +12,8 @@ import (
 func GetDailiesList(c *gin.Context) {
   ctx := CreateCtx(c)
 
-  skip := ctx.getQuery("skip", true).(int)
-  limit := ctx.getQuery("limit", true).(int)
+  skip := ctx.getQueryInt("skip")
+  limit := ctx.getQueryInt("limit")
 
   dailiesList, err := service.GetDailiesList(skip, limit)
 
@@ -28,13 +28,13 @@ func GetDailiesList(c *gin.Context) {
 }
 
 // 获取单个日报的信息
-func GetDailyInfo(c *gin.Context) {
+func GetDailyOne(c *gin.Context) {
   ctx := CreateCtx(c)
 
-  id := ctx.getParam("id").(string)
+  id := ctx.getParam("id")
 
   if !bson.IsObjectIdHex(id) {
-    ctx.Error(errors.New("无效的id号"), 1)
+    ctx.Error(errors.New("无效的用户ID"), 1)
     return
   }
 
@@ -50,30 +50,42 @@ func GetDailyInfo(c *gin.Context) {
   })
 }
 
-// create daily item at today.
-func CreateTodayDailyItem(c *gin.Context) {
+// create my daily item at today.
+func CreateMyTodayDailyItem(c *gin.Context) {
   ctx := CreateCtx(c)
 
-  pid := ctx.getRaw("project").(string)
-  progress := ctx.getRaw("progress").(int)
-  record := ctx.getRaw("record").(string)
-  uid, _ := c.Get("uid")
+  id := ctx.get("uid")
 
-  if !bson.IsObjectIdHex(pid) {
-    ctx.Error(errors.New("无效的项目"), 1)
+  if !bson.IsObjectIdHex(id) {
+    ctx.Error(errors.New("无效的用户ID"), 1)
     return
   }
 
-  // find the project info.
-  project, err := service.GetProjectInfoById(bson.ObjectIdHex(pid))
+  pid := ctx.getRaw("project")
+  progress := ctx.getRawInt("progress")
+  record := ctx.getRaw("record")
+  projectName := ""
 
-  if err != nil {
-    ctx.Error(errors.New("找不到相关项目"), 1)
-    return
+  if pid != "" {
+    if !bson.IsObjectIdHex(pid) {
+      ctx.Error(errors.New("无效的项目"), 1)
+      return
+    }
+
+    // find the project info.
+    project, err := service.GetProjectInfoById(bson.ObjectIdHex(pid))
+
+    if err != nil {
+      ctx.Error(errors.New("找不到相关项目"), 1)
+      return
+    }
+
+    // set project name
+    projectName = project.Name
   }
 
   // 找到用户今天的日报内容(找不到会创建一个空内容的日报数据)
-  dailyInfo, err := service.GetUserTodayDailyByUid(bson.ObjectIdHex(uid.(string)))
+  dailyInfo, err := service.GetUserTodayDaily(bson.ObjectIdHex(id))
 
   if err != nil {
     ctx.Error(err, 1)
@@ -90,8 +102,8 @@ func CreateTodayDailyItem(c *gin.Context) {
     Id:       bson.NewObjectId(),
     Record:   record,
     Progress: progress,
-    Pname:    project.Name,
-    Pid:      project.Id.Hex(),
+    Pname:    projectName,
+    Pid:      pid,
   }
 
   // insert it.
@@ -102,25 +114,24 @@ func CreateTodayDailyItem(c *gin.Context) {
     return
   }
 
-  ctx.Success(gin.H{
-    "data": dailyInfo,
-  })
+  ctx.Success(nil)
 }
 
 // 删除今天的日报
-func DeleteTodayDailyItem(c *gin.Context) {
+func DeleteUserTodayDailyItem(c *gin.Context) {
   ctx := CreateCtx(c)
 
-  uid := ctx.getRaw("uid").(string)
-  itemId := ctx.getParam("itemId").(string)
+  id := ctx.get("uid")
 
-  if !bson.IsObjectIdHex(uid) {
-    ctx.Error(errors.New("无效的id号"), 1)
+  if !bson.IsObjectIdHex(id) {
+    ctx.Error(errors.New("无效的用户ID"), 1)
     return
   }
 
+  itemId := ctx.getParam("itemId")
+
   // 删除今天中相应的日报
-  err := service.DeleteTodayDailyItemFromUsersDailyList(bson.ObjectIdHex(uid), bson.ObjectIdHex(itemId))
+  err := service.DeleteTodayDailyItemFromUsersDailyList(bson.ObjectIdHex(id), bson.ObjectIdHex(itemId))
 
   if err != nil {
     ctx.Error(err, 1)
@@ -129,13 +140,18 @@ func DeleteTodayDailyItem(c *gin.Context) {
   ctx.Success(gin.H{})
 }
 
-// 获取今天的日报
-func GetTodayDaily(c *gin.Context) {
+// 获取我今天的日报
+func GetMyTodayDaily(c *gin.Context) {
   ctx := CreateCtx(c)
 
-  uid := ctx.getParam("id").(string)
+  id := ctx.get("uid")
 
-  dailyInfo, err := service.GetUserTodayDailyByUid(bson.ObjectIdHex(uid))
+  if !bson.IsObjectIdHex(id) {
+    ctx.Error(errors.New("无效的用户ID"), 1)
+    return
+  }
+
+  dailyInfo, err := service.GetUserTodayDaily(bson.ObjectIdHex(id))
 
   if err != nil {
     ctx.Error(err, 1)
@@ -143,6 +159,6 @@ func GetTodayDaily(c *gin.Context) {
   }
 
   ctx.Success(gin.H{
-    "data": dailyInfo,
+    "data": dailyInfo.DailyList,
   })
 }
