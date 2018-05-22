@@ -1,10 +1,10 @@
 package controller
 
 import (
-  "github.com/gin-gonic/gin"
+  `github.com/gin-gonic/gin`
   `gopkg.in/mgo.v2/bson`
-  "workerbook/model"
-  "workerbook/service"
+  `workerbook/model`
+  `workerbook/service`
 )
 
 // query projects list
@@ -25,7 +25,7 @@ func GetProjectsList(c *gin.Context) {
   projectsList, err := service.GetProjectsList(skip, limit, search)
 
   if err != nil {
-    ctx.Error(err, 1)
+    ctx.Error(err.Error(), 1)
     return
   }
 
@@ -45,7 +45,7 @@ func CreateProject(c *gin.Context) {
   err := service.CreateProject(data)
 
   if err != nil {
-    ctx.Error(err, 1)
+    ctx.Error("创建项目失败", 1)
     return
   }
 

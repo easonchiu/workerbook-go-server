@@ -1,11 +1,10 @@
 package controller
 
 import (
-  "errors"
-  "github.com/gin-gonic/gin"
-  "gopkg.in/mgo.v2/bson"
-  "workerbook/model"
-  "workerbook/service"
+  `github.com/gin-gonic/gin`
+  `gopkg.in/mgo.v2/bson`
+  `workerbook/model`
+  `workerbook/service`
 )
 
 // 获取分组列表
@@ -17,7 +16,7 @@ func GetGroupsList(c *gin.Context) {
 
   groupsList, err := service.GetGroupsList(skip, limit)
   if err != nil {
-    ctx.Error(err, 1)
+    ctx.Error("获取分组失败", 1)
     return
   }
 
@@ -33,13 +32,13 @@ func GetGroupOne(c *gin.Context) {
   id := ctx.getParam("id")
 
   if !bson.IsObjectIdHex(id) {
-    ctx.Error(errors.New("无效的分组ID"), 1)
+    ctx.Error("无效的分组ID", 1)
     return
   }
 
   groupInfo, err := service.GetGroupInfoById(bson.ObjectIdHex(id))
   if err != nil {
-    ctx.Error(err, 1)
+    ctx.Error("获取分组失败", 1)
     return
   }
 
@@ -60,7 +59,7 @@ func CreateGroup(c *gin.Context) {
 
   err := service.CreateGroup(data)
   if err != nil {
-    ctx.Error(err, 1)
+    ctx.Error("创建分组失败", 1)
     return
   }
 

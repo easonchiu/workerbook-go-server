@@ -1,13 +1,11 @@
 package service
 
 import (
-
-  "errors"
-  "gopkg.in/mgo.v2/bson"
-  "time"
-  "workerbook/db"
-  "workerbook/model"
-
+  `errors`
+  `gopkg.in/mgo.v2/bson`
+  `time`
+  `workerbook/db`
+  `workerbook/model`
 )
 
 // Insert project info into database.

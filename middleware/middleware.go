@@ -1,12 +1,11 @@
 package middleware
 
 import (
-  `errors`
-  "fmt"
-  "github.com/gin-gonic/gin"
+  `fmt`
+  `github.com/gin-gonic/gin`
   `gopkg.in/mgo.v2/bson`
   `regexp`
-  "workerbook/controller"
+  `workerbook/controller`
 )
 
 func Register(g *gin.Engine) {
@@ -25,11 +24,10 @@ func Jwt(c *gin.Context) {
     // check up your token here...
     if bson.IsObjectIdHex(token) {
       c.Set("uid", token)
-
       c.Next()
     } else {
       ctx := controller.CreateCtx(c)
-      ctx.Error(errors.New("bad token."), 401)
+      ctx.Error("无效用户", 401)
       return
     }
 

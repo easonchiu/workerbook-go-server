@@ -24,16 +24,6 @@ export default class View extends PureComponent {
     this.evt.fetchData()
   }
 
-  renderMyProfile() {
-    const profile = this.props.user$.profile
-
-    return (
-      <div>
-        {profile.nickname} - {profile.groupName}
-      </div>
-    )
-  }
-
   renderMyDaily() {
     const list = this.props.daily$.mine
     return (
@@ -160,13 +150,14 @@ export default class View extends PureComponent {
   }
 
   render(props, state) {
+    const profile = this.props.user$.profile
+
     return (
       <div className="view-index">
-        <Wrapper.Header />
+        <Wrapper.Header profile={profile} />
 
         <div className="app-body">
           <main className="app-body__main">
-            {this.renderMyProfile()}
             {this.renderMyDaily()}
 
             <h2>Write daily.</h2>

@@ -1,11 +1,10 @@
 package controller
 
 import (
-  "errors"
-  "github.com/gin-gonic/gin"
-  "gopkg.in/mgo.v2/bson"
-  "workerbook/model"
-  "workerbook/service"
+  `github.com/gin-gonic/gin`
+  `gopkg.in/mgo.v2/bson`
+  `workerbook/model`
+  `workerbook/service`
 )
 
 // login and return jwt
@@ -17,10 +16,10 @@ func UserLogin(c *gin.Context) {
 
   // check the raw data.
   if username == "" {
-    ctx.Error(errors.New("用户名不能为空"), 1)
+    ctx.Error("用户名不能为空", 1)
     return
   } else if password == "" {
-    ctx.Error(errors.New("密码不能为空"), 1)
+    ctx.Error("密码不能为空", 1)
     return
   }
 
@@ -28,7 +27,7 @@ func UserLogin(c *gin.Context) {
   id, err := service.UserLogin(username, password)
 
   if err != nil {
-    ctx.Error(err, 1)
+    ctx.Error("登录失败", 1)
     return
   } else {
     ctx.Success(gin.H{
@@ -47,7 +46,7 @@ func GetUsersList(c *gin.Context) {
 
   usersList, err := service.GetUsersList(gid, skip, limit)
   if err != nil {
-    ctx.Error(err, 1)
+    ctx.Error(err.Error(), 1)
     return
   }
 
@@ -60,6 +59,8 @@ func GetUsersList(c *gin.Context) {
 func GetUserOne(c *gin.Context) {
   ctx := CreateCtx(c)
 
+  c.SetCookie("test", "value", 10000, "/", "0.0.0.0", true, true)
+
   id := ctx.getParam("id")
 
   if id == "my" {
@@ -67,13 +68,13 @@ func GetUserOne(c *gin.Context) {
   }
 
   if !bson.IsObjectIdHex(id) {
-    ctx.Error(errors.New("无效的用户ID"), 1)
+    ctx.Error("无效的用户ID", 1)
     return
   }
 
   userInfo, err := service.GetUserInfoById(bson.ObjectIdHex(id))
   if err != nil {
-    ctx.Error(err, 1)
+    ctx.Error("获取用户信息失败", 1)
     return
   }
 
@@ -98,7 +99,7 @@ func CreateUser(c *gin.Context) {
 
   err := service.CreateUser(data)
   if err != nil {
-    ctx.Error(err, 1)
+    ctx.Error("创建用户失败", 1)
     return
   }
 

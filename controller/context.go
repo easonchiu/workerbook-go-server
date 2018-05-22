@@ -1,10 +1,12 @@
 package controller
 
 import (
+  `errors`
   `fmt`
-  "github.com/gin-gonic/gin"
-  "github.com/tidwall/gjson"
-  "net/http"
+  `github.com/gin-gonic/gin`
+  `github.com/tidwall/gjson`
+  `gopkg.in/mgo.v2/bson`
+  `net/http`
   `strconv`
 )
 
@@ -25,6 +27,33 @@ func CreateCtx(c *gin.Context) *Context {
   return ctx
 }
 
+// check value is less then some int value.
+func (c *Context) CheckIntIsLessThen(val int, lessVal int, errString string) bool {
+  if val < lessVal {
+    c.Error(errString, 1)
+    return false
+  }
+  return true
+}
+
+// check value is more then some int value.
+func (c *Context) CheckIntIsMoreThen(val int, moreVal int, errString string) bool {
+  if val > moreVal {
+    c.Error(errString, 1)
+    return false
+  }
+  return true
+}
+
+// check value is objectId or not
+func (c *Context) CheckIsObjectIdHex(id string, errString string) bool {
+  if !bson.IsObjectIdHex(id) {
+    c.Error(errString, 9)
+    return false
+  }
+  return true
+}
+
 // success handle
 func (c *Context) Success(data gin.H) {
   respH := gin.H{
@@ -40,15 +69,24 @@ func (c *Context) Success(data gin.H) {
     respH["data"] = data
   }
 
-  c.Ctx.JSON(http.StatusOK, respH)
+  status := http.StatusOK
+
+  if data == nil {
+    status = http.StatusNoContent
+  }
+
+  c.Ctx.JSON(status, respH)
 }
 
 // error handle
-func (c *Context) Error(err error, errCode int) {
+func (c *Context) Error(errString string, errCode int) {
 
   if errCode == 0 {
     errCode = 1
   }
+
+  // create an error.
+  err := errors.New(errString)
 
   fmt.Println()
   fmt.Println(" >>> ERROR:", err.Error())
@@ -59,12 +97,12 @@ func (c *Context) Error(err error, errCode int) {
   fmt.Println(" >>> USER AUTH:", c.Ctx.Request.Header.Get("authorization"))
   fmt.Println()
 
+
   c.Ctx.JSON(http.StatusOK, gin.H{
     "msg":  err.Error(),
     "code": errCode,
   })
 
-  c.Ctx.Abort()
 }
 
 // forbidden handle

@@ -1,11 +1,11 @@
 package controller
 
 import (
-  "errors"
-  "github.com/gin-gonic/gin"
-  "gopkg.in/mgo.v2/bson"
-  "workerbook/model"
-  "workerbook/service"
+  `github.com/gin-gonic/gin`
+  `gopkg.in/mgo.v2`
+  `gopkg.in/mgo.v2/bson`
+  `workerbook/model`
+  `workerbook/service`
 )
 
 // 获取日报列表
@@ -15,10 +15,22 @@ func GetDailiesList(c *gin.Context) {
   skip := ctx.getQueryInt("skip")
   limit := ctx.getQueryInt("limit")
 
+  if !ctx.CheckIntIsLessThen(skip, 0, "Skip不能小于0") {
+    return
+  }
+
+  if !ctx.CheckIntIsLessThen(limit, 0, "Limit不能小于0") {
+    return
+  }
+
+  if !ctx.CheckIntIsMoreThen(limit, 0, "Limit不能小于100") {
+    return
+  }
+
   dailiesList, err := service.GetDailiesList(skip, limit)
 
   if err != nil {
-    ctx.Error(err, 1)
+    ctx.Error("找不到相关数据", 1)
     return
   }
 
@@ -33,15 +45,12 @@ func GetDailyOne(c *gin.Context) {
 
   id := ctx.getParam("id")
 
-  if !bson.IsObjectIdHex(id) {
-    ctx.Error(errors.New("无效的用户ID"), 1)
-    return
-  }
+  ctx.CheckIsObjectIdHex(id, "无效的用户ID")
 
   dailyInfo, err := service.GetDailyInfoById(bson.ObjectIdHex(id))
 
   if err != nil {
-    ctx.Error(err, 1)
+    ctx.Error("找不到相关数据", 1)
     return
   }
 
@@ -56,27 +65,36 @@ func CreateMyTodayDailyItem(c *gin.Context) {
 
   id := ctx.get("uid")
 
-  if !bson.IsObjectIdHex(id) {
-    ctx.Error(errors.New("无效的用户ID"), 1)
+  // check user is exist.
+  _, err := service.GetUserInfoById(bson.ObjectIdHex(id))
+
+  if err != nil {
+    ctx.Error("没有相关的用户", 1)
     return
   }
 
+  // check args.
   pid := ctx.getRaw("project")
   progress := ctx.getRawInt("progress")
   record := ctx.getRaw("record")
   projectName := ""
 
+  if record == "" {
+    ctx.Error("日报内容不能为空", 1)
+    return
+  }
+
   if pid != "" {
     if !bson.IsObjectIdHex(pid) {
-      ctx.Error(errors.New("无效的项目"), 1)
+      ctx.Error("无效的项目", 1)
       return
     }
 
     // find the project info.
     project, err := service.GetProjectInfoById(bson.ObjectIdHex(pid))
 
-    if err != nil {
-      ctx.Error(errors.New("找不到相关项目"), 1)
+    if err != nil && err != mgo.ErrNotFound {
+      ctx.Error(err.Error(), 1)
       return
     }
 
@@ -84,16 +102,28 @@ func CreateMyTodayDailyItem(c *gin.Context) {
     projectName = project.Name
   }
 
-  // 找到用户今天的日报内容(找不到会创建一个空内容的日报数据)
+  // 找到用户今天的日报内容
   dailyInfo, err := service.GetUserTodayDaily(bson.ObjectIdHex(id))
 
-  if err != nil {
-    ctx.Error(err, 1)
+  // if error and typeof error is not not-found.
+  if err != nil && err != mgo.ErrNotFound {
+    ctx.Error(err.Error(), 1)
     return
   }
 
-  if err != nil {
-    ctx.Error(errors.New("请设置正确的项目进度"), 1)
+  // if not-found, create empty today daily
+  if err == mgo.ErrNotFound {
+    newDaily, err := service.CreateMyTodayDaily(bson.ObjectIdHex(id))
+    if err != nil {
+      ctx.Error("创建日报失败", 1)
+      return
+    }
+    dailyInfo = newDaily
+  }
+
+  // progress must be between 0 to 100
+  if progress < 0 || progress > 100 {
+    ctx.Error("请设置正确的项目进度", 1)
     return
   }
 
@@ -110,7 +140,7 @@ func CreateMyTodayDailyItem(c *gin.Context) {
   err = service.AppendDailyItemIntoUsersDailyList(data, dailyInfo.Id)
 
   if err != nil {
-    ctx.Error(err, 1)
+    ctx.Error("创建日报失败", 1)
     return
   }
 
@@ -124,7 +154,7 @@ func DeleteUserTodayDailyItem(c *gin.Context) {
   id := ctx.get("uid")
 
   if !bson.IsObjectIdHex(id) {
-    ctx.Error(errors.New("无效的用户ID"), 1)
+    ctx.Error("无效的用户ID", 1)
     return
   }
 
@@ -134,7 +164,7 @@ func DeleteUserTodayDailyItem(c *gin.Context) {
   err := service.DeleteTodayDailyItemFromUsersDailyList(bson.ObjectIdHex(id), bson.ObjectIdHex(itemId))
 
   if err != nil {
-    ctx.Error(err, 1)
+    ctx.Error("删除日报失败", 1)
     return
   }
   ctx.Success(gin.H{})
@@ -146,15 +176,17 @@ func GetMyTodayDaily(c *gin.Context) {
 
   id := ctx.get("uid")
 
-  if !bson.IsObjectIdHex(id) {
-    ctx.Error(errors.New("无效的用户ID"), 1)
-    return
-  }
-
   dailyInfo, err := service.GetUserTodayDaily(bson.ObjectIdHex(id))
 
   if err != nil {
-    ctx.Error(err, 1)
+    // if not found, return empty data.
+    if err == mgo.ErrNotFound {
+      ctx.Success(gin.H{
+        "data": []model.DailyItem{},
+      })
+    } else {
+      ctx.Error(err.Error(), 1)
+    }
     return
   }
 
