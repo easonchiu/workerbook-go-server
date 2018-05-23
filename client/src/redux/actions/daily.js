@@ -11,7 +11,7 @@ const mine = () => async dispatch => {
 }
 
 // fetch daily list by day.
-const fetchListByDay = ({ skip, limit = 999 } = {}) => async dispatch => {
+const fetchListByDay = ({ skip, limit = 10 } = {}) => async dispatch => {
   const res = await http.request({
     url: '/dailies',
     method: 'GET',

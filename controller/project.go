@@ -10,10 +10,16 @@ import (
 // query projects list
 func GetProjectsList(c *gin.Context) {
   ctx := CreateCtx(c)
+  defer ctx.handleErrorIfPanic()
 
   skip := ctx.getQueryInt("skip")
   limit := ctx.getQueryInt("limit")
   status := ctx.getQueryInt("status")
+
+  // check
+  ctx.PanicIfIntLessThen(skip, 0, "Skip不能小于0")
+  ctx.PanicIfIntLessThen(limit, 0, "Limit不能小于0")
+  ctx.PanicIfIntMoreThen(limit, 100, "Limit不能大于100")
 
   // create search sql
   search := bson.M{}
@@ -25,8 +31,7 @@ func GetProjectsList(c *gin.Context) {
   projectsList, err := service.GetProjectsList(skip, limit, search)
 
   if err != nil {
-    ctx.Error(err.Error(), 1)
-    return
+    panic("获取项目列表失败")
   }
 
   ctx.Success(gin.H{
@@ -37,16 +42,21 @@ func GetProjectsList(c *gin.Context) {
 // create project.
 func CreateProject(c *gin.Context) {
   ctx := CreateCtx(c)
+  defer ctx.handleErrorIfPanic()
+
+  name := ctx.getRaw("name")
+
+  // check
+  ctx.PanicIfStringIsEmpty(name, "项目名不能为空")
 
   data := model.Project{
-    Name: ctx.getRaw("name"),
+    Name: name,
   }
 
   err := service.CreateProject(data)
 
   if err != nil {
-    ctx.Error("创建项目失败", 1)
-    return
+    panic("创建项目失败")
   }
 
   ctx.Success(nil)

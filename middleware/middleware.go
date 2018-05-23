@@ -28,12 +28,12 @@ func Jwt(c *gin.Context) {
     } else {
       ctx := controller.CreateCtx(c)
       ctx.Error("无效用户", 401)
-      return
+      c.Abort()
     }
-
   } else {
     ctx := controller.CreateCtx(c)
     ctx.Forbidden()
+    c.Abort()
   }
 }
 

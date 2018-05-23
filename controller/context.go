@@ -5,6 +5,7 @@ import (
   `fmt`
   `github.com/gin-gonic/gin`
   `github.com/tidwall/gjson`
+  `gopkg.in/mgo.v2`
   `gopkg.in/mgo.v2/bson`
   `net/http`
   `strconv`
@@ -28,30 +29,60 @@ func CreateCtx(c *gin.Context) *Context {
 }
 
 // check value is less then some int value.
-func (c *Context) CheckIntIsLessThen(val int, lessVal int, errString string) bool {
-  if val < lessVal {
-    c.Error(errString, 1)
-    return false
+func (c *Context) PanicIfIntLessThen(val int, min int, errString string) {
+  if val < min {
+    panic(errString)
   }
-  return true
 }
 
 // check value is more then some int value.
-func (c *Context) CheckIntIsMoreThen(val int, moreVal int, errString string) bool {
-  if val > moreVal {
-    c.Error(errString, 1)
-    return false
+func (c *Context) PanicIfIntMoreThen(val int, max int, errString string) {
+  if val > max {
+    panic(errString)
   }
-  return true
 }
 
 // check value is objectId or not
-func (c *Context) CheckIsObjectIdHex(id string, errString string) bool {
+func (c *Context) PanicIfStringNotObjectId(id string, errString string) {
   if !bson.IsObjectIdHex(id) {
-    c.Error(errString, 9)
-    return false
+    panic(errString)
   }
-  return true
+}
+
+// check value is empty string
+func (c *Context) PanicIfStringIsEmpty(str string, errString string) {
+  if str == "" {
+    panic(errString)
+  }
+}
+
+// check length of string is less then.
+func (c *Context) PanicIfLenLessThen(str string, length int, errString string) {
+  if len(str) < length {
+    panic(errString)
+  }
+}
+
+// check length of string is more then.
+func (c *Context) PanicIfLenMoreThen(str string, length int, errString string) {
+  if len(str) > length {
+    panic(errString)
+  }
+}
+
+// check value is mgo not-found
+func (c *Context) PanicIfMgoNotFound(err error, errString string) {
+  if err == mgo.ErrNotFound {
+    panic(errString)
+  }
+}
+
+// handle errors if panic.
+func (c *Context) handleErrorIfPanic() {
+  err := recover()
+  if err != nil {
+    c.Error(err.(string), 1)
+  }
 }
 
 // success handle
@@ -97,7 +128,6 @@ func (c *Context) Error(errString string, errCode int) {
   fmt.Println(" >>> USER AUTH:", c.Ctx.Request.Header.Get("authorization"))
   fmt.Println()
 
-
   c.Ctx.JSON(http.StatusOK, gin.H{
     "msg":  err.Error(),
     "code": errCode,
@@ -112,7 +142,6 @@ func (c *Context) Forbidden() {
     "code": http.StatusForbidden,
     "data": nil,
   })
-  c.Ctx.Abort()
 }
 
 // get post data by string
