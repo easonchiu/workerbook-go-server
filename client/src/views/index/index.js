@@ -5,7 +5,10 @@ import ComponentEvent from 'src/hoc/componentEvent'
 import Event from './event'
 
 import Wrapper from 'src/containers/wrapper'
-import DailyList from 'src/containers/dailyList'
+import MainDailyList from 'src/containers/mainDailyList'
+import AsideGroupList from 'src/containers/asideGroupList'
+import AsideUserList from 'src/containers/asideUserList'
+import AsideProjectList from 'src/containers/asideProjectList'
 
 @VIEW
 @ComponentEvent('evt', Event)
@@ -87,65 +90,33 @@ export default class View extends PureComponent {
   }
 
   renderDailyList() {
-    const list = this.props.daily$.list
-    return <DailyList list={list} />
+    return <MainDailyList list={this.props.daily$.list} />
   }
 
   renderGroupList() {
-    const list = this.props.group$.list
     return (
-      <ul>
-        <li>
-          <a href="javascript:;" onClick={this.evt.groupClick.bind(null, '')}>
-            全部
-          </a>
-        </li>
-        {
-          list.map(item => (
-            <li key={item.id}>
-              <a href="javascript:;" onClick={this.evt.groupClick.bind(null, item.id)}>
-                {item.name}-{item.count}
-              </a>
-            </li>
-          ))
-        }
-      </ul>
+      <AsideGroupList
+        list={this.props.group$.list}
+        itemClick={this.evt.groupClick}
+      />
     )
   }
 
   renderUserList() {
-    const list = this.props.user$.list
-
     return (
-      <ul>
-        {
-          list.map(item => (
-            <li key={item.id}>
-              <a href="javascript:;">
-                {item.nickname} ({item.groupName})
-              </a>
-            </li>
-          ))
-        }
-      </ul>
+      <AsideUserList
+        list={this.props.user$.list}
+        itemClick={this.evt.groupClick}
+      />
     )
   }
 
   renderProjectList() {
-    const list = this.props.project$.list
-
     return (
-      <ul>
-        {
-          list.map(item => (
-            <li key={item.id}>
-              <a href="javascript:;">
-                {item.name}
-              </a>
-            </li>
-          ))
-        }
-      </ul>
+      <AsideProjectList
+        list={this.props.project$.list}
+        itemClick={this.evt.groupClick}
+      />
     )
   }
 
@@ -163,18 +134,12 @@ export default class View extends PureComponent {
             <h2>Write daily.</h2>
             {this.renderDailyWriter()}
 
-            <h2>Daily list.</h2>
             {this.renderDailyList()}
           </main>
 
           <aside className="app-body__aside">
-            <h2>Group list.</h2>
             {this.renderGroupList()}
-
-            <h2>User list.</h2>
             {this.renderUserList()}
-
-            <h2>Project list.</h2>
             {this.renderProjectList()}
           </aside>
         </div>

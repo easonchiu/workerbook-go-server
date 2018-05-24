@@ -100,7 +100,7 @@ func CreateMyTodayDailyItem(c *gin.Context) {
 
   // if error and typeof error is not not-found.
   if err != nil && err != mgo.ErrNotFound {
-    panic(err)
+    panic("创建日报失败")
   }
 
   // if not-found, create empty today daily
@@ -150,7 +150,7 @@ func DeleteUserTodayDailyItem(c *gin.Context) {
     panic("删除日报失败")
   }
 
-  ctx.Success(gin.H{})
+  ctx.Success(nil)
 }
 
 // 获取我今天的日报
@@ -171,7 +171,7 @@ func GetMyTodayDaily(c *gin.Context) {
         "data": []model.DailyItem{},
       })
     } else {
-      panic(err.Error())
+      panic("获取日报失败")
     }
   } else {
     ctx.Success(gin.H{
