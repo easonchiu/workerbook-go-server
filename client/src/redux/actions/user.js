@@ -35,6 +35,15 @@ const appendDailyItem = ({ record, progress, project }) => async () => {
   return res
 }
 
+// delete daily item
+const deleteDailyItem = ({ id }) => async () => {
+  const res = await http.request({
+    url: '/users/my/dailies/today/items/' + id,
+    method: 'DELETE',
+  })
+  return res
+}
+
 // my profile
 const myProfile = () => async dispatch => {
   const res = await http.request({
@@ -64,4 +73,5 @@ export default {
   fetchList,
   myProfile,
   appendDailyItem,
+  deleteDailyItem,
 }

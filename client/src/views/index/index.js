@@ -39,6 +39,12 @@ export default class View extends PureComponent {
                 i.pname ? i.pname + ' - ' : null
               }
               {i.record}
+              <a href="javascript:;" onClick={this.evt.editDailyClick.bind(null, i.id)}>
+                编辑
+              </a>
+              <a href="javascript:;" onClick={this.evt.deleteDailyClick.bind(null, i.id)}>
+                删除
+              </a>
             </li>
           ))
         }
@@ -50,7 +56,7 @@ export default class View extends PureComponent {
     const list = this.props.project$.list
 
     return (
-      <div>
+      <div className="daily-writer">
         <input
           type="text"
           placeholder="writer"
@@ -97,6 +103,7 @@ export default class View extends PureComponent {
     return (
       <AsideGroupList
         list={this.props.group$.list}
+        active={''}
         itemClick={this.evt.groupClick}
       />
     )
@@ -115,6 +122,7 @@ export default class View extends PureComponent {
     return (
       <AsideProjectList
         list={this.props.project$.list}
+        active={''}
         itemClick={this.evt.groupClick}
       />
     )
@@ -131,7 +139,6 @@ export default class View extends PureComponent {
           <main className="app-body__main">
             {this.renderMyDaily()}
 
-            <h2>Write daily.</h2>
             {this.renderDailyWriter()}
 
             {this.renderDailyList()}

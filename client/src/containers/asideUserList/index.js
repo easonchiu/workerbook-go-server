@@ -2,24 +2,21 @@ import './style'
 import React from 'react'
 
 import AsidePanel from '../asidePanel'
+import UserHeader from 'src/components/userHeader'
 
 const AsideUserList = props => {
   const { list } = props
   return (
     <AsidePanel title="全部成员" className="aside-user-list">
-      <ul>
+      <div className="user-list">
         {
           list.map(item => {
             return (
-              <li key={item.id}>
-                <a href="javascript:;" onClick={props.itemClick.bind(null, item.id)}>
-                  {item.nickname}
-                </a>
-              </li>
+              <UserHeader name={item.nickname} key={item.id} />
             )
           })
         }
-      </ul>
+      </div>
     </AsidePanel>
   )
 }
