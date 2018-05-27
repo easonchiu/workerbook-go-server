@@ -74,13 +74,14 @@ func CreateMyTodayDailyItem(c *gin.Context) {
   ctx.PanicIfIntLessThen(progress, 0, "请设置正确的项目进度")
   ctx.PanicIfIntMoreThen(progress, 100, "请设置正确的项目进度")
 
-  // check user is exist.
+  // check user is exist or not.
   _, err := service.GetUserInfoById(bson.ObjectIdHex(uid))
 
   if err != nil {
     panic("没有相关的用户")
   }
 
+  // find the project info if has pid
   if pid != "" {
     ctx.PanicIfStringNotObjectId(pid, "无效的项目")
 

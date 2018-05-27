@@ -21,15 +21,25 @@ const create = payload => async () => {
   return res
 }
 
+// my daily
+const fetchMyTodayDaily = () => async dispatch => {
+  const res = await http.request({
+    url: '/users/my/dailies/today',
+    method: 'GET',
+  })
+  dispatch(createAction('USER_MY_TODAY_DAILY')(res))
+}
+
+
 // append daily item.
 const appendDailyItem = ({ record, progress, project }) => async () => {
   const res = await http.request({
     url: '/users/my/dailies/today/items',
     method: 'POST',
     data: {
-      record,
+      record: record.trim(),
       progress,
-      project,
+      project: project.trim(),
     }
   })
   return res
@@ -45,7 +55,7 @@ const deleteDailyItem = ({ id }) => async () => {
 }
 
 // my profile
-const myProfile = () => async dispatch => {
+const fetchMyProfile = () => async dispatch => {
   const res = await http.request({
     url: '/users/my',
     method: 'GET',
@@ -64,6 +74,7 @@ const fetchList = ({ gid, skip, limit } = {}) => async dispatch => {
       limit,
     }
   })
+  res.gid = gid
   dispatch(createAction('USER_LIST')(res))
 }
 
@@ -71,7 +82,8 @@ export default {
   login,
   create,
   fetchList,
-  myProfile,
+  fetchMyProfile,
   appendDailyItem,
   deleteDailyItem,
+  fetchMyTodayDaily,
 }

@@ -9,121 +9,64 @@ import MainDailyList from 'src/containers/mainDailyList'
 import AsideGroupList from 'src/containers/asideGroupList'
 import AsideUserList from 'src/containers/asideUserList'
 import AsideProjectList from 'src/containers/asideProjectList'
+import MyDailyWriter from 'src/components/myDailyWriter'
 
 @VIEW
 @ComponentEvent('evt', Event)
 export default class View extends PureComponent {
-  constructor(props) {
-    super(props)
-
-    this.state = {
-      record: '',
-      progress: 0,
-      project: '',
-    }
-  }
-
   componentDidMount() {
     this.evt.fetchData()
   }
 
-  renderMyDaily() {
-    const list = this.props.daily$.mine
+  // 日报编写区
+  renderMyDailyWriter() {
     return (
-      <ul>
-        {
-          list.map(i => (
-            <li key={i.id}>
-              {i.progress}%{' - '}
-              {
-                i.pname ? i.pname + ' - ' : null
-              }
-              {i.record}
-              <a href="javascript:;" onClick={this.evt.editDailyClick.bind(null, i.id)}>
-                编辑
-              </a>
-              <a href="javascript:;" onClick={this.evt.deleteDailyClick.bind(null, i.id)}>
-                删除
-              </a>
-            </li>
-          ))
-        }
-      </ul>
+      <MyDailyWriter
+        ref={el => {
+          this.$myDailyWriter = el
+        }}
+        myDailyList={this.props.user$.fetchMyTodayDaily}
+        projectList={this.props.project$.list}
+        onDeleteItem={this.evt.deleteDailyClick}
+        onAppend={this.evt.appendDaily}
+      />
     )
   }
 
-  renderDailyWriter() {
-    const list = this.props.project$.list
-
-    return (
-      <div className="daily-writer">
-        <input
-          type="text"
-          placeholder="writer"
-          value={this.state.record}
-          onChange={this.evt.dailyWriterChange}
-        />
-
-        <input
-          type="text"
-          placeholder="progress"
-          value={this.state.progress}
-          onChange={this.evt.progressChange}
-        />
-
-        <select
-          value={this.state.project}
-          onChange={this.evt.dailyProjectChange}
-        >
-          <option value={0}>请选择</option>
-          {
-            list.map(item => (
-              <option
-                key={item.id}
-                value={item.id}
-              >
-                {item.name}
-              </option>
-            ))
-          }
-        </select>
-
-        <button onClick={this.evt.appendDaily}>
-          发布
-        </button>
-      </div>
-    )
-  }
-
+  // 主体区的日报列表
   renderDailyList() {
     return <MainDailyList list={this.props.daily$.list} />
   }
 
+  // 侧栏的分组模块
   renderGroupList() {
     return (
       <AsideGroupList
-        list={this.props.group$.list}
-        active={''}
+        data={this.props.group$.list}
+        active={this.props.user$.activeGroup}
         itemClick={this.evt.groupClick}
       />
     )
   }
 
+  // 侧栏的用户模块
   renderUserList() {
     return (
       <AsideUserList
         list={this.props.user$.list}
+        isAll={this.props.user$.activeGroup === ''}
         itemClick={this.evt.groupClick}
       />
     )
   }
 
+  // 侧栏的项目模块
   renderProjectList() {
     return (
       <AsideProjectList
         list={this.props.project$.list}
-        active={''}
-        itemClick={this.evt.groupClick}
+        active={this.props.daily$.activeProject}
+        itemClick={this.evt.projectClick}
       />
     )
   }
@@ -137,10 +80,7 @@ export default class View extends PureComponent {
 
         <div className="app-body">
           <main className="app-body__main">
-            {this.renderMyDaily()}
-
-            {this.renderDailyWriter()}
-
+            {this.renderMyDailyWriter()}
             {this.renderDailyList()}
           </main>
 

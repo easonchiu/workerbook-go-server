@@ -4,8 +4,8 @@ export default class Event {
   fetchData = async () => {
     try {
       await Promise.all([
-        this.props.$user.myProfile(),
-        this.props.$daily.mine(),
+        this.props.$user.fetchMyProfile(),
+        this.props.$user.fetchMyTodayDaily(),
         this.props.$daily.fetchListByDay(),
         this.props.$group.fetchList(),
         this.props.$user.fetchList(),
@@ -19,50 +19,56 @@ export default class Event {
     }
   }
 
+  // 更新数据
+  reload = async () => {
+    try {
+      await Promise.all([
+        this.props.$user.fetchMyTodayDaily(),
+        this.props.$daily.fetchListByDay(),
+      ])
+    }
+    catch (err) {
+      alert(err.message)
+    }
+  }
+
   // 侧栏分组点击
-  groupClick = gid => {
-    this.props.$user.fetchList({ gid })
+  groupClick = async gid => {
+    try {
+      await this.props.$user.fetchList({ gid })
+    }
+    catch (err) {
+      alert(err.message)
+    }
   }
 
-  // 日报内容编辑
-  dailyWriterChange = e => {
-    this.setState({
-      record: e.target.value
-    })
+  // 侧栏项目点击
+  projectClick = async pid => {
+    console.log(pid)
   }
 
-  // 重新编辑我今天写的日报
-  editDailyClick = id => {
-
-  }
 
   // 删除我今天写的日报
   deleteDailyClick = async id => {
-    await this.props.$user.deleteDailyItem({ id })
-  }
-
-  // 进度编辑
-  progressChange = e => {
-    this.setState({
-      progress: e.target.value
-    })
-  }
-
-  // 项目归属编辑
-  dailyProjectChange = e => {
-    this.setState({
-      project: e.target.value
-    })
+    try {
+      await this.props.$user.deleteDailyItem({ id })
+      this.reload()
+    }
+    catch (err) {
+      alert(err.message)
+    }
   }
 
   // 添加日报（发布按钮点击）
-  appendDaily = async () => {
+  appendDaily = async ({ record, progress, project }) => {
     try {
       await this.props.$user.appendDailyItem({
-        record: this.state.record,
-        progress: this.state.progress,
-        project: this.state.project,
+        record,
+        progress,
+        project,
       })
+      this.$myDailyWriter && this.$myDailyWriter.clear()
+      this.reload()
     }
     catch (err) {
       alert(err.message)

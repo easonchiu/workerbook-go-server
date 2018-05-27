@@ -6,12 +6,16 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
   border-radius: 4px;
   margin-bottom: 15px;
-  > h2 {
+  &__header {
     padding: 15px 15px 0;
-    font-size: 16px;
-    line-height: 20px;
-    font-weight: 700;
-    display: -webkit-box;
+    display: flex;
+    align-items: center;
     margin-bottom: 10px;
+    > h2 {
+      font-size: 16px;
+      line-height: 20px;
+      font-weight: 700;
+      flex: 1;
+    }
   }
 }

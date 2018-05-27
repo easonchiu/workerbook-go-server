@@ -1,6 +1,7 @@
 import './style'
 import React from 'react'
 
+import MiniPager from 'src/components/miniPager'
 import AsidePanel from '../asidePanel'
 
 const Item = props => {
@@ -17,9 +18,15 @@ const Item = props => {
 }
 
 const AsideGroupList = props => {
-  const { list, active, itemClick = () => {} } = props
+  const { data = {}, active, itemClick = () => {} } = props
+  const { data: list, skip, limit, count } = data
+
   return (
-    <AsidePanel title="成员分组" className="aside-group-list">
+    <AsidePanel
+      title="成员分组"
+      className="aside-group-list"
+      addonRight={<MiniPager current={skip + 1} max={Math.ceil(count / limit)} />}
+    >
       <ul>
         <li>
           <Item active={active === ''} onClick={itemClick.bind(null, '')}>

@@ -14,7 +14,7 @@ func UserLogin(c *gin.Context) {
 
   username := ctx.getRaw("username")
   password := ctx.getRaw("password")
-  
+
   // check
   ctx.PanicIfStringIsEmpty(username, "用户名不能为空")
   ctx.PanicIfStringIsEmpty(password, "密码不能为空")

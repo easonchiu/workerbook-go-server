@@ -1,6 +1,7 @@
 import './style'
 import React from 'react'
 
+import MiniPager from 'src/components/miniPager'
 import AsidePanel from '../asidePanel'
 
 const Item = props => {
@@ -19,7 +20,11 @@ const Item = props => {
 const AsideProjectList = props => {
   const { list, active, itemClick = () => {} } = props
   return (
-    <AsidePanel title="项目分类" className="aside-project-list">
+    <AsidePanel
+      title="项目分类"
+      className="aside-project-list"
+      addonRight={<MiniPager />}
+    >
       <ul>
         <li>
           <Item active={active === ''} onClick={itemClick.bind(null, '')}>

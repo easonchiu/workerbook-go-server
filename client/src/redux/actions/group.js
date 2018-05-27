@@ -2,7 +2,7 @@ import { createAction } from 'easy-action'
 import http from 'src/utils/http'
 
 // fetch group list.
-const fetchList = ({ skip, limit } = {}) => async dispatch => {
+const fetchList = ({ skip = 0, limit = 2 } = {}) => async dispatch => {
   const res = await http.request({
     url: '/groups',
     method: 'GET',

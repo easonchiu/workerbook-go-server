@@ -27,6 +27,12 @@
     }
   }
   > ul {
+    li {
+      margin-bottom: 10px;
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
     strong {
       display: inline-block;
       color: #eb7350;

@@ -85,6 +85,9 @@ func GetUserTodayDaily(uid bson.ObjectId) (model.Daily, error) {
   // find daily with uid and string time.
   err = db.C(model.DailyCollection).Find(bson.M{"uid": uid.Hex(), "day": today}).One(&data)
 
+  // if data is not empty, reverse it.
+
+
   return data, err
 }
 
@@ -137,12 +140,7 @@ func AppendDailyItemIntoUsersDailyList(data model.DailyItem, id bson.ObjectId) e
 
   err = db.C(model.DailyCollection).UpdateId(id, bson.M{
     "$push": bson.M{
-      "dailyList": bson.M{
-        "$each": []model.DailyItem{
-          data,
-        },
-        "$position": 0,
-      },
+      "dailyList": data,
     },
   })
 

@@ -140,6 +140,8 @@ func GetUsersList(gid string, skip int, limit int) ([]model.UserResult, error) {
 
   if limit < 0 {
     limit = 0
+  } else if limit > 100 {
+    limit = 100
   }
 
   // create condition sql

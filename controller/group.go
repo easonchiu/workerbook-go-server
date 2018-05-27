@@ -26,8 +26,17 @@ func GetGroupsList(c *gin.Context) {
     panic("获取分组失败")
   }
 
+  count, err := service.GetCountOfGroup()
+
+  if err != nil {
+    panic("获取分组失败")
+  }
+
   ctx.Success(gin.H{
     "list": groupsList,
+    "skip": skip,
+    "limit": limit,
+    "count": count,
   })
 }
 

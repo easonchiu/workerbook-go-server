@@ -99,6 +99,19 @@ func GetGroupsList(skip int, limit int) ([]model.Group, error) {
   return data, nil
 }
 
+// get count of group
+func GetCountOfGroup() (int, error) {
+  db, close, err := db.CloneDB()
+
+  if err != nil {
+    return 0, err
+  } else {
+    defer close()
+  }
+
+  return db.C(model.GroupCollection).Count()
+}
+
 // refresh group count
 func RefreshGroupCount(gid bson.ObjectId) error {
   db, close, err := db.CloneDB()
