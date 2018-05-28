@@ -162,6 +162,12 @@ func (c *Context) getRawBool(key string) bool {
   return res.Str == "true"
 }
 
+// get post data by JSON
+func (c *Context) getRawJSON(key string) gjson.Result {
+  res := gjson.GetBytes(c.RawData, key)
+  return res
+}
+
 // get params by string
 func (c *Context) getParam(key string) string {
   res := c.Ctx.Param(key)
@@ -179,6 +185,12 @@ func (c *Context) getParamInt(key string) int {
 func (c *Context) getParamBool(key string) bool {
   res := c.Ctx.Param(key)
   return res == "true"
+}
+
+// get params by JSON
+func (c *Context) getParamJSON(key string) gjson.Result {
+  res := c.Ctx.Param(key)
+  return gjson.Parse(res)
 }
 
 // get query by string
@@ -201,6 +213,15 @@ func (c *Context) getQueryBool(key string) bool {
     return false
   }
   return res == "true"
+}
+
+// get query by JSON
+func (c *Context) getQueryJSON(key string) gjson.Result {
+  res, exist := c.Ctx.GetQuery(key)
+  if !exist {
+    return gjson.Result{}
+  }
+  return gjson.Parse(res)
 }
 
 // get value by string
@@ -229,4 +250,13 @@ func (c *Context) getBool(key string) bool {
     return false
   }
   return res.(string) == "true"
+}
+
+// get value by JSON
+func (c *Context) getJSON(key string) gjson.Result {
+  res, exist := c.Ctx.Get(key)
+  if !exist {
+    return gjson.Result{}
+  }
+  return gjson.Parse(res.(string))
 }
