@@ -9,7 +9,7 @@ const MiniPager = props => {
     !props.current ||
     props.max <= 0 ||
     props.current <= 0 ||
-    props.max <= props.current) {
+    props.max < props.current) {
     return null
   }
 
@@ -23,12 +23,20 @@ const MiniPager = props => {
 
   return (
     <div className="mini-pager">
-      <a href="javascript:;" className={lcss}>
+      <a
+        href="javascript:;"
+        className={lcss}
+        onClick={props.onChange && props.onChange.bind(null, props.current - 1)}
+      >
         <svg width="128" height="128" viewBox="0 0 1024 1024">
           <path d={d} fill="#f00" />
         </svg>
       </a>
-      <a href="javascript:;" className={rcss}>
+      <a
+        href="javascript:;"
+        className={rcss}
+        onClick={props.onChange && props.onChange.bind(null, props.current + 1)}
+      >
         <svg width="128" height="128" viewBox="0 0 1024 1024">
           <path d={d} fill="#f00" />
         </svg>

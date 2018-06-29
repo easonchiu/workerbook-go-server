@@ -45,6 +45,7 @@ export default class View extends PureComponent {
         data={this.props.group$.list}
         active={this.props.user$.activeGroup}
         itemClick={this.evt.groupClick}
+        onPageChange={this.evt.groupPageChange}
       />
     )
   }

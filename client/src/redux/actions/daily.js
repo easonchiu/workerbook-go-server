@@ -1,7 +1,6 @@
 import { createAction } from 'easy-action'
 import http from 'src/utils/http'
 
-
 // fetch daily list by day.
 const fetchListByDay = ({ skip, limit = 10 } = {}) => async dispatch => {
   const res = await http.request({

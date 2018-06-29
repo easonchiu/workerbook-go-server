@@ -30,10 +30,10 @@ func main() {
   // get port args
   // e.g.  go run main.go --port=:8080
   port := ""
-  flag.StringVar(&port, "port", ":8080", "port addr")
+  flag.StringVar(&port, "port", "8080", "port addr")
   flag.Parse()
 
   // start
-  g.Run(port)
+  g.Run(":" + port)
 
 }

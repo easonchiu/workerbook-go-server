@@ -54,10 +54,10 @@ func CreateProject(data model.Project) error {
 }
 
 // Query group info by id.
-func GetProjectInfoById(id bson.ObjectId) (model.Project, error) {
+func GetProjectInfoById(id bson.ObjectId) (*model.Project, error) {
   db, close, err := db.CloneDB()
 
-  data := model.Project{}
+  data := new(model.Project)
 
   if err != nil {
     return data, err
@@ -65,7 +65,7 @@ func GetProjectInfoById(id bson.ObjectId) (model.Project, error) {
     defer close()
   }
 
-  err = db.C(model.ProjectCollection).FindId(id).One(&data)
+  err = db.C(model.ProjectCollection).FindId(id).One(data)
 
   if err != nil {
     return data, err
@@ -75,7 +75,7 @@ func GetProjectInfoById(id bson.ObjectId) (model.Project, error) {
 }
 
 // Query groups list with skip and limit.
-func GetProjectsList(skip int, limit int, search bson.M) ([]model.Project, error) {
+func GetProjectsList(skip int, limit int, search bson.M) (*[]model.Project, error) {
   db, close, err := db.CloneDB()
 
   if err != nil {
@@ -84,13 +84,13 @@ func GetProjectsList(skip int, limit int, search bson.M) ([]model.Project, error
     defer close()
   }
 
-  data := []model.Project{}
+  data := new([]model.Project)
 
   if limit < 0 {
     limit = 0
   }
 
-  err = db.C(model.ProjectCollection).Find(search).Skip(skip).Limit(limit).All(&data)
+  err = db.C(model.ProjectCollection).Find(search).Skip(skip).Limit(limit).All(data)
 
   if err != nil {
     return nil, err

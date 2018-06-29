@@ -32,6 +32,17 @@ export default class Event {
     }
   }
 
+  // 侧栏分组翻页
+  groupPageChange = async page => {
+    try {
+      const { limit } = this.props.group$.list
+      await this.props.$group.fetchList({ skip: (page - 1) * limit })
+    }
+    catch (err) {
+      alert(err.message)
+    }
+  }
+
   // 侧栏分组点击
   groupClick = async gid => {
     try {

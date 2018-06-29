@@ -54,10 +54,10 @@ func CreateGroup(data model.Group) error {
 }
 
 // Query group info by id.
-func GetGroupInfoById(id bson.ObjectId) (model.Group, error) {
+func GetGroupInfoById(id bson.ObjectId) (*model.Group, error) {
   db, close, err := db.CloneDB()
 
-  data := model.Group{}
+  data := new(model.Group)
 
   if err != nil {
     return data, err
@@ -65,7 +65,7 @@ func GetGroupInfoById(id bson.ObjectId) (model.Group, error) {
     defer close()
   }
 
-  err = db.C(model.GroupCollection).FindId(id).One(&data)
+  err = db.C(model.GroupCollection).FindId(id).One(data)
 
   if err != nil {
     return data, err
@@ -75,7 +75,7 @@ func GetGroupInfoById(id bson.ObjectId) (model.Group, error) {
 }
 
 // Query groups list with skip and limit.
-func GetGroupsList(skip int, limit int) ([]model.Group, error) {
+func GetGroupsList(skip int, limit int) (*[]model.Group, error) {
   db, close, err := db.CloneDB()
 
   if err != nil {
@@ -84,13 +84,13 @@ func GetGroupsList(skip int, limit int) ([]model.Group, error) {
     defer close()
   }
 
-  data := []model.Group{}
+  data := new([]model.Group)
 
   if limit < 0 {
     limit = 0
   }
 
-  err = db.C(model.GroupCollection).Find(bson.M{}).Skip(skip).Limit(limit).All(&data)
+  err = db.C(model.GroupCollection).Find(bson.M{}).Skip(skip).Limit(limit).All(data)
 
   if err != nil {
     return nil, err

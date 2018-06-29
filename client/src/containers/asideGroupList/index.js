@@ -20,12 +20,17 @@ const Item = props => {
 const AsideGroupList = props => {
   const { data = {}, active, itemClick = () => {} } = props
   const { data: list, skip, limit, count } = data
-
   return (
     <AsidePanel
       title="成员分组"
       className="aside-group-list"
-      addonRight={<MiniPager current={skip + 1} max={Math.ceil(count / limit)} />}
+      addonRight={
+        <MiniPager
+          current={skip / limit + 1}
+          max={Math.ceil(count / limit)}
+          onChange={props.onPageChange}
+        />
+      }
     >
       <ul>
         <li>

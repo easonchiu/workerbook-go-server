@@ -30,7 +30,7 @@ func GetDailyInfoById(id bson.ObjectId) (model.Daily, error) {
 }
 
 // Query dailies list with skip and limit.
-func GetDailiesList(skip int, limit int) ([]model.Daily, error) {
+func GetDailiesList(skip int, limit int) (*[]model.Daily, error) {
   db, close, err := db.CloneDB()
 
   if err != nil {
@@ -39,7 +39,7 @@ func GetDailiesList(skip int, limit int) ([]model.Daily, error) {
     defer close()
   }
 
-  data := []model.Daily{}
+  data := new([]model.Daily)
 
   if limit < 0 {
     limit = 0
@@ -51,7 +51,7 @@ func GetDailiesList(skip int, limit int) ([]model.Daily, error) {
         "$size": 0,
       },
     },
-  }).Sort("-updateTime").Skip(skip).Limit(limit).All(&data)
+  }).Sort("-updateTime").Skip(skip).Limit(limit).All(data)
 
   if err != nil {
     return nil, err
@@ -61,10 +61,10 @@ func GetDailiesList(skip int, limit int) ([]model.Daily, error) {
 }
 
 // Query today's daily with some user.
-func GetUserTodayDaily(uid bson.ObjectId) (model.Daily, error) {
+func GetUserTodayDaily(uid bson.ObjectId) (*model.Daily, error) {
   db, close, err := db.CloneDB()
 
-  data := model.Daily{}
+  data := new(model.Daily)
 
   if err != nil {
     return data, err
@@ -83,20 +83,17 @@ func GetUserTodayDaily(uid bson.ObjectId) (model.Daily, error) {
   today := time.Now().Format("2006-01-02")
 
   // find daily with uid and string time.
-  err = db.C(model.DailyCollection).Find(bson.M{"uid": uid.Hex(), "day": today}).One(&data)
-
-  // if data is not empty, reverse it.
-
+  err = db.C(model.DailyCollection).Find(bson.M{"uid": uid.Hex(), "day": today}).One(data)
 
   return data, err
 }
 
 // create today daily
-func CreateMyTodayDaily(uid bson.ObjectId) (model.Daily, error) {
+func CreateMyTodayDaily(uid bson.ObjectId) (*model.Daily, error) {
   db, close, err := db.CloneDB()
 
   if err != nil {
-    return model.Daily{}, err
+    return nil, err
   } else {
     defer close()
   }
@@ -105,13 +102,13 @@ func CreateMyTodayDaily(uid bson.ObjectId) (model.Daily, error) {
   userInfo, err := GetUserInfoById(uid)
 
   if err != nil {
-    return model.Daily{}, errors.New("没有相关的用户")
+    return nil, errors.New("没有相关的用户")
   }
 
   // time to string
   today := time.Now().Format("2006-01-02")
 
-  data := model.Daily{
+  data := &model.Daily{
     Id:         bson.NewObjectId(),
     Uid:        userInfo.Id.Hex(),
     NickName:   userInfo.NickName,

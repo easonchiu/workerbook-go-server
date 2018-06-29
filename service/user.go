@@ -48,7 +48,7 @@ func CreateUser(data model.User) error {
   }
 
   // group must be exist.
-  group := model.Group{}
+  group := new(model.Group)
   db.C(model.GroupCollection).FindId(bson.ObjectIdHex(data.Gid)).One(&group)
 
   if group.Id == "" {
@@ -87,7 +87,7 @@ func UserLogin(username string, password string) (string, error) {
     defer close()
   }
 
-  data := model.UserResult{}
+  data := new(model.UserResult)
 
   err = db.C(model.UserCollection).Find(bson.M{
     "username": username,
@@ -105,10 +105,10 @@ func UserLogin(username string, password string) (string, error) {
 }
 
 // Query user info by id.
-func GetUserInfoById(id bson.ObjectId) (model.UserResult, error) {
+func GetUserInfoById(id bson.ObjectId) (*model.UserResult, error) {
   db, close, err := db.CloneDB()
 
-  data := model.UserResult{}
+  data := new(model.UserResult)
 
   if err != nil {
     return data, err
@@ -127,7 +127,7 @@ func GetUserInfoById(id bson.ObjectId) (model.UserResult, error) {
 
 // Query users list with skip and limit.
 // it will find all of users when 'gid' is empty.
-func GetUsersList(gid string, skip int, limit int) ([]model.UserResult, error) {
+func GetUsersList(gid string, skip int, limit int) (*[]model.UserResult, error) {
   db, close, err := db.CloneDB()
 
   if err != nil {
@@ -136,7 +136,7 @@ func GetUsersList(gid string, skip int, limit int) ([]model.UserResult, error) {
     defer close()
   }
 
-  data := []model.UserResult{}
+  data := new([]model.UserResult)
 
   if limit < 0 {
     limit = 0
@@ -151,7 +151,7 @@ func GetUsersList(gid string, skip int, limit int) ([]model.UserResult, error) {
   }
 
   // find it
-  err = db.C(model.UserCollection).Find(sql).Skip(skip).Limit(limit).All(&data)
+  err = db.C(model.UserCollection).Find(sql).Skip(skip).Limit(limit).All(data)
 
   if err != nil {
     return nil, err
