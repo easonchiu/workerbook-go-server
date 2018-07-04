@@ -23,10 +23,10 @@ type User struct {
   UserName string `json:"username"`
 
   // 分组id
-  Gid string `json:"gid"`
+  GroupId string `json:"groupId"`
 
   // 分组名
-  GroupName string `json:"groupName" bson:"groupName"`
+  GroupName string `json:"groupName"`
 
   // 手机号
   Mobile string `json:"mobile"`
@@ -38,10 +38,13 @@ type User struct {
   Role int `json:"role"`
 
   // 创建时间
-  CreateTime time.Time `json:"createTime" bson:"createTime"`
+  CreateTime time.Time `json:"createTime"`
 
   // 用户是否存在
   Exist bool `json:"exist"`
+
+  // 钉住的任务
+  Ding []bson.ObjectId `json:"ding"`
 }
 
 // user result
@@ -53,10 +56,10 @@ type UserResult struct {
   NickName string `json:"nickname"`
 
   // 分组id
-  Gid string `json:"gid"`
+  GroupId string `json:"groupId"`
 
   // 分组名
-  GroupName string `json:"groupName" bson:"groupName"`
+  GroupName string `json:"groupName"`
 
   // 邮箱
   Email string `json:"email"`
@@ -65,5 +68,8 @@ type UserResult struct {
   Role int `json:"role"`
 
   // 创建时间
-  CreateTime time.Time `json:"createTime" bson:"createTime"`
+  CreateTime time.Time `json:"createTime"`
+
+  // 钉住的任务
+  Ding []bson.ObjectId `json:"ding"`
 }

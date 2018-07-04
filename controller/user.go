@@ -88,20 +88,26 @@ func CreateUser(c *gin.Context) {
   ctx := CreateCtx(c)
   defer ctx.handleErrorIfPanic()
 
+  nickName := ctx.getRaw("nickname")
+  userName := ctx.getRaw("username")
+  groupId := ctx.getRaw("groupId")
+  role := ctx.getRawInt("role")
+  password := ctx.getRaw("password")
+
   data := model.User{
-    NickName: ctx.getRaw("nickname"),
-    Email:    ctx.getRaw("email"),
-    UserName: ctx.getRaw("username"),
-    Gid:      ctx.getRaw("gid"),
-    Role:     ctx.getRawInt("role"),
-    Mobile:   ctx.getRaw("mobile"),
-    Password: ctx.getRaw("password"),
+    NickName: nickName,
+    Email:    "",
+    UserName: userName,
+    GroupId:  groupId,
+    Role:     role,
+    Mobile:   "",
+    Password: password,
   }
 
   err := service.CreateUser(data)
 
   if err != nil {
-    panic("创建用户失败")
+    panic(err)
   }
 
   ctx.Success(nil)

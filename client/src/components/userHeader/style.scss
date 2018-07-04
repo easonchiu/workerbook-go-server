@@ -1,14 +1,19 @@
 @charset "utf-8";
 
 .user-header {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 60px;
   height: 60px;
-  line-height: 60px;
-  text-align: center;
   color: #fff;
   font-size: 14px;
   background-color: #d0d8e1;
   border-radius: 50%;
   position: relative;
+  &.mini {
+    width: 34px;
+    height: 34px;
+    font-size: 12px;
+  }
 }

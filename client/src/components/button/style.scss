@@ -18,4 +18,21 @@
   &:hover {
     background: #4677f5;
   }
+  &.mini {
+    height: auto;
+    line-height: 1;
+    padding: 6px;
+    font-size: 12px;
+    color: #fff;
+    border-radius: 2px;
+    border: none;
+    box-shadow: none;
+  }
+  &.light {
+    color: #5081ff;
+    background: #f7f9fc - 2;
+    &:hover {
+      background: #f7f9fc - 7;
+    }
+  }
 }

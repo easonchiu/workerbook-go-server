@@ -9,10 +9,10 @@ import (
 )
 
 // Query daily info by id.
-func GetDailyInfoById(id bson.ObjectId) (model.Daily, error) {
+func GetDailyInfoById(id bson.ObjectId) (*model.Daily, error) {
   db, close, err := db.CloneDB()
 
-  data := model.Daily{}
+  data := new(model.Daily)
 
   if err != nil {
     return data, err
@@ -20,7 +20,7 @@ func GetDailyInfoById(id bson.ObjectId) (model.Daily, error) {
     defer close()
   }
 
-  err = db.C(model.DailyCollection).FindId(id).One(&data)
+  err = db.C(model.DailyCollection).FindId(id).One(data)
 
   if err != nil {
     return data, err
@@ -111,9 +111,7 @@ func CreateMyTodayDaily(uid bson.ObjectId) (*model.Daily, error) {
   data := &model.Daily{
     Id:         bson.NewObjectId(),
     Uid:        userInfo.Id.Hex(),
-    NickName:   userInfo.NickName,
-    GroupName:  userInfo.GroupName,
-    Gid:        userInfo.Gid,
+    GroupId:    userInfo.GroupId,
     Day:        today,
     DailyList:  []model.DailyItem{},
     CreateTime: time.Now(),

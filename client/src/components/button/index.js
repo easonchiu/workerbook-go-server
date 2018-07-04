@@ -3,10 +3,13 @@ import React from 'react'
 import classNames from 'classnames'
 
 const Button = props => {
-  const css = classNames('x-button', props.className)
+  const css = classNames('x-button', {
+    mini: props.mini,
+    light: props.light,
+  }, props.className)
 
   return (
-    <button {...props} className={css}>
+    <button className={css}>
       {props.children}
     </button>
   )

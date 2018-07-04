@@ -12,7 +12,7 @@ HttpError.prototype.constructor = HttpError
 
 const config = {
   production: '/',
-  development: 'proxy',
+  development: '/proxy',
   test: '/'
 }
 
@@ -37,7 +37,7 @@ const http = axios.create({
  * 请求拦截器，在发起请求之前
  */
 http.interceptors.request.use(config => {
-  const token = getToken()
+  const token = getToken() || '5afef5157973f27d2cceab42'
   if (token) {
     config.headers.authorization = 'Bearer ' + token
   }

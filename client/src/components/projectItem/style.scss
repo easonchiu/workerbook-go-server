@@ -1,0 +1,58 @@
+
+.project-item {
+  position: relative;
+  width: 340px;
+  height: 140px;
+  border-radius: 4px;
+  border: 1px solid #dee3e8;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  padding: 10px;
+  > h2 {
+    color: #586069;
+    font-size: 16px;
+    font-weight: bold;
+    line-height: 1.5;
+    margin-bottom: 5px;
+  }
+  > time, .join {
+    color: #8a929b;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .mission-count {
+    position: absolute;
+    cursor: pointer;
+    display: flex;
+    right: 10px;
+    bottom: 10px;
+    font-size: 12px;
+    line-height: 1;
+    color: #fff;
+    text-align: center;
+    border-radius: 2px;
+    overflow: hidden;
+    p {
+      padding: 6px;
+      background: #33b400 + 10;
+    }
+    span {
+      padding: 6px 8px;
+      background: #33b400 - 10;
+    }
+    &:hover {
+      p {
+        background: #33b400;
+      }
+      span {
+        background: #33b400 - 20;
+      }
+    }
+  }
+  .tools {
+    display: flex;
+    position: absolute;
+    left: 10px;
+    bottom: 10px;
+  }
+}

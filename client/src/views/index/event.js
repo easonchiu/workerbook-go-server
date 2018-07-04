@@ -15,6 +15,7 @@ export default class Event {
       ])
     }
     catch (err) {
+      console.error(err)
       alert(err.message)
     }
   }
@@ -28,6 +29,7 @@ export default class Event {
       ])
     }
     catch (err) {
+      console.error(err)
       alert(err.message)
     }
   }
@@ -49,6 +51,7 @@ export default class Event {
       await this.props.$user.fetchList({ gid })
     }
     catch (err) {
+      console.error(err)
       alert(err.message)
     }
   }
@@ -58,7 +61,6 @@ export default class Event {
     console.log(pid)
   }
 
-
   // 删除我今天写的日报
   deleteDailyClick = async id => {
     try {
@@ -66,6 +68,7 @@ export default class Event {
       this.reload()
     }
     catch (err) {
+      console.error(err)
       alert(err.message)
     }
   }
@@ -82,6 +85,7 @@ export default class Event {
       this.reload()
     }
     catch (err) {
+      console.error(err)
       alert(err.message)
     }
   }

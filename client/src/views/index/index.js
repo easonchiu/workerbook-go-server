@@ -5,11 +5,13 @@ import ComponentEvent from 'src/hoc/componentEvent'
 import Event from './event'
 
 import Wrapper from 'src/containers/wrapper'
-import MainDailyList from 'src/containers/mainDailyList'
+
 import AsideGroupList from 'src/containers/asideGroupList'
 import AsideUserList from 'src/containers/asideUserList'
-import AsideProjectList from 'src/containers/asideProjectList'
+
+import MissionItem from 'src/components/missionItem'
 import MyDailyWriter from 'src/components/myDailyWriter'
+import MainDailyList from 'src/containers/mainDailyList'
 
 @VIEW
 @ComponentEvent('evt', Event)
@@ -61,37 +63,37 @@ export default class View extends PureComponent {
     )
   }
 
-  // 侧栏的项目模块
-  renderProjectList() {
-    return (
-      <AsideProjectList
-        list={this.props.project$.list}
-        active={this.props.daily$.activeProject}
-        itemClick={this.evt.projectClick}
-      />
-    )
-  }
-
   render(props, state) {
     const profile = this.props.user$.profile
 
     return (
       <div className="view-index">
-        <Wrapper.Header profile={profile} />
+        <Wrapper.Header nav="index" profile={profile} />
 
-        <div className="app-body">
-          <main className="app-body__main">
+        <Wrapper.Full className="mission-bar">
+          <header>
+            <h1>参与的任务</h1>
+          </header>
+          <div className="list">
+            <MissionItem joined />
+            <MissionItem joined />
+            <MissionItem joined />
+          </div>
+        </Wrapper.Full>
+
+        <Wrapper.Body>
+          <Wrapper.Body.Main>
             {this.renderMyDailyWriter()}
             {this.renderDailyList()}
-          </main>
+          </Wrapper.Body.Main>
 
-          <aside className="app-body__aside">
+          <Wrapper.Body.Aside>
             {this.renderGroupList()}
             {this.renderUserList()}
-            {this.renderProjectList()}
-          </aside>
-        </div>
+          </Wrapper.Body.Aside>
+        </Wrapper.Body>
 
+        <Wrapper.Footer />
       </div>
     )
   }

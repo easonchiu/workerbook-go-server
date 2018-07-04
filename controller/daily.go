@@ -66,7 +66,6 @@ func CreateMyTodayDailyItem(c *gin.Context) {
   pid := ctx.getRaw("project")
   progress := ctx.getRawInt("progress")
   record := ctx.getRaw("record")
-  projectName := ""
 
   // check
   ctx.PanicIfStringNotObjectId(uid, "无效的用户ID")
@@ -86,14 +85,14 @@ func CreateMyTodayDailyItem(c *gin.Context) {
     ctx.PanicIfStringNotObjectId(pid, "无效的项目")
 
     // find the project info.
-    project, err := service.GetProjectInfoById(bson.ObjectIdHex(pid))
+    _, err := service.GetProjectInfoById(bson.ObjectIdHex(pid))
 
     if err != nil && err != mgo.ErrNotFound {
       panic(err)
     }
 
     // set project name
-    projectName = project.Name
+    // projectName = project.Name
   }
 
   // 找到用户今天的日报内容
@@ -116,10 +115,7 @@ func CreateMyTodayDailyItem(c *gin.Context) {
   // create record data.
   data := model.DailyItem{
     Id:       bson.NewObjectId(),
-    Record:   record,
     Progress: progress,
-    Pname:    projectName,
-    Pid:      pid,
   }
 
   // insert it.

@@ -20,5 +20,5 @@ type Group struct {
   Count int `json:"count"`
 
   // 创建时间
-  CreateTime time.Time `json:"createTime" bson:"createTime"`
+  CreateTime time.Time `json:"createTime"`
 }

@@ -22,7 +22,7 @@ const AsideGroupList = props => {
   const { data: list, skip, limit, count } = data
   return (
     <AsidePanel
-      title="成员分组"
+      title="部门"
       className="aside-group-list"
       addonRight={
         <MiniPager

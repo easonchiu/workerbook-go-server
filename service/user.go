@@ -26,21 +26,22 @@ func CreateUser(data model.User) error {
     return errors.New("密码不能为空")
   } else if data.NickName == "" {
     return errors.New("昵称不能为空")
-  } else if !bson.IsObjectIdHex(data.Gid) {
+  } else if !bson.IsObjectIdHex(data.GroupId) {
     return errors.New("分组号错误")
   }
 
   // supplement other data.
-  if data.Role == 0 {
+  if data.Role != 0 && data.Role != 1 && data.Role != 2 {
     data.Role = 1
   }
+
   data.CreateTime = time.Now()
 
   // username must be the only.
   count, err := db.C(model.UserCollection).Find(bson.M{"username": data.UserName}).Count()
 
   if err != nil {
-    return err
+    return errors.New("创建用户失败")
   }
 
   if count > 0 {
@@ -49,7 +50,7 @@ func CreateUser(data model.User) error {
 
   // group must be exist.
   group := new(model.Group)
-  db.C(model.GroupCollection).FindId(bson.ObjectIdHex(data.Gid)).One(&group)
+  db.C(model.GroupCollection).FindId(bson.ObjectIdHex(data.GroupId)).One(&group)
 
   if group.Id == "" {
     return errors.New("找不到该分组")
@@ -68,7 +69,7 @@ func CreateUser(data model.User) error {
   err = db.C(model.UserCollection).Insert(data)
 
   if err != nil {
-    return err
+    return errors.New("创建用户失败")
   }
 
   // refresh group count
