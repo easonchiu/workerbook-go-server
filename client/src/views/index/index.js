@@ -13,9 +13,18 @@ import MissionItem from 'src/components/missionItem'
 import MyDailyWriter from 'src/components/myDailyWriter'
 import MainDailyList from 'src/containers/mainDailyList'
 
+import MainDialog from 'src/containers/mainDialog'
+
 @VIEW
 @ComponentEvent('evt', Event)
 export default class View extends PureComponent {
+  constructor(props) {
+    super(props)
+    this.state = {
+      popupVisible: false
+    }
+  }
+
   componentDidMount() {
     this.evt.fetchData()
   }
@@ -94,6 +103,18 @@ export default class View extends PureComponent {
         </Wrapper.Body>
 
         <Wrapper.Footer />
+
+        <MainDialog visible={this.state.popupVisible}>
+          <div
+            onClick={() => {
+              this.setState({
+                popupVisible: false
+              })
+            }}
+          >
+            xxxx
+          </div>
+        </MainDialog>
       </div>
     )
   }

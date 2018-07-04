@@ -8,12 +8,17 @@ const AsideUserList = props => {
   const { list, isAll } = props
   return (
     <AsidePanel title={isAll ? '全部成员' : '部门成员'} className="aside-user-list">
-      <div className="user-list">
+      <div className="user-list clearfix">
         {
           list && list.length ?
             list.map(item => {
               return (
-                <UserHeader name={item.nickname} key={item.id} />
+                <UserHeader
+                  name={item.nickname}
+                  key={item.id}
+                  userId={item.id}
+                  to={`/index?uid=${item.id}`}
+                />
               )
             }) :
             <p className="empty">暂无成员</p>

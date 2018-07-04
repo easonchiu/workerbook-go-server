@@ -22,11 +22,11 @@ const MissionItem = props => {
       {
         props.showJoined ?
           <div className="joined-list">
-            <UserHeader name="石头" mini />
-            <UserHeader name="牛哥" mini />
-            <UserHeader name="张三" mini />
-            <UserHeader name="李四" mini />
-            <UserHeader name="龙五" mini />
+            <UserHeader name="Eason.Chiu" mini to={1} />
+            <UserHeader name="牛哥牛哥" mini to={1} />
+            <UserHeader name="张小三" mini to={1} />
+            <UserHeader name="李四" mini to={1} />
+            <UserHeader name="龙五" mini to={1} />
             <p className="more">等32人</p>
             {
               !props.joined ?

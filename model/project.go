@@ -56,3 +56,4 @@ type Mission struct {
   // 状态 1. 正常 2. 停止
   Status int `json:"status"`
 }
+
