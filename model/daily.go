@@ -37,7 +37,7 @@ type DailyItem struct {
   Id bson.ObjectId `json:"id" bson:"_id"`
 
   // 内容
-  Content string `json:"content"`
+  Content string `json:"record" bson:"record"`
 
   // 进度
   Progress int `json:"progress"`

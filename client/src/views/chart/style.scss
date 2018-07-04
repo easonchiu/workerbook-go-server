@@ -4,5 +4,15 @@
     display: block;
     padding-top: 20px;
   }
+}
 
+.dialog {
+  .inner {
+    background: #fff;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 360px;
+    height: 100%;
+  }
 }

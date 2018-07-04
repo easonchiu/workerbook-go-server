@@ -1,0 +1,32 @@
+
+.app-dialog {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 99999;
+  &__bg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(50, 80, 120, 0.2);
+    opacity: 0;
+    transition: all 0.2s ease-out;
+  }
+  &--in {
+    .app-dialog__bg {
+      opacity: 1;
+    }
+  }
+  &__content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+  }
+}

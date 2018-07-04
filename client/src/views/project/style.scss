@@ -27,36 +27,25 @@
       }
     }
   }
-  .mission-bar {
-    z-index: 999;
-    position: absolute;
-    right: 0;
-    top: 0;
-    width: 100%;
+}
+
+.view-project__mission-bar {
+  .inner {
+    width: 380px;
     height: 100%;
-    background: rgba(0,0,0,0.1);
-    .inner {
-      background: #fff;
-      position: absolute;
-      box-shadow: -1px 0 3px rgba(0, 0, 0, 0.07);
-      right: 0;
-      top: 0;
-      width: 380px;
-      height: 100%;
-      padding: 20px;
-      > .mission-item {
-        margin-bottom: 15px;
-      }
-      > header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 15px;
-        h2 {
-          font-size: 18px;
-          line-height: 20px;
-          font-weight: 700;
-          flex: 1;
-        }
+    padding: 20px;
+    > .mission-item {
+      margin-bottom: 15px;
+    }
+    > header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+      h2 {
+        font-size: 18px;
+        line-height: 20px;
+        font-weight: 700;
+        flex: 1;
       }
     }
   }

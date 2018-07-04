@@ -7,6 +7,7 @@ import Event from './event'
 import Wrapper from 'src/containers/wrapper'
 import ProjectItem from 'src/components/projectItem'
 import MissionItem from 'src/components/missionItem'
+import AsideDialog from 'src/containers/asideDialog'
 
 @VIEW
 @ComponentEvent('evt', Event)
@@ -56,21 +57,26 @@ export default class View extends PureComponent {
 
         </div>
 
-        {
-          this.state.showMission ?
-            <div className="mission-bar" onClick={this.evt.hide}>
-              <div className="inner">
-                <header><h2>世界杯活动页面开发</h2></header>
-                <MissionItem showJoined />
-                <MissionItem showJoined />
-                <MissionItem showJoined />
-                <MissionItem showJoined />
-              </div>
-            </div> :
-            null
-        }
-
         <Wrapper.Footer />
+
+        <AsideDialog className="view-project__mission-bar" visible={this.state.showMission}>
+          <div className="inner">
+            <a
+              onClick={() => {
+                this.setState({
+                  showMission: false
+                })
+              }}
+            >
+              xxx
+            </a>
+            <header><h2>世界杯活动页面开发</h2></header>
+            <MissionItem showJoined />
+            <MissionItem showJoined />
+            <MissionItem showJoined />
+            <MissionItem showJoined />
+          </div>
+        </AsideDialog>
 
       </div>
     )

@@ -5,11 +5,18 @@ import ComponentEvent from 'src/hoc/componentEvent'
 import Event from './event'
 
 import Wrapper from 'src/containers/wrapper'
-import Dialog from 'src/containers/dialog'
 
 @VIEW
 @ComponentEvent('evt', Event)
 export default class View extends PureComponent {
+  constructor(props) {
+    super(props)
+
+    this.state = {
+      visible: false
+    }
+  }
+
   componentDidMount() {
     this.evt.fetchData()
   }
@@ -22,12 +29,11 @@ export default class View extends PureComponent {
         <Wrapper.Header nav="chart" profile={profile} />
 
         <Wrapper.Body>
-          xxx
+
         </Wrapper.Body>
 
         <Wrapper.Footer />
 
-        <Dialog />
       </div>
     )
   }

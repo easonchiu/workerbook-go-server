@@ -10,7 +10,7 @@ const Header = props => {
       <div className="app-header__inner">
         <a className="logo" href="javascript:;" />
         <nav>
-          <Link className={nav === 'index' ? 'active' : ''} to="/index">日报与任务</Link>
+          <Link className={nav === 'index' ? 'active' : ''} to="/index">日报</Link>
           <Link className={nav === 'project' ? 'active' : ''} to="/project">项目</Link>
           <Link className={nav === 'chart' ? 'active' : ''} to="/chart">数据</Link>
         </nav>
