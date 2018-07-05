@@ -1,15 +1,15 @@
 package middleware
 
 import (
-  `fmt`
   `github.com/gin-gonic/gin`
   `gopkg.in/mgo.v2/bson`
   `regexp`
   `workerbook/controller`
+  "workerbook/errno"
 )
 
 func Register(g *gin.Engine) {
-  // g.Use(log)
+
 }
 
 // check up json web token
@@ -17,6 +17,9 @@ func Jwt(c *gin.Context) {
   auth, token := c.Request.Header.Get("authorization"), ""
 
   jwtReg := regexp.MustCompile(`^Bearer\s\S+$`)
+
+  c.Next()
+  return
 
   if jwtReg.MatchString(auth) {
     token = auth[len("Bearer "):]
@@ -27,7 +30,7 @@ func Jwt(c *gin.Context) {
       c.Next()
     } else {
       ctx := controller.CreateCtx(c)
-      ctx.Error("无效用户", 401)
+      ctx.Error(errno.ErrorUserReLogin)
       c.Abort()
     }
   } else {
@@ -35,10 +38,4 @@ func Jwt(c *gin.Context) {
     ctx.Forbidden()
     c.Abort()
   }
-}
-
-// print user agent
-func log(c *gin.Context) {
-  fmt.Println(" >>> UserAgent is: ", c.Request.UserAgent())
-  c.Next()
 }

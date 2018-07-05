@@ -2,7 +2,6 @@ package router
 
 import (
   `github.com/gin-gonic/gin`
-  `workerbook/controller`
 )
 
 func Register(g *gin.Engine) {
@@ -11,15 +10,15 @@ func Register(g *gin.Engine) {
   registerUserRouter(g.Group("/users"))
 
   // 注册分组相关的路由
-  registerGroupRouter(g.Group("/groups"))
+  // registerGroupRouter(g.Group("/groups"))
 
   // 注册日报相关的路由
-  registerDailyRouter(g.Group("/dailies"))
+  // registerDailyRouter(g.Group("/dailies"))
 
   // 注册项目相关的路由
-  registerProjectRouter(g.Group("/projects"))
+  // registerProjectRouter(g.Group("/projects"))
 
   // 其他路由
-  g.POST("/login", controller.UserLogin)
+  // g.POST("/login", controller.UserLogin)
 
 }

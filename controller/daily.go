@@ -4,6 +4,7 @@ import (
   `github.com/gin-gonic/gin`
   `gopkg.in/mgo.v2`
   `gopkg.in/mgo.v2/bson`
+  "workerbook/errno"
   `workerbook/model`
   `workerbook/service`
 )
@@ -11,24 +12,26 @@ import (
 // 获取日报列表
 func GetDailiesList(c *gin.Context) {
   ctx := CreateCtx(c)
-  defer ctx.handleErrorIfPanic()
+  defer ctx.HandleError()
 
+  // get
   skip := ctx.getQueryInt("skip")
   limit := ctx.getQueryInt("limit")
 
   // check
-  ctx.PanicIfIntLessThen(skip, 0, "Skip不能小于0")
-  ctx.PanicIfIntLessThen(limit, 0, "Limit不能小于0")
-  ctx.PanicIfIntMoreThen(limit, 100, "Limit不能大于100")
+  ctx.ErrorIfIntLessThen(skip, 0, errno.ErrorSkipRange)
+  ctx.ErrorIfIntLessThen(limit, 0, errno.ErrorSkipRange)
+  ctx.ErrorIfIntMoreThen(limit, 100, errno.ErrorSkipRange)
 
-  // check pass
-
+  // query
   dailiesList, err := service.GetDailiesList(skip, limit)
 
+  // check
   if err != nil {
-    panic("找不到相关数据")
+    ctx.Error(err)
   }
 
+  // return
   ctx.Success(gin.H{
     "list": dailiesList,
   })
@@ -37,21 +40,23 @@ func GetDailiesList(c *gin.Context) {
 // 获取单个日报的信息
 func GetDailyOne(c *gin.Context) {
   ctx := CreateCtx(c)
-  defer ctx.handleErrorIfPanic()
+  defer ctx.HandleError()
 
+  // get
   id := ctx.getParam("id")
 
   // check
-  ctx.PanicIfStringNotObjectId(id, "无效的用户ID")
+  ctx.ErrorIfStringNotObjectId(id, errno.ErrorDailyIdError)
 
-  // check pass
-
+  // query
   dailyInfo, err := service.GetDailyInfoById(bson.ObjectIdHex(id))
 
+  // check
   if err != nil {
-    panic("找不到相关数据")
+    ctx.Error(err)
   }
 
+  // return
   ctx.Success(gin.H{
     "data": dailyInfo,
   })
@@ -60,7 +65,7 @@ func GetDailyOne(c *gin.Context) {
 // create my daily item at today.
 func CreateMyTodayDailyItem(c *gin.Context) {
   ctx := CreateCtx(c)
-  defer ctx.handleErrorIfPanic()
+  defer ctx.HandleError()
 
   uid := ctx.get("uid")
   pid := ctx.getRaw("project")
@@ -68,21 +73,21 @@ func CreateMyTodayDailyItem(c *gin.Context) {
   record := ctx.getRaw("record")
 
   // check
-  ctx.PanicIfStringNotObjectId(uid, "无效的用户ID")
-  ctx.PanicIfStringIsEmpty(record, "日报内容不能为空")
-  ctx.PanicIfIntLessThen(progress, 0, "请设置正确的项目进度")
-  ctx.PanicIfIntMoreThen(progress, 100, "请设置正确的项目进度")
+  ctx.ErrorIfStringNotObjectId(uid, errno.ErrorUserIdError)
+  ctx.ErrorIfStringIsEmpty(record, "日报内容不能为空")
+  ctx.ErrorIfIntLessThen(progress, 0, "请设置正确的项目进度")
+  ctx.ErrorIfIntMoreThen(progress, 100, "请设置正确的项目进度")
 
   // check user is exist or not.
   _, err := service.GetUserInfoById(bson.ObjectIdHex(uid))
 
   if err != nil {
-    panic("没有相关的用户")
+    ctx.Error(err)
   }
 
   // find the project info if has pid
   if pid != "" {
-    ctx.PanicIfStringNotObjectId(pid, "无效的项目")
+    ctx.ErrorIfStringNotObjectId(pid, "无效的项目")
 
     // find the project info.
     _, err := service.GetProjectInfoById(bson.ObjectIdHex(pid))
@@ -131,14 +136,14 @@ func CreateMyTodayDailyItem(c *gin.Context) {
 // 删除今天的日报
 func DeleteUserTodayDailyItem(c *gin.Context) {
   ctx := CreateCtx(c)
-  defer ctx.handleErrorIfPanic()
+  defer ctx.HandleError()
 
   uid := ctx.get("uid")
   itemId := ctx.getParam("itemId")
 
   // check
-  ctx.PanicIfStringNotObjectId(uid, "无效的用户ID")
-  ctx.PanicIfStringNotObjectId(itemId, "无效的日报ID")
+  ctx.ErrorIfStringNotObjectId(uid, errno.ErrorUserIdError)
+  ctx.ErrorIfStringNotObjectId(itemId, errno.ErrorDailyIdError)
 
   // 删除今天中相应的日报
   err := service.DeleteTodayDailyItemFromUsersDailyList(bson.ObjectIdHex(uid), bson.ObjectIdHex(itemId))
@@ -153,11 +158,11 @@ func DeleteUserTodayDailyItem(c *gin.Context) {
 // 获取我今天的日报
 func GetMyTodayDaily(c *gin.Context) {
   ctx := CreateCtx(c)
-  defer ctx.handleErrorIfPanic()
+  defer ctx.HandleError()
 
   uid := ctx.get("uid")
 
-  ctx.PanicIfStringNotObjectId(uid, "无效的用户ID")
+  ctx.ErrorIfStringNotObjectId(uid, errno.ErrorUserIdError)
 
   dailyInfo, err := service.GetUserTodayDaily(bson.ObjectIdHex(uid))
 

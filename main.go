@@ -4,7 +4,6 @@ import (
   `flag`
   `github.com/gin-gonic/gin`
   `workerbook/db`
-  `workerbook/middleware`
   `workerbook/router`
 )
 
@@ -22,7 +21,7 @@ func main() {
   g := gin.Default() // gin.New()
 
   // register middleware
-  middleware.Register(g)
+  // middleware.Register(g)
 
   // register router
   router.Register(g)

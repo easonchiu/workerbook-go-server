@@ -1,59 +1,67 @@
 package controller
 
 import (
-  `github.com/gin-gonic/gin`
-  `gopkg.in/mgo.v2/bson`
-  `workerbook/model`
-  `workerbook/service`
+  "github.com/gin-gonic/gin"
+  "gopkg.in/mgo.v2/bson"
+  "workerbook/errno"
+  "workerbook/model"
+  "workerbook/service"
 )
 
 // login and return jwt
 func UserLogin(c *gin.Context) {
   ctx := CreateCtx(c)
-  defer ctx.handleErrorIfPanic()
+  defer ctx.HandleError()
 
+  // get
   username := ctx.getRaw("username")
   password := ctx.getRaw("password")
 
   // check
-  ctx.PanicIfStringIsEmpty(username, "用户名不能为空")
-  ctx.PanicIfStringIsEmpty(password, "密码不能为空")
+  ctx.ErrorIfStringIsEmpty(username, errno.ErrorUsernameEmpty)
+  ctx.ErrorIfStringIsEmpty(password, errno.ErrorPasswordEmpty)
 
-  // query user info from database.
+  // query
   id, err := service.UserLogin(username, password)
 
+  // check
   if err != nil {
-    panic("登录失败")
-  } else {
-    ctx.Success(gin.H{
-      "data": id,
-    })
+    ctx.Error(0)
   }
+
+  // return
+  ctx.Success(gin.H{
+    "data": id,
+  })
 }
 
 // query users list
 func GetUsersList(c *gin.Context) {
   ctx := CreateCtx(c)
-  defer ctx.handleErrorIfPanic()
+  defer ctx.HandleError()
 
+  // get
   gid := ctx.getQuery("gid")
   skip := ctx.getQueryInt("skip")
   limit := ctx.getQueryInt("limit")
 
   // check
   if gid != "" {
-    ctx.PanicIfStringNotObjectId(gid, "分组ID错误")
+    ctx.ErrorIfStringNotObjectId(gid, errno.ErrorDepartmentIdError)
   }
-  ctx.PanicIfIntLessThen(skip, 0, "Skip不能小于0")
-  ctx.PanicIfIntLessThen(limit, 0, "Limit不能小于0")
-  ctx.PanicIfIntMoreThen(limit, 100, "Limit不能大于100")
+  ctx.ErrorIfIntLessThen(skip, 0, errno.ErrorSkipRange)
+  ctx.ErrorIfIntLessThen(limit, 0, errno.ErrorLimitRange)
+  ctx.ErrorIfIntMoreThen(limit, 100, errno.ErrorLimitRange)
 
+  // query
   usersList, err := service.GetUsersList(gid, skip, limit)
 
+  // check
   if err != nil {
-    panic("获取用户列表失败")
+    ctx.Error(0)
   }
 
+  // return
   ctx.Success(gin.H{
     "list": usersList,
   })
@@ -62,22 +70,26 @@ func GetUsersList(c *gin.Context) {
 // query user info
 func GetUserOne(c *gin.Context) {
   ctx := CreateCtx(c)
-  defer ctx.handleErrorIfPanic()
 
+  // get
   id := ctx.getParam("id")
 
   if id == "my" {
     id = ctx.get("uid")
   }
 
-  ctx.PanicIfStringNotObjectId(id, "无效的用户ID")
+  // check
+  ctx.ErrorIfStringNotObjectId(id, errno.ErrorUserIdError)
 
+  // query
   userInfo, err := service.GetUserInfoById(bson.ObjectIdHex(id))
 
+  // check
   if err != nil {
-    panic("获取用户信息失败")
+    ctx.Error(0)
   }
 
+  // return
   ctx.Success(gin.H{
     "data": userInfo,
   })
@@ -86,14 +98,16 @@ func GetUserOne(c *gin.Context) {
 // create user
 func CreateUser(c *gin.Context) {
   ctx := CreateCtx(c)
-  defer ctx.handleErrorIfPanic()
+  defer ctx.HandleError()
 
+  // get
   nickName := ctx.getRaw("nickname")
   userName := ctx.getRaw("username")
   groupId := ctx.getRaw("groupId")
   role := ctx.getRawInt("role")
   password := ctx.getRaw("password")
 
+  // create
   data := model.User{
     NickName: nickName,
     Email:    "",
@@ -104,11 +118,13 @@ func CreateUser(c *gin.Context) {
     Password: password,
   }
 
+  // insert
   err := service.CreateUser(data)
 
   if err != nil {
-    panic(err)
+    ctx.Error(0)
   }
 
+  // return
   ctx.Success(nil)
 }
