@@ -34,24 +34,16 @@ export default class View extends PureComponent {
 
           <div className="project-list">
             <header>
-              <h1>参与的项目</h1>
+              <h1>进行中的</h1>
             </header>
             <div className="list">
               <ProjectItem onMissionClick={this.evt.click} />
-            </div>
-          </div>
-
-          <div className="project-list">
-            <header>
-              <h1>未参与的项目</h1>
-            </header>
-            <div className="list">
-              <ProjectItem />
-              <ProjectItem />
-              <ProjectItem />
-              <ProjectItem />
-              <ProjectItem />
-              <ProjectItem />
+              <ProjectItem onMissionClick={this.evt.click} />
+              <ProjectItem onMissionClick={this.evt.click} />
+              <ProjectItem onMissionClick={this.evt.click} />
+              <ProjectItem onMissionClick={this.evt.click} />
+              <ProjectItem onMissionClick={this.evt.click} />
+              <ProjectItem onMissionClick={this.evt.click} />
             </div>
           </div>
 

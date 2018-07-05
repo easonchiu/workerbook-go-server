@@ -10,6 +10,7 @@ class Dialog extends React.PureComponent {
       visible: props.visible,
       ani: 'out'
     }
+
     if (props.visible) {
       setTimeout(() => {
         this.setState({
@@ -17,8 +18,19 @@ class Dialog extends React.PureComponent {
         })
       })
     }
-    this.el = document.createElement('div')
-    document.body.appendChild(this.el)
+
+    this.el = document.getElementById('app_dialogs')
+    if (!this.el) {
+      this.el = document.createElement('div')
+      this.el.id = 'app_dialogs'
+      document.body.appendChild(this.el)
+    }
+    this.dialogEl = document.createElement('div')
+    this.el.appendChild(this.dialogEl)
+  }
+
+  componentWillUnmount() {
+    this.el.removeChild(this.dialogEl)
   }
 
   static getDerivedStateFromProps(np, ps) {
@@ -53,10 +65,6 @@ class Dialog extends React.PureComponent {
     }
   }
 
-  componentWillUnmount() {
-    document.body.removeChild(this.el)
-  }
-
   renderContent() {
     const css = classNames('app-dialog', this.props.className, `app-dialog--${this.state.ani}`)
     return (
@@ -75,7 +83,7 @@ class Dialog extends React.PureComponent {
   render() {
     return createPortal(
       this.renderContent(),
-      this.el
+      this.dialogEl
     )
   }
 }

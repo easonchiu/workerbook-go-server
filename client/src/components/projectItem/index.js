@@ -14,8 +14,9 @@ const ProjectItem = props => {
         <span>4</span>
       </a>
       <div className="tools">
-        <Button mini>项目说明</Button>
+        <Button mini light>项目说明</Button>
       </div>
+      <div className="progress"><span>45</span></div>
     </div>
   )
 }

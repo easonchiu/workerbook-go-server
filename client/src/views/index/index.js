@@ -84,9 +84,9 @@ export default class View extends PureComponent {
             <h1>参与的任务</h1>
           </header>
           <div className="list">
-            <MissionItem joined />
-            <MissionItem joined />
-            <MissionItem joined />
+            <MissionItem />
+            <MissionItem />
+            <MissionItem />
           </div>
         </Wrapper.Full>
 
