@@ -1,3 +1,7 @@
+html {
+  color: #222;
+}
+
 html, body, div, span, applet, object, iframe,
 h1, h2, h3, h4, h5, h6, p, blockquote, pre,
 a, abbr, acronym, address, big, cite, code,
@@ -17,6 +21,7 @@ time, mark, audio, video {
   font-size: 100%;
   font: inherit;
   vertical-align: baseline;
+  color: inherit;
 }
 
 /* HTML5 display-role reset for older browsers */
@@ -40,7 +45,6 @@ blockquote, q {
 blockquote:before, blockquote:after,
 q:before, q:after {
   content: '';
-  content: none;
 }
 
 table {
@@ -73,4 +77,35 @@ a {
 }
 .clearfix {
   zoom: 1
+}
+
+.console-table {
+  width: 100%;
+  border-top: 1px solid #ebedf0;
+  font-size: 14px;
+  thead tr {
+    background: #f7f9fc;
+    border-bottom: 1px solid #ebedf0;
+    color: #333;
+  }
+  tbody tr {
+    border-bottom: 1px solid #ebedf0;
+    color: #586069;
+    &:hover {
+      background: #fffff1;
+    }
+  }
+  td {
+    padding: 15px 10px;
+    &.c a {
+      display: none;
+      color: #5081ff;
+      &:hover {
+        color: #33b400;
+      }
+    }
+  }
+  tr:hover td.c a {
+    display: inline;
+  }
 }

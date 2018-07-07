@@ -9,8 +9,8 @@ func Register(g *gin.Engine) {
   // 注册用户相关的路由
   registerUserRouter(g.Group("/users"))
 
-  // 注册分组相关的路由
-  // registerGroupRouter(g.Group("/groups"))
+  // 注册部门相关的路由
+  registerDepartmentRouter(g.Group("/departments"))
 
   // 注册日报相关的路由
   // registerDailyRouter(g.Group("/dailies"))

@@ -18,9 +18,6 @@ func Jwt(c *gin.Context) {
 
   jwtReg := regexp.MustCompile(`^Bearer\s\S+$`)
 
-  c.Next()
-  return
-
   if jwtReg.MatchString(auth) {
     token = auth[len("Bearer "):]
 
@@ -30,12 +27,12 @@ func Jwt(c *gin.Context) {
       c.Next()
     } else {
       ctx := controller.CreateCtx(c)
-      ctx.Error(errno.ErrorUserReLogin)
+      ctx.Error(errno.ErrUserReLogin)
       c.Abort()
     }
   } else {
     ctx := controller.CreateCtx(c)
-    ctx.Forbidden()
+    ctx.Error(errno.ErrUserReLogin)
     c.Abort()
   }
 }

@@ -16,7 +16,7 @@
       border-top-left-radius: 3px;
       border-bottom-left-radius: 3px;
       svg {
-        -webkit-transform: rotate(90deg);
+        transform: rotate(90deg);
       }
     }
     &:last-child {
@@ -24,7 +24,7 @@
       border-top-right-radius: 3px;
       border-bottom-right-radius: 3px;
       svg {
-        -webkit-transform: rotate(-90deg);
+        transform: rotate(-90deg);
       }
     }
     &:hover {

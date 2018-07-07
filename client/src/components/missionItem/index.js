@@ -53,14 +53,9 @@ class MissionItem extends React.PureComponent {
       <MainDialog
         className="dialog-project-rule"
         visible={this.state.projectRulePopupVisible}
+        title="世界杯活动页面开发"
+        onClose={this.hideProjectRule}
       >
-        <header>
-          <h1>世界杯活动页面开发</h1>
-          <a
-            href="javascript:;"
-            onClick={this.hideProjectRule}
-          />
-        </header>
         <div className="info">
           <time>截至时间：2018年5月5日</time>
           <p>参与部门：A部门、B部门、C部门</p>
@@ -81,14 +76,9 @@ class MissionItem extends React.PureComponent {
       <MainDialog
         className="dialog-mission-rule"
         visible={this.state.missionRulePopupVisible}
+        title="前端页面开发"
+        onClose={this.hideMissionRule}
       >
-        <header>
-          <h1>前端页面开发</h1>
-          <a
-            href="javascript:;"
-            onClick={this.hideMissionRule}
-          />
-        </header>
         <div className="info">
           <time>任务截至时间：2018年3月5日</time>
           <p>所属项目：世界杯活动页面开发</p>

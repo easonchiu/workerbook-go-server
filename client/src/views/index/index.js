@@ -6,7 +6,7 @@ import Event from './event'
 
 import Wrapper from 'src/containers/wrapper'
 
-import AsideGroupList from 'src/containers/asideGroupList'
+import AsideDepartmentList from 'src/containers/asideDepartmentList'
 import AsideUserList from 'src/containers/asideUserList'
 
 import MissionItem from 'src/components/missionItem'
@@ -52,7 +52,7 @@ export default class View extends PureComponent {
   // 侧栏的分组模块
   renderGroupList() {
     return (
-      <AsideGroupList
+      <AsideDepartmentList
         data={this.props.group$.list}
         active={this.props.user$.activeGroup}
         itemClick={this.evt.groupClick}

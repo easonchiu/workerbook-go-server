@@ -1,80 +1,120 @@
 package controller
 
 import (
-  `fmt`
-  `github.com/gin-gonic/gin`
-  `github.com/tidwall/gjson`
-  `gopkg.in/mgo.v2`
-  `gopkg.in/mgo.v2/bson`
-  `net/http`
-  `strconv`
+  "errors"
+  "fmt"
+  "github.com/gin-gonic/gin"
+  "github.com/tidwall/gjson"
+  "gopkg.in/mgo.v2"
+  "gopkg.in/mgo.v2/bson"
+  "net/http"
+  "strconv"
   "workerbook/errno"
 )
 
 type Context struct {
-  Ctx     *gin.Context
+  Ctx *gin.Context
+  Err error // 这个err用于错误的合并处理，在下列代码中只会存一次err，并在处理后设为nil
   RawData []byte
 }
 
 // create a new context
 func CreateCtx(c *gin.Context) *Context {
   bytes, _ := c.GetRawData()
-
-  ctx := &Context{
-    Ctx:     c,
-    RawData: bytes,
-  }
-
-  return ctx
+  return &Context{c, nil, bytes}
 }
 
 // check value is less then some int value.
-func (c *Context) ErrorIfIntLessThen(val int, min int, errNo int) {
+func (c *Context) ErrorIfIntLessThen(val int, min int, errNo string) error {
   if val < min {
-    c.Error(errNo)
+    err := errors.New(errNo)
+    if c.Err == nil {
+      c.Err = err
+    }
+    return err
   }
+  return nil
 }
 
 // check value is more then some int value.
-func (c *Context) ErrorIfIntMoreThen(val int, max int, errNo int) {
+func (c *Context) ErrorIfIntMoreThen(val int, max int, errNo string) error {
   if val > max {
-    c.Error(errNo)
+    err := errors.New(errNo)
+    if c.Err == nil {
+      c.Err = err
+    }
+    return err
   }
+  return nil
 }
 
 // check value is objectId or not
-func (c *Context) ErrorIfStringNotObjectId(id string, errNo int) {
+func (c *Context) ErrorIfStringNotObjectId(id string, errNo string) error {
   if !bson.IsObjectIdHex(id) {
-    c.Error(errNo)
+    err := errors.New(errNo)
+    if c.Err == nil {
+      c.Err = err
+    }
+    return err
   }
+  return nil
 }
 
 // check value is empty string
-func (c *Context) ErrorIfStringIsEmpty(str string, errNo int) {
+func (c *Context) ErrorIfStringIsEmpty(str string, errNo string) error {
   if str == "" {
-    c.Error(errNo)
+    err := errors.New(errNo)
+    if c.Err == nil {
+      c.Err = err
+    }
+    return err
   }
+  return nil
 }
 
 // check length of string is less then.
-func (c *Context) PanicIfLenLessThen(str string, length int, errNo int) {
+func (c *Context) ErrorIfLenLessThen(str string, length int, errNo string) error {
   if len(str) < length {
-    c.Error(errNo)
+    err := errors.New(errNo)
+    if c.Err == nil {
+      c.Err = err
+    }
+    return err
   }
+  return nil
 }
 
 // check length of string is more then.
-func (c *Context) PanicIfLenMoreThen(str string, length int, errNo int) {
+func (c *Context) ErrorIfLenMoreThen(str string, length int, errNo string) error {
   if len(str) > length {
-    c.Error(errNo)
+    err := errors.New(errNo)
+    if c.Err == nil {
+      c.Err = err
+    }
+    return err
   }
+  return nil
 }
 
 // check value is mgo not-found
-func (c *Context) PanicIfMgoNotFound(err error, errNo int) {
+func (c *Context) ErrorIfMgoNotFound(err error, errNo string) error {
   if err == mgo.ErrNotFound {
-    c.Error(errNo)
+    err := errors.New(errNo)
+    if c.Err == nil {
+      c.Err = err
+    }
+    return err
   }
+  return nil
+}
+
+// 处理ErrorIf相关的错误
+func (c *Context) HandleErrorIf() bool {
+  if c.Err != nil {
+    c.Error(c.Err)
+    return true
+  }
+  return false
 }
 
 // success handle
@@ -102,49 +142,40 @@ func (c *Context) Success(data gin.H) {
 }
 
 // 处理错误
-func (c *Context) HandleError() {
-  err := recover()
+func (c *Context) Error(errNo interface{}) {
 
-  switch err.(type) {
-  case errno.ErrType:
+  errStrNo := ""
+
+  switch errNo.(type) {
+  case string:
+    errStrNo = errNo.(string)
+  case error:
+    errStrNo = errNo.(error).Error()
   default:
+    errStrNo = errno.DefaultType.Code
+  }
+
+  err := errno.Error[errStrNo]
+  err.Code = errStrNo
+
+  c.Err = nil
+
+  if err.Code == "" {
     err = errno.DefaultType
   }
 
   fmt.Println()
-  fmt.Println(" >>> ERROR:", err.(errno.ErrType).Message)
-  fmt.Println(" >>> ERROR CODE:", err.(errno.ErrType).Code)
+  fmt.Println(" >>> ERROR:", err.Message)
+  fmt.Println(" >>> ERROR CODE:", err.Code)
   fmt.Println(" >>> REQUEST METHOD:", c.Ctx.Request.Method)
   fmt.Println(" >>> REQUEST URL:", c.Ctx.Request.URL.String())
   fmt.Println(" >>> USER AGENT:", c.Ctx.Request.UserAgent())
   fmt.Println(" >>> USER AUTH:", c.Ctx.Request.Header.Get("authorization"))
   fmt.Println()
 
-  c.Ctx.JSON(err.(errno.ErrType).Status, gin.H{
-    "msg":  err.(errno.ErrType).Message,
-    "code": err.(errno.ErrType).Code,
-  })
-}
-
-// 抛出错误
-func (c *Context) Error(err int) {
-
-  e := errno.Error[err]
-  e.Code = err
-
-  if e.Code == 0 {
-    e = errno.DefaultType
-  }
-
-  panic(e)
-}
-
-// forbidden handle
-func (c *Context) Forbidden() {
-  c.Ctx.JSON(http.StatusForbidden, gin.H{
-    "msg":  "forbidden",
-    "code": http.StatusForbidden,
-    "data": nil,
+  c.Ctx.JSON(err.Status, gin.H{
+    "msg":  err.Message,
+    "code": err.Code,
   })
 }
 

@@ -36,7 +36,13 @@ class MainDialog extends React.PureComponent {
         onStatusChange={this.onStatusChange}
       >
         <div className={innerCss}>
-          {this.props.children}
+          <header className="main-dialog__header">
+            <h1>{this.props.title}</h1>
+            <a href="javascript:;" onClick={this.props.onClose} />
+          </header>
+          <div className="main-dialog__body">
+            {this.props.children}
+          </div>
         </div>
       </Dialog>
     )

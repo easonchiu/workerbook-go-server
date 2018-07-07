@@ -1,0 +1,38 @@
+
+.console-user-list {
+  header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    h1 {
+      flex: 1;
+      font-size: 20px;
+      line-height: 1.5;
+      color: #222;
+      font-weight: bold;
+    }
+  }
+  table {
+    td:nth-child(1) {
+      width: 120px;
+      text-align: center;
+    }
+    td:nth-child(2), td:nth-child(3) {
+      width: 200px;
+    }
+    td:nth-child(5) {
+      width: 200px;
+      text-align: center;
+    }
+    td:last-child {
+      width: 200px;
+      text-align: center;
+    }
+  }
+}
+
+.dialog-console-edit-user {
+  .wb-form {
+    padding-bottom: 20px;
+  }
+}

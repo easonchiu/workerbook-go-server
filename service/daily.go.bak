@@ -4,13 +4,13 @@ import (
   `errors`
   `gopkg.in/mgo.v2/bson`
   `time`
-  `workerbook/db`
   `workerbook/model`
+  `workerbook/mongo`
 )
 
 // Query daily info by id.
 func GetDailyInfoById(id bson.ObjectId) (*model.Daily, error) {
-  db, close, err := db.CloneDB()
+  db, close, err := mongo.CloneDB()
 
   data := new(model.Daily)
 
@@ -31,7 +31,7 @@ func GetDailyInfoById(id bson.ObjectId) (*model.Daily, error) {
 
 // Query dailies list with skip and limit.
 func GetDailiesList(skip int, limit int) (*[]model.Daily, error) {
-  db, close, err := db.CloneDB()
+  db, close, err := mongo.CloneDB()
 
   if err != nil {
     return nil, err
@@ -62,7 +62,7 @@ func GetDailiesList(skip int, limit int) (*[]model.Daily, error) {
 
 // Query today's daily with some user.
 func GetUserTodayDaily(uid bson.ObjectId) (*model.Daily, error) {
-  db, close, err := db.CloneDB()
+  db, close, err := mongo.CloneDB()
 
   data := new(model.Daily)
 
@@ -76,7 +76,7 @@ func GetUserTodayDaily(uid bson.ObjectId) (*model.Daily, error) {
   _, err = GetUserInfoById(uid)
 
   if err != nil {
-    return data, errors.New("没有相关的用户")
+    return nil, err
   }
 
   // time to string
@@ -90,7 +90,7 @@ func GetUserTodayDaily(uid bson.ObjectId) (*model.Daily, error) {
 
 // create today daily
 func CreateMyTodayDaily(uid bson.ObjectId) (*model.Daily, error) {
-  db, close, err := db.CloneDB()
+  db, close, err := mongo.CloneDB()
 
   if err != nil {
     return nil, err
@@ -102,7 +102,7 @@ func CreateMyTodayDaily(uid bson.ObjectId) (*model.Daily, error) {
   userInfo, err := GetUserInfoById(uid)
 
   if err != nil {
-    return nil, errors.New("没有相关的用户")
+    return nil, err
   }
 
   // time to string
@@ -125,7 +125,7 @@ func CreateMyTodayDaily(uid bson.ObjectId) (*model.Daily, error) {
 
 // append daily item into users daily list.
 func AppendDailyItemIntoUsersDailyList(data model.DailyItem, id bson.ObjectId) error {
-  db, close, err := db.CloneDB()
+  db, close, err := mongo.CloneDB()
 
   if err != nil {
     return err
@@ -144,7 +144,7 @@ func AppendDailyItemIntoUsersDailyList(data model.DailyItem, id bson.ObjectId) e
 
 // delete daily item in today from users daily list.
 func DeleteTodayDailyItemFromUsersDailyList(uid bson.ObjectId, itemId bson.ObjectId) error {
-  db, close, err := db.CloneDB()
+  db, close, err := mongo.CloneDB()
 
   if err != nil {
     return err

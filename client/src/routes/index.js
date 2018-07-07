@@ -11,10 +11,7 @@ const Chart = AsyncComponent(() => import('src/views/chart'))
 const ChartProject = AsyncComponent(() => import('src/views/chartProject'))
 const ChartGroup = AsyncComponent(() => import('src/views/chartGroup'))
 
-
-const CreateUser = AsyncComponent(() => import('src/views/createUser'))
-const CreateGroup = AsyncComponent(() => import('src/views/createGroup'))
-const CreateProject = AsyncComponent(() => import('src/views/createProject'))
+const Console = AsyncComponent(() => import('src/views/console'))
 
 
 // 配置路由
@@ -29,9 +26,8 @@ const Routes = () => {
         <Route exact path="/chart/project" component={ChartProject} />
         <Route exact path="/chart/group" component={ChartGroup} />
 
-        <Route exact path="/createUser" component={CreateUser} />
-        <Route exact path="/createGroup" component={CreateGroup} />
-        <Route exact path="/createProject" component={CreateProject} />
+        <Route exact path="/console/(user|department|project|events)" component={Console} />
+
         <Redirect to="/index" />
       </Switch>
     </BrowserRouter>

@@ -3,18 +3,18 @@ package main
 import (
   `flag`
   `github.com/gin-gonic/gin`
-  `workerbook/db`
+  `workerbook/mongo`
   `workerbook/router`
 )
 
 func init() {
-  db.ConnectDB()
+  mongo.ConnectDB()
 }
 
 func main() {
 
   // close db before unmount
-  defer db.CloseDB()
+  defer mongo.CloseDB()
 
   // initialization
   // Default With the Logger and Recovery middleware already attached

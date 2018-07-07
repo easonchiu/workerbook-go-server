@@ -55,7 +55,11 @@ const deleteDailyItem = ({ id }) => async () => {
 }
 
 // my profile
-const fetchMyProfile = () => async dispatch => {
+const fetchMyProfile = () => async (dispatch, getState) => {
+  const state = getState()
+  if (state.user$.profile.id) {
+    return
+  }
   const res = await http.request({
     url: '/users/my',
     method: 'GET',

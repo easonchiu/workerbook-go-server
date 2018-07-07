@@ -1,16 +1,17 @@
 package service
 
 import (
-  `errors`
-  `gopkg.in/mgo.v2/bson`
-  `time`
-  `workerbook/db`
-  `workerbook/model`
+  "errors"
+  "gopkg.in/mgo.v2/bson"
+  "time"
+  "workerbook/errno"
+  "workerbook/model"
+  "workerbook/mongo"
 )
 
-// Insert group info into database.
-func CreateGroup(data model.Group) error {
-  db, close, err := db.CloneDB()
+// Insert department info into database.
+func CreateDepartment(data model.Department) error {
+  db, close, err := mongo.CloneDB()
 
   if err != nil {
     return err
@@ -20,101 +21,96 @@ func CreateGroup(data model.Group) error {
 
   // check the data is error or not.
   if data.Name == "" {
-    return errors.New("分组不能为空")
+    return errors.New(errno.ErrDepartmentNameEmpty)
   }
 
   // supplement other data.
   data.CreateTime = time.Now()
-  data.Count = 0
+  data.UserCount = 0
 
   // name must be the only.
-  count, err := db.C(model.GroupCollection).Find(bson.M{"name": data.Name}).Count()
+  count, err := db.C(model.DepartmentCollection).Find(bson.M{"name": data.Name}).Count()
 
   if err != nil {
     return err
   }
 
   if count > 0 {
-    return errors.New("已存在相同的分组")
-  }
-
-  // create a new object id.
-  if data.Id == "" {
-    data.Id = bson.NewObjectId()
+    return errors.New(errno.ErrSameDepartmentName)
   }
 
   // insert it.
-  err = db.C(model.GroupCollection).Insert(data)
+  err = db.C(model.DepartmentCollection).Insert(data)
 
   if err != nil {
-    return err
+    return errors.New(errno.ErrCreateDepartmentFailed)
   }
 
   return nil
 }
 
 // Query group info by id.
-func GetGroupInfoById(id bson.ObjectId) (*model.Group, error) {
-  db, close, err := db.CloneDB()
-
-  data := new(model.Group)
-
-  if err != nil {
-    return data, err
-  } else {
-    defer close()
-  }
-
-  err = db.C(model.GroupCollection).FindId(id).One(data)
-
-  if err != nil {
-    return data, err
-  }
-
-  return data, nil
-}
+// func GetGroupInfoById(id bson.ObjectId) (*model.Group, error) {
+//   db, close, err := mongo.CloneDB()
+//
+//   data := new(model.Group)
+//
+//   if err != nil {
+//     return data, err
+//   } else {
+//     defer close()
+//   }
+//
+//   err = db.C(model.GroupCollection).FindId(id).One(data)
+//
+//   if err != nil {
+//     return data, err
+//   }
+//
+//   return data, nil
+// }
 
 // Query groups list with skip and limit.
-func GetGroupsList(skip int, limit int) (*[]model.Group, error) {
-  db, close, err := db.CloneDB()
-
-  if err != nil {
-    return nil, err
-  } else {
-    defer close()
-  }
-
-  data := new([]model.Group)
-
-  if limit < 0 {
-    limit = 0
-  }
-
-  err = db.C(model.GroupCollection).Find(bson.M{}).Skip(skip).Limit(limit).All(data)
-
-  if err != nil {
-    return nil, err
-  }
-
-  return data, nil
-}
+// func GetGroupsList(skip int, limit int) (*[]model.Group, error) {
+//   db, close, err := mongo.CloneDB()
+//
+//   if err != nil {
+//     return nil, err
+//   } else {
+//     defer close()
+//   }
+//
+//   data := new([]model.Group)
+//
+//   if limit < 0 {
+//     limit = 0
+//   }
+//
+//   err = db.C(model.GroupCollection).Find(bson.M{}).Skip(skip).Limit(limit).All(data)
+//
+//   if err != nil {
+//     return nil, err
+//   }
+//
+//   return data, nil
+// }
 
 // get count of group
-func GetCountOfGroup() (int, error) {
-  db, close, err := db.CloneDB()
+// func GetCountOfGroup() (int, error) {
+//   db, close, err := mongo.CloneDB()
+//
+//   if err != nil {
+//     return 0, err
+//   } else {
+//     defer close()
+//   }
+//
+//   return db.C(model.GroupCollection).Count()
+// }
 
-  if err != nil {
-    return 0, err
-  } else {
-    defer close()
-  }
-
-  return db.C(model.GroupCollection).Count()
-}
-
-// refresh group count
-func RefreshGroupCount(gid bson.ObjectId) error {
-  db, close, err := db.CloneDB()
+// update department count
+func UpdateDepartmentCount(departmentId string) error {
+  db, close, err := mongo.CloneDB()
 
   if err != nil {
     return err
@@ -122,17 +118,17 @@ func RefreshGroupCount(gid bson.ObjectId) error {
     defer close()
   }
 
-  count, err := db.C(model.UserCollection).Find(bson.M{
-    "gid": gid.Hex(),
+  userCount, err := db.C(model.UserCollection).Find(bson.M{
+    "departmentId": departmentId,
   }).Count()
 
   if err != nil {
     return err
   }
 
-  db.C(model.GroupCollection).UpdateId(gid, bson.M{
+  db.C(model.DepartmentCollection).UpdateId(bson.ObjectIdHex(departmentId), bson.M{
     "$set": bson.M{
-      "count": count,
+      "userCount": userCount,
     },
   })
 

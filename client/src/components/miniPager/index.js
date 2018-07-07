@@ -29,7 +29,7 @@ const MiniPager = props => {
         onClick={props.onChange && props.onChange.bind(null, props.current - 1)}
       >
         <svg width="128" height="128" viewBox="0 0 1024 1024">
-          <path d={d} fill="#f00" />
+          <path d={d} />
         </svg>
       </a>
       <a
@@ -38,7 +38,7 @@ const MiniPager = props => {
         onClick={props.onChange && props.onChange.bind(null, props.current + 1)}
       >
         <svg width="128" height="128" viewBox="0 0 1024 1024">
-          <path d={d} fill="#f00" />
+          <path d={d} />
         </svg>
       </a>
     </div>

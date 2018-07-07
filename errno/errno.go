@@ -1,67 +1,74 @@
 package errno
 
-import "net/http"
+import (
+  "net/http"
+)
 
-// 注意：添加错误类型时不要颠倒顺序或在同一类别的中间插入
 const (
   // 用户相关错误 100xxx
-  ErrorUserIdError = 100001 + iota
-  ErrorUserNotFound
-  ErrorUserReLogin
-  ErrorUserList
-  ErrorUsernameEmpty
-  ErrorPasswordEmpty
-  ErrorSameUsername
-  ErrorCreateUserFailed
-  ErrorLoginFailed
+  ErrUserIdError             = "100001"
+  ErrUserNotFound            = "100002"
+  ErrUserReLogin             = "100003"
+  ErrUsernameOrPasswordError = "100004"
+  ErrUserList                = "100005"
+  ErrUsernameEmpty           = "100006"
+  ErrNicknameEmpty           = "100007"
+  ErrPasswordEmpty           = "100008"
+  ErrSameUsername            = "100009"
+  ErrCreateUserFailed        = "100010"
+  ErrLoginFailed             = "100011"
 
   // 部门相关错误 101xxx
-  ErrorDepartmentIdError = 101001 + iota
-  ErrorDepartmentNotFound
-  ErrorDepartmentNameEmpty
-  ErrorCreateDepartmentFailed
+  ErrDepartmentIdError      = "101001"
+  ErrDepartmentNotFound     = "101002"
+  ErrDepartmentNameEmpty    = "101003"
+  ErrSameDepartmentName     = "101004"
+  ErrCreateDepartmentFailed = "101005"
 
   // 日报相关错误 102xxx
-  ErrorDailyIdError = 102001 + iota
-  ErrorDailyNotFound
+  ErrDailyIdError  = "102001"
+  ErrDailyNotFound = "102002"
 
   // 系统级错误 200xxx
-  ErrorSkipRange = 200001 + iota
-  ErrorLimitRange
+  ErrSkipRange  = "200001"
+  ErrLimitRange = "200002"
 
   // 默认错误
-  ErrorServerError = 999999
+  ErrServerError = "999999"
 )
 
 type ErrType struct {
   Message string
   Status  int
-  Code    int
+  Code    string
 }
 
 // 默认错误
-var DefaultType = ErrType{"系统错误", http.StatusInternalServerError, ErrorServerError}
+var DefaultType = ErrType{"系统错误", http.StatusInternalServerError, ErrServerError}
 
 // 错误列表
-var Error = map[int]ErrType{
-  ErrorUserIdError: {"用户id错误", http.StatusOK, 0},
-  ErrorUserNotFound: {"找不到该用户", http.StatusOK, 0},
-  ErrorUserReLogin:  {"请重新登录", http.StatusUnauthorized, 0},
-  ErrorUsernameEmpty: {"用户名不能为空", http.StatusOK, 0},
-  ErrorPasswordEmpty: {"密码不能为空", http.StatusOK, 0},
-  ErrorLoginFailed: {"登录失败，请重试", http.StatusOK, 0},
-  ErrorUserList: {"获取用户列表失败", http.StatusOK, 0},
-  ErrorSameUsername: {"已存在相同的用户名", http.StatusOK, 0},
-  ErrorCreateUserFailed: {"创建用户失败", http.StatusOK, 0},
+var Error = map[string]ErrType{
+  ErrUserIdError:             {"用户id错误", http.StatusOK, ""},
+  ErrUserNotFound:            {"找不到该用户", http.StatusOK, ""},
+  ErrUserReLogin:             {"请重新登录", http.StatusUnauthorized, ""},
+  ErrUsernameOrPasswordError: {"用户名或密码错误", http.StatusOK, ""},
+  ErrUsernameEmpty:           {"用户名不能为空", http.StatusOK, ""},
+  ErrNicknameEmpty:           {"昵称不能为空", http.StatusOK, ""},
+  ErrPasswordEmpty:           {"密码不能为空", http.StatusOK, ""},
+  ErrLoginFailed:             {"登录失败，请重试", http.StatusOK, ""},
+  ErrUserList:                {"获取用户列表失败", http.StatusOK, ""},
+  ErrSameUsername:            {"已存在相同的用户名", http.StatusOK, ""},
+  ErrCreateUserFailed:        {"创建用户失败", http.StatusOK, ""},
 
-  ErrorDailyIdError: {"日报id错误", http.StatusOK, 0},
-  ErrorDailyNotFound: {"找不到相关日报", http.StatusOK, 0},
+  ErrDailyIdError:  {"日报id错误", http.StatusOK, ""},
+  ErrDailyNotFound: {"找不到相关日报", http.StatusOK, ""},
 
-  ErrorDepartmentIdError: {"部门id错误", http.StatusOK, 0},
-  ErrorDepartmentNotFound: {"找不到相关部门", http.StatusOK, 0},
-  ErrorDepartmentNameEmpty: {"部门名称不能为空", http.StatusOK, 0},
-  ErrorCreateDepartmentFailed: {"创建部门失败", http.StatusOK, 0},
+  ErrDepartmentIdError:      {"部门id错误", http.StatusOK, ""},
+  ErrDepartmentNotFound:     {"找不到相关部门", http.StatusOK, ""},
+  ErrDepartmentNameEmpty:    {"部门名称不能为空", http.StatusOK, ""},
+  ErrSameDepartmentName:     {"已存在相同部门名称", http.StatusOK, ""},
+  ErrCreateDepartmentFailed: {"创建部门失败", http.StatusOK, ""},
 
-  ErrorSkipRange: {"skip取值范围错误", http.StatusInternalServerError, 0},
-  ErrorLimitRange: {"limit取值范围错误", http.StatusInternalServerError, 0},
+  ErrSkipRange:  {"skip取值范围错误", http.StatusInternalServerError, ""},
+  ErrLimitRange: {"limit取值范围错误", http.StatusInternalServerError, ""},
 }

@@ -91,28 +91,6 @@
 }
 
 .dialog-project-rule {
-  .main-dialog__content {
-    width: 600px;
-    overflow: hidden;
-    margin: 0 0 0 -300px;
-  }
-  header {
-    display: flex;
-    margin-bottom: 5px;
-    a {
-      display: block;
-      width: 20px;
-      height: 20px;
-      background: #dee3e8;
-    }
-  }
-  h1 {
-    flex: 1;
-    color: #000;
-    font-size: 18px;
-    font-weight: bold;
-    line-height: 1.5;
-  }
   .info {
     line-height: 1.5;
     margin-bottom: 10px;
@@ -135,7 +113,7 @@
     }
   }
   h3 {
-    color: #000;
+    color: #222;
     font-size: 16px;
     font-weight: bold;
     line-height: 1.5;
@@ -144,28 +122,6 @@
 }
 
 .dialog-mission-rule {
-  .main-dialog__content {
-    width: 600px;
-    overflow: hidden;
-    margin: 0 0 0 -300px;
-  }
-  header {
-    display: flex;
-    margin-bottom: 5px;
-    a {
-      display: block;
-      width: 20px;
-      height: 20px;
-      background: #dee3e8;
-    }
-  }
-  h1 {
-    flex: 1;
-    color: #000;
-    font-size: 18px;
-    font-weight: bold;
-    line-height: 1.5;
-  }
   .info {
     line-height: 1.5;
     margin-bottom: 10px;
@@ -191,7 +147,7 @@
     }
   }
   h3 {
-    color: #000;
+    color: #222;
     font-size: 16px;
     font-weight: bold;
     line-height: 1.5;

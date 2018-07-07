@@ -17,13 +17,13 @@ const Item = props => {
   )
 }
 
-const AsideGroupList = props => {
+const AsideDepartmentList = props => {
   const { data = {}, active, itemClick = () => {} } = props
   const { data: list, skip, limit, count } = data
   return (
     <AsidePanel
       title="部门"
-      className="aside-group-list"
+      className="aside-department-list"
       addonRight={
         <MiniPager
           current={skip / limit + 1}
@@ -55,4 +55,4 @@ const AsideGroupList = props => {
     </AsidePanel>
   )
 }
-export default AsideGroupList
+export default AsideDepartmentList

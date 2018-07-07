@@ -4,13 +4,13 @@ import (
   `errors`
   `gopkg.in/mgo.v2/bson`
   `time`
-  `workerbook/db`
   `workerbook/model`
+  "workerbook/mongo"
 )
 
 // Insert project info into database.
 func CreateProject(data model.Project) error {
-  db, close, err := db.CloneDB()
+  db, close, err := mongo.CloneDB()
 
   if err != nil {
     return err
@@ -55,7 +55,7 @@ func CreateProject(data model.Project) error {
 
 // Query group info by id.
 func GetProjectInfoById(id bson.ObjectId) (*model.Project, error) {
-  db, close, err := db.CloneDB()
+  db, close, err := mongo.CloneDB()
 
   data := new(model.Project)
 
@@ -76,7 +76,7 @@ func GetProjectInfoById(id bson.ObjectId) (*model.Project, error) {
 
 // Query groups list with skip and limit.
 func GetProjectsList(skip int, limit int, search bson.M) (*[]model.Project, error) {
-  db, close, err := db.CloneDB()
+  db, close, err := mongo.CloneDB()
 
   if err != nil {
     return nil, err

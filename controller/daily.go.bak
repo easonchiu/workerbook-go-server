@@ -28,7 +28,7 @@ func GetDailiesList(c *gin.Context) {
 
   // check
   if err != nil {
-    ctx.Error(err)
+    ctx.Error(0)
   }
 
   // return
@@ -53,7 +53,7 @@ func GetDailyOne(c *gin.Context) {
 
   // check
   if err != nil {
-    ctx.Error(err)
+    ctx.Error(0)
   }
 
   // return
@@ -79,11 +79,7 @@ func CreateMyTodayDailyItem(c *gin.Context) {
   ctx.ErrorIfIntMoreThen(progress, 100, "请设置正确的项目进度")
 
   // check user is exist or not.
-  _, err := service.GetUserInfoById(bson.ObjectIdHex(uid))
-
-  if err != nil {
-    ctx.Error(err)
-  }
+  _ := service.GetUserInfoById(bson.ObjectIdHex(uid))
 
   // find the project info if has pid
   if pid != "" {

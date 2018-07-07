@@ -10,9 +10,6 @@ const UserCollection = "users"
 
 // collection schema
 type User struct {
-  // id
-  Id bson.ObjectId `json:"id" bson:"_id"`
-
   // 昵称
   NickName string `json:"nickname"`
 
@@ -22,11 +19,8 @@ type User struct {
   // 用户名
   UserName string `json:"username"`
 
-  // 分组id
-  GroupId string `json:"groupId"`
-
-  // 分组名
-  GroupName string `json:"groupName"`
+  // 部门id
+  DepartmentId string `json:"departmentId"`
 
   // 手机号
   Mobile string `json:"mobile"`
@@ -40,11 +34,8 @@ type User struct {
   // 创建时间
   CreateTime time.Time `json:"createTime"`
 
-  // 用户是否存在
-  Exist bool `json:"exist"`
-
-  // 钉住的任务
-  Ding []bson.ObjectId `json:"ding"`
+  // 用户状态
+  Status int `json:"status"`
 }
 
 // user result
@@ -55,21 +46,12 @@ type UserResult struct {
   // 昵称
   NickName string `json:"nickname"`
 
-  // 分组id
-  GroupId string `json:"groupId"`
-
-  // 分组名
-  GroupName string `json:"groupName"`
+  // 部门id
+  DepartmentId string `json:"departmentId"`
 
   // 邮箱
   Email string `json:"email"`
 
   // 1: 普通用户， 2: 部门Leader，99: 管理员
   Role int `json:"role"`
-
-  // 创建时间
-  CreateTime time.Time `json:"createTime"`
-
-  // 钉住的任务
-  Ding []bson.ObjectId `json:"ding"`
 }

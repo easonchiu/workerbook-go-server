@@ -1,4 +1,5 @@
 import axios from 'axios'
+import Toast from 'src/components/toast'
 import { clearToken, getToken } from 'src/utils/token'
 
 // type an error
@@ -37,7 +38,7 @@ const http = axios.create({
  * 请求拦截器，在发起请求之前
  */
 http.interceptors.request.use(config => {
-  const token = getToken() || '5afef5157973f27d2cceab42'
+  const token = '5b410f047179e585bf1febed' // getToken()
   if (token) {
     config.headers.authorization = 'Bearer ' + token
   }
@@ -58,7 +59,7 @@ http.interceptors.response.use(
       clearToken()
       return false
     }
-
+    Toast.error(config.data.msg)
     // return reject error
     return Promise.reject(new HttpError(config.data.msg, config.code))
   },

@@ -12,7 +12,9 @@ const Header = props => {
         <nav>
           <Link className={nav === 'index' ? 'active' : ''} to="/index">日报</Link>
           <Link className={nav === 'project' ? 'active' : ''} to="/project">项目</Link>
+          <Link className={nav === 'events' ? 'active' : ''} to="/events">日程</Link>
           <Link className={nav === 'chart' ? 'active' : ''} to="/chart">数据</Link>
+          <Link className={nav === 'console' ? 'active' : ''} to="/console/user">管理后台</Link>
         </nav>
         <div className="profile">
           <h6>晚上好：{profile.nickname}</h6>

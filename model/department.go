@@ -6,19 +6,28 @@ import (
 )
 
 // collection name
-const GroupCollection = "groups"
+const DepartmentCollection = "departments"
 
 // collection schema
-type Group struct {
-  // id
-  Id bson.ObjectId `json:"id" bson:"_id"`
-
-  // 分组名
+type Department struct {
+  // 部门名
   Name string `json:"name"`
 
-  // 分组下的用户数
-  Count int `json:"count"`
+  // 部门下的用户数
+  UserCount int `json:"userCount"`
 
   // 创建时间
   CreateTime time.Time `json:"createTime"`
+}
+
+
+type DepartmentResult struct {
+  // id
+  Id bson.ObjectId `json:"id" bson:"_id"`
+
+  // 部门名
+  Name string `json:"name"`
+
+  // 部门下的用户数
+  UserCount int `json:"userCount"`
 }
