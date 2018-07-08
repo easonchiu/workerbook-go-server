@@ -4,10 +4,12 @@ import user$ from './user'
 import daily$ from './daily'
 import group$ from './group'
 import project$ from './project'
+import console$ from './console'
 
 export default combineReducers({
   user$,
   daily$,
   group$,
   project$,
+  console$,
 })

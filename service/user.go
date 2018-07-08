@@ -38,6 +38,17 @@ func CreateUser(data model.User) error {
     return errors.New(errno.ErrSameUsername)
   }
 
+  // nickname must be the only.
+  count, err = db.C(model.UserCollection).Find(bson.M{"nickname": data.NickName}).Count()
+
+  if err != nil {
+    return errors.New(errno.ErrCreateUserFailed)
+  }
+
+  if count > 0 {
+    return errors.New(errno.ErrSameNickname)
+  }
+
   // department must be exist.
   department := new(model.Department)
   db.C(model.DepartmentCollection).FindId(bson.ObjectIdHex(data.DepartmentId)).One(&department)
@@ -125,6 +136,43 @@ func GetUsersList(departmentId string, skip int, limit int) (*[]model.UserResult
   }
 
   data := new([]model.UserResult)
+
+  if limit < 0 {
+    limit = 0
+  } else if limit > 100 {
+    limit = 100
+  }
+
+  // create condition sql
+  sql := bson.M{}
+  if departmentId != "" {
+    sql["departmentId"] = departmentId
+  }
+
+  // find it
+  err = db.C(model.UserCollection).Find(sql).Skip(skip).Limit(limit).All(data)
+
+  if err != nil {
+    if err == mgo.ErrNotFound {
+      return nil, errors.New(errno.ErrUserNotFound)
+    }
+    return nil, err
+  }
+
+  return data, nil
+}
+
+// 管理后台获取用户列表
+func GetConsoleUsersList(departmentId string, skip int, limit int) (*[]model.UserConsoleResult, error) {
+  db, closer, err := mongo.CloneDB()
+
+  if err != nil {
+    return nil, err
+  } else {
+    defer closer()
+  }
+
+  data := new([]model.UserConsoleResult)
 
   if limit < 0 {
     limit = 0

@@ -3,7 +3,7 @@ import { handleActions } from 'easy-action'
 const initialState = {
   fetchMyTodayDaily: [],
   list: [],
-  activeGroup: '', // 当前list对应的id
+  activeDepartment: '', // 当前list对应的id
   profile: {},
 }
 
@@ -18,7 +18,7 @@ export default handleActions({
     return {
       ...state,
       list: action.payload.list,
-      activeGroup: action.payload.gid || '',
+      activeDepartment: action.payload.departmentId || '',
     }
   },
   USER_PROFILE(state, action) {

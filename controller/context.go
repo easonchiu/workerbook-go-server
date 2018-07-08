@@ -179,25 +179,25 @@ func (c *Context) Error(errNo interface{}) {
   })
 }
 
-// get post data by string
+// get body by string
 func (c *Context) getRaw(key string) string {
   res := gjson.GetBytes(c.RawData, key)
   return res.Str
 }
 
-// get post data by int
+// get body by int
 func (c *Context) getRawInt(key string) int {
   res := gjson.GetBytes(c.RawData, key)
   return int(res.Int())
 }
 
-// get post data by bool
+// get body by bool
 func (c *Context) getRawBool(key string) bool {
   res := gjson.GetBytes(c.RawData, key)
   return res.Str == "true"
 }
 
-// get post data by JSON
+// get body by JSON
 func (c *Context) getRawJSON(key string) gjson.Result {
   res := gjson.GetBytes(c.RawData, key)
   return res
@@ -234,11 +234,27 @@ func (c *Context) getQuery(key string) string {
   return res
 }
 
+func (c *Context) getQueryDefault(key string, def string) string {
+  val := c.getQuery(key)
+  if val == "" {
+    return def
+  }
+  return val
+}
+
 // get query by int
 func (c *Context) getQueryInt(key string) int {
   res, _ := c.Ctx.GetQuery(key)
   intRes, _ := strconv.Atoi(res)
   return intRes
+}
+
+func (c *Context) getQueryIntDefault(key string, def int) int {
+  val := c.getQueryInt(key)
+  if val == 0 {
+    return def
+  }
+  return val
 }
 
 // get query by bool
@@ -248,6 +264,14 @@ func (c *Context) getQueryBool(key string) bool {
     return false
   }
   return res == "true"
+}
+
+func (c *Context) getQueryBoolDefault(key string, def bool) bool {
+  val := c.getQueryBool(key)
+  if val == false {
+    return def
+  }
+  return val
 }
 
 // get query by JSON
@@ -274,8 +298,7 @@ func (c *Context) getInt(key string) int {
   if !exist {
     return 0
   }
-  intRes, _ := strconv.Atoi(res.(string))
-  return intRes
+  return res.(int)
 }
 
 // get value by string
@@ -284,7 +307,7 @@ func (c *Context) getBool(key string) bool {
   if !exist {
     return false
   }
-  return res.(string) == "true"
+  return res.(bool)
 }
 
 // get value by JSON

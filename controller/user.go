@@ -8,7 +8,7 @@ import (
   "workerbook/service"
 )
 
-// login and return jwt
+// 用户登录
 func UserLogin(c *gin.Context) {
   ctx := CreateCtx(c)
 
@@ -39,14 +39,15 @@ func UserLogin(c *gin.Context) {
   })
 }
 
-// query users list
+// 获取用户列表
 func GetUsersList(c *gin.Context) {
   ctx := CreateCtx(c)
 
   // get
+  isConsole := ctx.getBool("isConsole")
   departmentId := ctx.getQuery("departmentId")
-  skip := ctx.getQueryInt("skip")
-  limit := ctx.getQueryInt("limit")
+  skip := ctx.getQueryIntDefault("skip", 0)
+  limit := ctx.getQueryIntDefault("limit", 10)
 
   // check
   if departmentId != "" {
@@ -61,30 +62,41 @@ func GetUsersList(c *gin.Context) {
   }
 
   // query
-  usersList, err := service.GetUsersList(departmentId, skip, limit)
+  if isConsole == true {
+    usersList, err := service.GetConsoleUsersList(departmentId, skip, limit)
 
-  // check
-  if err != nil {
-    ctx.Error(err)
-    return
+    // check
+    if err != nil {
+      ctx.Error(err)
+      return
+    }
+
+    // return
+    ctx.Success(gin.H{
+      "list": usersList,
+    })
+  } else {
+    usersList, err := service.GetUsersList(departmentId, skip, limit)
+
+    // check
+    if err != nil {
+      ctx.Error(err)
+      return
+    }
+
+    // return
+    ctx.Success(gin.H{
+      "list": usersList,
+    })
   }
-
-  // return
-  ctx.Success(gin.H{
-    "list": usersList,
-  })
 }
 
-// query user info
+// 获取用户信息
 func GetUserOne(c *gin.Context) {
   ctx := CreateCtx(c)
 
   // get
   id := ctx.getParam("id")
-
-  if id == "my" {
-    id = ctx.get("uid")
-  }
 
   // check
   ctx.ErrorIfStringNotObjectId(id, errno.ErrUserIdError)
@@ -108,7 +120,36 @@ func GetUserOne(c *gin.Context) {
   })
 }
 
-// create user
+// 获取我的信息
+func GetProfile(c *gin.Context) {
+  ctx := CreateCtx(c)
+
+  // get
+  id := ctx.get("uid")
+
+  // check
+  ctx.ErrorIfStringNotObjectId(id, errno.ErrUserIdError)
+
+  if ctx.HandleErrorIf() {
+    return
+  }
+
+  // query
+  userInfo, err := service.GetUserInfoById(bson.ObjectIdHex(id))
+
+  // check
+  if err != nil {
+    ctx.Error(err)
+    return
+  }
+
+  // return
+  ctx.Success(gin.H{
+    "data": userInfo,
+  })
+}
+
+// 创建用户
 func CreateUser(c *gin.Context) {
   ctx := CreateCtx(c)
 

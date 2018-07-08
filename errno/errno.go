@@ -15,8 +15,9 @@ const (
   ErrNicknameEmpty           = "100007"
   ErrPasswordEmpty           = "100008"
   ErrSameUsername            = "100009"
-  ErrCreateUserFailed        = "100010"
-  ErrLoginFailed             = "100011"
+  ErrSameNickname            = "100010"
+  ErrCreateUserFailed        = "100011"
+  ErrLoginFailed             = "100012"
 
   // 部门相关错误 101xxx
   ErrDepartmentIdError      = "101001"
@@ -51,13 +52,14 @@ var Error = map[string]ErrType{
   ErrUserIdError:             {"用户id错误", http.StatusOK, ""},
   ErrUserNotFound:            {"找不到该用户", http.StatusOK, ""},
   ErrUserReLogin:             {"请重新登录", http.StatusUnauthorized, ""},
-  ErrUsernameOrPasswordError: {"用户名或密码错误", http.StatusOK, ""},
-  ErrUsernameEmpty:           {"用户名不能为空", http.StatusOK, ""},
-  ErrNicknameEmpty:           {"昵称不能为空", http.StatusOK, ""},
+  ErrUsernameOrPasswordError: {"帐号或密码错误", http.StatusOK, ""},
+  ErrUsernameEmpty:           {"帐号不能为空", http.StatusOK, ""},
+  ErrNicknameEmpty:           {"姓名不能为空", http.StatusOK, ""},
   ErrPasswordEmpty:           {"密码不能为空", http.StatusOK, ""},
   ErrLoginFailed:             {"登录失败，请重试", http.StatusOK, ""},
   ErrUserList:                {"获取用户列表失败", http.StatusOK, ""},
-  ErrSameUsername:            {"已存在相同的用户名", http.StatusOK, ""},
+  ErrSameUsername:            {"该帐号已存在", http.StatusOK, ""},
+  ErrSameNickname:            {"已存在相同的姓名", http.StatusOK, ""},
   ErrCreateUserFailed:        {"创建用户失败", http.StatusOK, ""},
 
   ErrDailyIdError:  {"日报id错误", http.StatusOK, ""},

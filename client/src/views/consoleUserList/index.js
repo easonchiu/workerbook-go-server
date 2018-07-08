@@ -20,10 +20,14 @@ class ConsoleUserList extends React.PureComponent {
       appendDialogVisible: false,
       nickname: '赵志达',
       username: 'eason',
-      departmentId: '5a5cd2181ea5a0c406c6a2e8',
+      departmentId: '5b424feeaea6f431c2655006',
       role: '1',
       password: '123456',
     }
+  }
+
+  componentDidMount() {
+    this.evt.fetchData()
   }
 
   renderDialog() {
@@ -81,23 +85,24 @@ class ConsoleUserList extends React.PureComponent {
   }
 
   render() {
+    const { users } = this.props.console$
     const header = (
       <tr>
         <td>编号</td>
-        <td>昵称</td>
-        <td>用户名</td>
+        <td>姓名</td>
+        <td>帐号</td>
         <td>部门</td>
         <td>状态</td>
         <td>操作</td>
       </tr>
     )
-    const body = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(res => (
-      <tr key={res}>
-        <td>{res}</td>
-        <td>王三</td>
-        <td>testname</td>
-        <td>前端开发</td>
-        <td>在职</td>
+    const body = users.list.map((res, i) => (
+      <tr key={res.id}>
+        <td>{i}</td>
+        <td>{res.nickname}</td>
+        <td>{res.username}</td>
+        <td>{res.departmentId}</td>
+        <td>{res.role}</td>
         <td className="c"><a href="javascript:;">编辑</a></td>
       </tr>
     ))

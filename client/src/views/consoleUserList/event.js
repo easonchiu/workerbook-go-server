@@ -1,6 +1,21 @@
 import Err from 'src/utils/errif'
 
 export default class Event {
+  fetchData = async () => {
+    try {
+      await Promise.all([
+        this.props.$console.fetchUsersList({
+          skip: 0,
+          limit: 0,
+          isConsole: true,
+        })
+      ])
+    }
+    catch (err) {
+      console.error(err)
+      alert(err.message)
+    }
+  }
 
   onPageClick = p => {
     this.setState({

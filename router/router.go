@@ -2,6 +2,8 @@ package router
 
 import (
   `github.com/gin-gonic/gin`
+  "workerbook/controller"
+  "workerbook/middleware"
 )
 
 func Register(g *gin.Engine) {
@@ -18,7 +20,13 @@ func Register(g *gin.Engine) {
   // 注册项目相关的路由
   // registerProjectRouter(g.Group("/projects"))
 
-  // 其他路由
+  // 登录
   // g.POST("/login", controller.UserLogin)
+
+  // 获取个人信息
+  g.GET("/profile", middleware.Jwt, controller.GetProfile)
+
+  // 注册管理后台的路由
+  registerConsoleRouter(g.Group("/console"))
 
 }

@@ -4,7 +4,7 @@ export default class Event {
   fetchData = async () => {
     try {
       await Promise.all([
-        this.props.$user.fetchMyProfile(),
+        this.props.$user.fetchProfile(),
       ])
     }
     catch (err) {

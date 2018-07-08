@@ -55,30 +55,30 @@ const deleteDailyItem = ({ id }) => async () => {
 }
 
 // my profile
-const fetchMyProfile = () => async (dispatch, getState) => {
+const fetchProfile = () => async (dispatch, getState) => {
   const state = getState()
   if (state.user$.profile.id) {
     return
   }
   const res = await http.request({
-    url: '/users/my',
+    url: '/profile',
     method: 'GET',
   })
   dispatch(createAction('USER_PROFILE')(res))
 }
 
 // fetch list
-const fetchList = ({ gid, skip, limit } = {}) => async dispatch => {
+const fetchList = ({ departmentId, skip, limit } = {}) => async dispatch => {
   const res = await http.request({
     url: '/users',
     method: 'GET',
     params: {
-      gid,
+      departmentId,
       skip,
       limit,
     }
   })
-  res.gid = gid
+  res.departmentId = departmentId
   dispatch(createAction('USER_LIST')(res))
 }
 
@@ -86,7 +86,7 @@ export default {
   login,
   create,
   fetchList,
-  fetchMyProfile,
+  fetchProfile,
   appendDailyItem,
   deleteDailyItem,
   fetchMyTodayDaily,
