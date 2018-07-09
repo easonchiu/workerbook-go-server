@@ -75,7 +75,7 @@ func CreateUser(data model.User) error {
 }
 
 // update user info.
-func UpdateUser(m bson.M) error {
+func UpdateUser(id bson.ObjectId, m bson.M) error {
   db, closer, err := mongo.CloneDB()
 
   if err != nil {
@@ -84,37 +84,43 @@ func UpdateUser(m bson.M) error {
     defer closer()
   }
 
-  // username must be the only.
+  // 帐号唯一
   count, err := db.C(model.UserCollection).Find(bson.M{"username": m["username"]}).Count()
 
   if err != nil {
-    return errors.New(errno.ErrCreateUserFailed)
+    return errors.New(errno.ErrUpdateUserFailed)
   }
 
   if count > 0 {
     return errors.New(errno.ErrSameUsername)
   }
 
-  // nickname must be the only.
-  count, err = db.C(model.UserCollection).Find(bson.M{"nickname": m["nickname"]}).Count()
+  // 姓名唯一
+  count, err = db.C(model.UserCollection).Find(bson.M{
+    "nickname": m["nickname"],
+    "_id": bson.M{
+      "$ne": id,
+    },
+  }).Count()
 
   if err != nil {
-    return errors.New(errno.ErrCreateUserFailed)
+    return errors.New(errno.ErrUpdateUserFailed)
   }
 
   if count > 0 {
     return errors.New(errno.ErrSameNickname)
   }
 
-  // department must be exist.
-  count, err = db.C(model.DepartmentCollection).FindId(bson.ObjectIdHex(m["departmentId"].(string))).Count()
+  // 部门必选并必须存在
+  ref := m["department"].(mgo.DBRef)
+  count, err = db.FindRef(&ref).Count()
 
   if count == 0 {
     return errors.New(errno.ErrDepartmentNotFound)
   }
 
-  // insert it.
-  err = db.C(model.UserCollection).UpdateId(bson.ObjectIdHex(m["id"].(string)), bson.M{
+  // 更新数据
+  err = db.C(model.UserCollection).UpdateId(id, bson.M{
     "$set": m,
   })
 
@@ -128,7 +134,7 @@ func UpdateUser(m bson.M) error {
   return nil
 }
 
-// user login by username and password
+// 用户登录并返回用户id
 func UserLogin(username string, password string) (id string, err error) {
   db, closer, err := mongo.CloneDB()
 
@@ -155,7 +161,7 @@ func UserLogin(username string, password string) (id string, err error) {
   }
 }
 
-// Query user info by id.
+// 根据id查找用户信息
 func GetUserInfoById(id bson.ObjectId) (gin.H, error) {
   db, closer, err := mongo.CloneDB()
 
@@ -176,13 +182,11 @@ func GetUserInfoById(id bson.ObjectId) (gin.H, error) {
     return nil, err
   }
 
-  return gin.H{
-    "department": data.GetResultOneWithRef(db),
-  }, nil
+  return data.GetMap(db), nil
 }
 
-// Query users list with skip and limit.
-// it will find all of users when 'departmentId' is empty.
+// 获取用户列表
+// 如果departmentId为空，查找所有用户
 func GetUsersList(departmentId string, skip int, limit int) (gin.H, error) {
   db, closer, err := mongo.CloneDB()
 
@@ -200,7 +204,7 @@ func GetUsersList(departmentId string, skip int, limit int) (gin.H, error) {
     limit = 100
   }
 
-  // create condition sql
+  // 设置查找sql
   sql := bson.M{}
   if departmentId != "" {
     sql["departmentId"] = departmentId
@@ -227,13 +231,13 @@ func GetUsersList(departmentId string, skip int, limit int) (gin.H, error) {
   var list []gin.H
 
   for _, r := range *data {
-    list = append(list, r.GetResultOneWithRef(db))
+    list = append(list, r.GetMap(db))
   }
 
   return gin.H{
-    "list": list,
+    "list":  list,
     "count": count,
-    "skip": skip,
+    "skip":  skip,
     "limit": limit,
   }, nil
 }

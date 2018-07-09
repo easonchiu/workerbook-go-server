@@ -1,7 +1,9 @@
 package model
 
 import (
-  `gopkg.in/mgo.v2/bson`
+  "github.com/gin-gonic/gin"
+  "gopkg.in/mgo.v2"
+  "gopkg.in/mgo.v2/bson"
   `time`
 )
 
@@ -10,24 +12,24 @@ const DepartmentCollection = "departments"
 
 // collection schema
 type Department struct {
+  // id
+  Id bson.ObjectId `bson:"_id,omitempty"`
+
   // 部门名
-  Name string `json:"name"`
+  Name string `bson:"name"`
 
   // 部门下的用户数
-  UserCount int `json:"userCount"`
+  UserCount int `bson:"userCount"`
 
   // 创建时间
-  CreateTime time.Time `json:"createTime"`
+  CreateTime time.Time `bson:"createTime"`
 }
 
-
-type DepartmentResult struct {
-  // id
-  Id bson.ObjectId `json:"id" bson:"_id"`
-
-  // 部门名
-  Name string `json:"name"`
-
-  // 部门下的用户数
-  UserCount int `json:"userCount"`
+func (d Department) GetMap(db *mgo.Database) gin.H {
+  return gin.H{
+    "id": d.Id,
+    "name": d.Name,
+    "userCount": d.UserCount,
+    "createTime": d.CreateTime,
+  }
 }

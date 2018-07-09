@@ -2,7 +2,7 @@ import Toast from 'src/components/toast'
 import Err from 'src/utils/errif'
 
 export default class Event {
-  fetchData = async (pager) => {
+  fetchData = async (pager = 1) => {
     try {
       await Promise.all([
         this.props.$console.fetchUsersList({

@@ -180,8 +180,8 @@ func CreateUser(c *gin.Context) {
     return
   }
 
-  // update count
-  service.UpdateDepartmentCount(departmentId)
+  // update count in department
+  service.UpdateDepartmentsUserCount()
 
   // return
   ctx.Success(nil)
@@ -192,7 +192,7 @@ func UpdateUser(c *gin.Context) {
   ctx := CreateCtx(c)
 
   // get
-  id := ctx.getRaw("id")
+  id := ctx.getParam("id")
   nickname := ctx.getRaw("nickname")
   departmentId := ctx.getRaw("departmentId")
   role := ctx.getRawInt("role")
@@ -208,12 +208,15 @@ func UpdateUser(c *gin.Context) {
   }
 
   // update
-  err := service.UpdateUser(bson.M{
-    "id":           id,
-    "nickname":     nickname,
-    "departmentId": departmentId,
-    "role":         role,
-    "status":       status,
+  err := service.UpdateUser(bson.ObjectIdHex(id), bson.M{
+    "nickname": nickname,
+    "role":     role,
+    "status":   status,
+    "department": mgo.DBRef{
+      Id:         bson.ObjectIdHex(departmentId),
+      Collection: model.DepartmentCollection,
+      Database:   conf.DBName,
+    },
   })
 
   // check
@@ -221,6 +224,9 @@ func UpdateUser(c *gin.Context) {
     ctx.Error(err)
     return
   }
+
+  // update count in department
+  service.UpdateDepartmentsUserCount()
 
   ctx.Success(nil)
 }

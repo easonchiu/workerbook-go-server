@@ -16,8 +16,7 @@ const (
   ErrPasswordEmpty           = "100008"
   ErrSameUsername            = "100009"
   ErrUsernameTooShort        = "100010"
-  ErrUsernameTooLone         = "100011"
-  ErrUsernameTooEasy         = "100012"
+  ErrUsernameTooLong         = "100011"
   ErrSameNickname            = "100013"
   ErrNicknameTooShort        = "100014"
   ErrNicknameTooLong         = "100015"
@@ -31,6 +30,7 @@ const (
   ErrDepartmentNameEmpty    = "101003"
   ErrSameDepartmentName     = "101004"
   ErrCreateDepartmentFailed = "101005"
+  ErrUpdateDepartmentFailed = "101006"
 
   // 日报相关错误 102xxx
   ErrDailyIdError  = "102001"
@@ -64,8 +64,11 @@ var Error = map[string]ErrType{
   ErrPasswordEmpty:           {"密码不能为空", http.StatusOK, ""},
   ErrLoginFailed:             {"登录失败，请重试", http.StatusOK, ""},
   ErrUserList:                {"获取用户列表失败", http.StatusOK, ""},
-  ErrSameUsername:            {"该帐号已存在", http.StatusOK, ""},
+  ErrUsernameTooShort:        {"帐号不得少于6个字", http.StatusOK, ""},
+  ErrUsernameTooLong:         {"帐号不得多于14个字", http.StatusOK, ""},
   ErrSameNickname:            {"已存在相同的姓名", http.StatusOK, ""},
+  ErrNicknameTooShort:        {"姓名不得于少2个字", http.StatusOK, ""},
+  ErrNicknameTooLong:         {"姓名不得多于8个字", http.StatusOK, ""},
   ErrCreateUserFailed:        {"创建用户失败", http.StatusOK, ""},
   ErrUpdateUserFailed:        {"更新用户失败", http.StatusOK, ""},
 
@@ -77,6 +80,7 @@ var Error = map[string]ErrType{
   ErrDepartmentNameEmpty:    {"部门名称不能为空", http.StatusOK, ""},
   ErrSameDepartmentName:     {"已存在相同部门名称", http.StatusOK, ""},
   ErrCreateDepartmentFailed: {"创建部门失败", http.StatusOK, ""},
+  ErrUpdateDepartmentFailed: {"更新部门失败", http.StatusOK, ""},
 
   ErrSkipRange:  {"skip取值范围错误", http.StatusInternalServerError, ""},
   ErrLimitRange: {"limit取值范围错误", http.StatusInternalServerError, ""},

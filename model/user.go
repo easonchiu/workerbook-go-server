@@ -43,7 +43,7 @@ type User struct {
   Status int `bson:"status"`
 }
 
-func (u User) GetResultOneWithRef(db *mgo.Database) gin.H {
+func (u User) GetMap(db *mgo.Database) gin.H {
   department := new(Department)
   db.FindRef(&u.Department).One(department)
 
