@@ -1,5 +1,6 @@
 import './style'
 import React from 'react'
+import classNames from 'classnames'
 
 const Pager = props => {
   const d = 'M126.040 295.7c18.8-18.8 49.1-18.801 67.901 0l318 318 318-318c18.8-18.8 49.2-18.8 67.901 0 18.8 18.8 18.801 49.1 0 67.901l-352 352c-18.8 18.8-49.2 18.8-67.901 0l-352-352c-9.4-9.4-14-21.7-14-34 0.1-12.2 4.7-24.501 14.1-33.9z'
@@ -38,7 +39,9 @@ const Pager = props => {
       <a
         href="javascript:;"
         key={i}
-        className={props.current === i ? 'active' : ''}
+        className={classNames({
+          active: props.current === i
+        })}
         onClick={() => {
           props.onClick && props.onClick(i)
         }}
@@ -87,7 +90,9 @@ const Pager = props => {
     <div className="wb-pager">
       <a
         href="javascript:;"
-        className="wb-pager__prev"
+        className={classNames('wb-pager__prev', {
+          'wb-pager--disabled': props.current === 1
+        })}
         onClick={() => {
           props.onClick && props.onClick(Math.max(props.current - 1, 1))
         }}
@@ -99,7 +104,9 @@ const Pager = props => {
       {list}
       <a
         href="javascript:;"
-        className="wb-pager__next"
+        className={classNames('wb-pager__next', {
+          'wb-pager--disabled': props.current === props.max
+        })}
         onClick={() => {
           props.onClick && props.onClick(Math.min(props.current + 1, props.max))
         }}

@@ -3,7 +3,7 @@ import React from 'react'
 import classNames from 'classnames'
 
 const Input = props => {
-  const css = classNames('x-input', props.className)
+  const css = classNames('wb-input', props.className)
   const domprops = {
     ...props,
     multi: null,

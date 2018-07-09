@@ -18,6 +18,4 @@ func registerUserRouter(g *gin.RouterGroup) {
 
   // g.GET("/:id/dailies/today", middleware.Jwt, controller.GetMyTodayDaily)
 
-  g.POST("", middleware.Jwt, controller.CreateUser)
-
 }

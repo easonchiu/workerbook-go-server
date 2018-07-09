@@ -5,6 +5,7 @@ const initialState = {
     list: [],
     skip: 0,
     limit: 0,
+    count: 0,
   }
 }
 
@@ -16,6 +17,7 @@ export default handleActions({
         list: action.payload.list || [],
         skip: action.payload.skip,
         limit: action.payload.limit,
+        count: action.payload.count,
       }
     }
   }

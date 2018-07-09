@@ -176,6 +176,7 @@ func (c *Context) Error(errNo interface{}) {
   c.Ctx.JSON(err.Status, gin.H{
     "msg":  err.Message,
     "code": err.Code,
+    "data": nil,
   })
 }
 

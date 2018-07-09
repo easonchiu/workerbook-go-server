@@ -2,7 +2,9 @@ package controller
 
 import (
   "github.com/gin-gonic/gin"
+  "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
+  "workerbook/conf"
   "workerbook/errno"
   "workerbook/model"
   "workerbook/service"
@@ -44,7 +46,6 @@ func GetUsersList(c *gin.Context) {
   ctx := CreateCtx(c)
 
   // get
-  isConsole := ctx.getBool("isConsole")
   departmentId := ctx.getQuery("departmentId")
   skip := ctx.getQueryIntDefault("skip", 0)
   limit := ctx.getQueryIntDefault("limit", 10)
@@ -62,33 +63,18 @@ func GetUsersList(c *gin.Context) {
   }
 
   // query
-  if isConsole == true {
-    usersList, err := service.GetConsoleUsersList(departmentId, skip, limit)
+  data, err := service.GetUsersList(departmentId, skip, limit)
 
-    // check
-    if err != nil {
-      ctx.Error(err)
-      return
-    }
-
-    // return
-    ctx.Success(gin.H{
-      "list": usersList,
-    })
-  } else {
-    usersList, err := service.GetUsersList(departmentId, skip, limit)
-
-    // check
-    if err != nil {
-      ctx.Error(err)
-      return
-    }
-
-    // return
-    ctx.Success(gin.H{
-      "list": usersList,
-    })
+  // check
+  if err != nil {
+    ctx.Error(err)
+    return
   }
+
+  // return
+  ctx.Success(gin.H{
+    "data": data,
+  })
 }
 
 // 获取用户信息
@@ -172,13 +158,17 @@ func CreateUser(c *gin.Context) {
 
   // create
   data := model.User{
-    NickName:     nickName,
-    Email:        "",
-    UserName:     userName,
-    DepartmentId: departmentId,
-    Role:         role,
-    Mobile:       "",
-    Password:     password,
+    NickName: nickName,
+    Email:    "",
+    UserName: userName,
+    Department: mgo.DBRef{
+      Id:         bson.ObjectIdHex(departmentId),
+      Collection: model.DepartmentCollection,
+      Database:   conf.DBName,
+    },
+    Role:     role,
+    Mobile:   "",
+    Password: password,
   }
 
   // insert
@@ -187,11 +177,50 @@ func CreateUser(c *gin.Context) {
   // check
   if err != nil {
     ctx.Error(err)
+    return
   }
 
   // update count
   service.UpdateDepartmentCount(departmentId)
 
   // return
+  ctx.Success(nil)
+}
+
+// 修改用户
+func UpdateUser(c *gin.Context) {
+  ctx := CreateCtx(c)
+
+  // get
+  id := ctx.getRaw("id")
+  nickname := ctx.getRaw("nickname")
+  departmentId := ctx.getRaw("departmentId")
+  role := ctx.getRawInt("role")
+  status := ctx.getRawInt("status")
+
+  // check
+  ctx.ErrorIfStringNotObjectId(id, errno.ErrUserIdError)
+  ctx.ErrorIfStringIsEmpty(nickname, errno.ErrNicknameEmpty)
+  ctx.ErrorIfStringNotObjectId(departmentId, errno.ErrDepartmentIdError)
+
+  if ctx.HandleErrorIf() {
+    return
+  }
+
+  // update
+  err := service.UpdateUser(bson.M{
+    "id":           id,
+    "nickname":     nickname,
+    "departmentId": departmentId,
+    "role":         role,
+    "status":       status,
+  })
+
+  // check
+  if err != nil {
+    ctx.Error(err)
+    return
+  }
+
   ctx.Success(nil)
 }

@@ -2,6 +2,7 @@ package service
 
 import (
   "errors"
+  "github.com/gin-gonic/gin"
   "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
   "time"
@@ -51,7 +52,7 @@ func CreateUser(data model.User) error {
 
   // department must be exist.
   department := new(model.Department)
-  db.C(model.DepartmentCollection).FindId(bson.ObjectIdHex(data.DepartmentId)).One(&department)
+  db.FindRef(&data.Department).One(department)
 
   if department.Name == "" {
     return errors.New(errno.ErrDepartmentNotFound)
@@ -73,6 +74,60 @@ func CreateUser(data model.User) error {
   return nil
 }
 
+// update user info.
+func UpdateUser(m bson.M) error {
+  db, closer, err := mongo.CloneDB()
+
+  if err != nil {
+    return err
+  } else {
+    defer closer()
+  }
+
+  // username must be the only.
+  count, err := db.C(model.UserCollection).Find(bson.M{"username": m["username"]}).Count()
+
+  if err != nil {
+    return errors.New(errno.ErrCreateUserFailed)
+  }
+
+  if count > 0 {
+    return errors.New(errno.ErrSameUsername)
+  }
+
+  // nickname must be the only.
+  count, err = db.C(model.UserCollection).Find(bson.M{"nickname": m["nickname"]}).Count()
+
+  if err != nil {
+    return errors.New(errno.ErrCreateUserFailed)
+  }
+
+  if count > 0 {
+    return errors.New(errno.ErrSameNickname)
+  }
+
+  // department must be exist.
+  count, err = db.C(model.DepartmentCollection).FindId(bson.ObjectIdHex(m["departmentId"].(string))).Count()
+
+  if count == 0 {
+    return errors.New(errno.ErrDepartmentNotFound)
+  }
+
+  // insert it.
+  err = db.C(model.UserCollection).UpdateId(bson.ObjectIdHex(m["id"].(string)), bson.M{
+    "$set": m,
+  })
+
+  if err != nil {
+    return errors.New(errno.ErrUpdateUserFailed)
+  }
+
+  // refresh user count in department
+  // RefreshGroupCount(group.Id)
+
+  return nil
+}
+
 // user login by username and password
 func UserLogin(username string, password string) (id string, err error) {
   db, closer, err := mongo.CloneDB()
@@ -83,7 +138,7 @@ func UserLogin(username string, password string) (id string, err error) {
     defer closer()
   }
 
-  data := new(model.UserResult)
+  data := new(model.User)
 
   err = db.C(model.UserCollection).Find(bson.M{
     "username": username,
@@ -101,10 +156,10 @@ func UserLogin(username string, password string) (id string, err error) {
 }
 
 // Query user info by id.
-func GetUserInfoById(id bson.ObjectId) (*model.UserResult, error) {
+func GetUserInfoById(id bson.ObjectId) (gin.H, error) {
   db, closer, err := mongo.CloneDB()
 
-  data := new(model.UserResult)
+  data := new(model.User)
 
   if err != nil {
     return nil, err
@@ -121,12 +176,14 @@ func GetUserInfoById(id bson.ObjectId) (*model.UserResult, error) {
     return nil, err
   }
 
-  return data, nil
+  return gin.H{
+    "department": data.GetResultOneWithRef(db),
+  }, nil
 }
 
 // Query users list with skip and limit.
 // it will find all of users when 'departmentId' is empty.
-func GetUsersList(departmentId string, skip int, limit int) (*[]model.UserResult, error) {
+func GetUsersList(departmentId string, skip int, limit int) (gin.H, error) {
   db, closer, err := mongo.CloneDB()
 
   if err != nil {
@@ -135,7 +192,7 @@ func GetUsersList(departmentId string, skip int, limit int) (*[]model.UserResult
     defer closer()
   }
 
-  data := new([]model.UserResult)
+  data := new([]model.User)
 
   if limit < 0 {
     limit = 0
@@ -150,7 +207,7 @@ func GetUsersList(departmentId string, skip int, limit int) (*[]model.UserResult
   }
 
   // find it
-  err = db.C(model.UserCollection).Find(sql).Skip(skip).Limit(limit).All(data)
+  err = db.C(model.UserCollection).Find(sql).Skip(skip).Limit(limit).Sort("-createTime").All(data)
 
   if err != nil {
     if err == mgo.ErrNotFound {
@@ -159,42 +216,24 @@ func GetUsersList(departmentId string, skip int, limit int) (*[]model.UserResult
     return nil, err
   }
 
-  return data, nil
-}
-
-// 管理后台获取用户列表
-func GetConsoleUsersList(departmentId string, skip int, limit int) (*[]model.UserConsoleResult, error) {
-  db, closer, err := mongo.CloneDB()
+  // get count
+  count, err := db.C(model.UserCollection).Find(sql).Count()
 
   if err != nil {
-    return nil, err
-  } else {
-    defer closer()
+    return nil, errors.New(errno.ErrUserNotFound)
   }
 
-  data := new([]model.UserConsoleResult)
+  // result
+  var list []gin.H
 
-  if limit < 0 {
-    limit = 0
-  } else if limit > 100 {
-    limit = 100
+  for _, r := range *data {
+    list = append(list, r.GetResultOneWithRef(db))
   }
 
-  // create condition sql
-  sql := bson.M{}
-  if departmentId != "" {
-    sql["departmentId"] = departmentId
-  }
-
-  // find it
-  err = db.C(model.UserCollection).Find(sql).Skip(skip).Limit(limit).All(data)
-
-  if err != nil {
-    if err == mgo.ErrNotFound {
-      return nil, errors.New(errno.ErrUserNotFound)
-    }
-    return nil, err
-  }
-
-  return data, nil
+  return gin.H{
+    "list": list,
+    "count": count,
+    "skip": skip,
+    "limit": limit,
+  }, nil
 }

@@ -1,5 +1,6 @@
 package conf
 
 const (
-	DBUrl = "mongodb://localhost:27017/workerbook"
+  DBName = "workerbook"
+  DBUrl  = "mongodb://localhost:27017/workerbook"
 )

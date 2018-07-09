@@ -15,9 +15,15 @@ const (
   ErrNicknameEmpty           = "100007"
   ErrPasswordEmpty           = "100008"
   ErrSameUsername            = "100009"
-  ErrSameNickname            = "100010"
-  ErrCreateUserFailed        = "100011"
-  ErrLoginFailed             = "100012"
+  ErrUsernameTooShort        = "100010"
+  ErrUsernameTooLone         = "100011"
+  ErrUsernameTooEasy         = "100012"
+  ErrSameNickname            = "100013"
+  ErrNicknameTooShort        = "100014"
+  ErrNicknameTooLong         = "100015"
+  ErrCreateUserFailed        = "100016"
+  ErrUpdateUserFailed        = "100017"
+  ErrLoginFailed             = "100018"
 
   // 部门相关错误 101xxx
   ErrDepartmentIdError      = "101001"
@@ -61,6 +67,7 @@ var Error = map[string]ErrType{
   ErrSameUsername:            {"该帐号已存在", http.StatusOK, ""},
   ErrSameNickname:            {"已存在相同的姓名", http.StatusOK, ""},
   ErrCreateUserFailed:        {"创建用户失败", http.StatusOK, ""},
+  ErrUpdateUserFailed:        {"更新用户失败", http.StatusOK, ""},
 
   ErrDailyIdError:  {"日报id错误", http.StatusOK, ""},
   ErrDailyNotFound: {"找不到相关日报", http.StatusOK, ""},

@@ -1,6 +1,8 @@
 package model
 
 import (
+  "github.com/gin-gonic/gin"
+  "gopkg.in/mgo.v2"
   `gopkg.in/mgo.v2/bson`
   `time`
 )
@@ -10,81 +12,50 @@ const UserCollection = "users"
 
 // collection schema
 type User struct {
+  // id
+  Id bson.ObjectId `bson:"_id,omitempty"`
+
   // 昵称
-  NickName string `json:"nickname" bson:"nickname"`
+  NickName string `bson:"nickname"`
 
   // 邮箱
-  Email string `json:"email" bson:"email"`
+  Email string `bson:"email"`
 
   // 用户名
-  UserName string `json:"username" bson:"username"`
+  UserName string `bson:"username"`
 
-  // 部门id
-  DepartmentId string `json:"departmentId" bson:"departmentId"`
-
-  // 手机号
-  Mobile string `json:"mobile" bson:"mobile"`
-
-  // 密码
-  Password string `json:"password" bson:"password"`
-
-  // 1: 普通用户， 2: 部门Leader，99: 管理员
-  Role int `json:"role" bson:"role"`
-
-  // 创建时间
-  CreateTime time.Time `json:"createTime" bson:"createTime"`
-
-  // 用户状态
-  Status int `json:"status" bson:"status"`
-}
-
-// user result
-type UserResult struct {
-  // id
-  Id bson.ObjectId `json:"id" bson:"_id"`
-
-  // 昵称
-  NickName string `json:"nickname" bson:"nickname"`
-
-  // 部门id
-  DepartmentId string `json:"departmentId" bson:"departmentId"`
-
-  // 邮箱
-  Email string `json:"email" bson:"email"`
-
-  // 1: 普通用户， 2: 部门Leader，99: 管理员
-  Role int `json:"role" bson:"role"`
-}
-
-// user result at console
-type UserConsoleResult struct {
-  // id
-  Id bson.ObjectId `json:"id" bson:"_id"`
-
-  // 昵称
-  NickName string `json:"nickname" bson:"nickname"`
-
-  // 邮箱
-  Email string `json:"email" bson:"email"`
-
-  // 用户名
-  UserName string `json:"username" bson:"username"`
-
-  // 部门id
-  DepartmentId string `json:"departmentId" bson:"departmentId"`
+  // 部门
+  Department mgo.DBRef `bson:"department"`
 
   // 手机号
-  Mobile string `json:"mobile" bson:"mobile"`
+  Mobile string `bson:"mobile"`
 
   // 密码
-  Password string `json:"password" bson:"password"`
+  Password string `bson:"password"`
 
   // 1: 普通用户， 2: 部门Leader，99: 管理员
-  Role int `json:"role" bson:"role"`
+  Role int `bson:"role"`
 
   // 创建时间
-  CreateTime time.Time `json:"createTime" bson:"createTime"`
+  CreateTime time.Time `bson:"createTime"`
 
   // 用户状态
-  Status int `json:"status" bson:"status"`
+  Status int `bson:"status"`
+}
+
+func (u User) GetResultOneWithRef(db *mgo.Database) gin.H {
+  department := new(Department)
+  db.FindRef(&u.Department).One(department)
+
+  return gin.H{
+    "id": u.Id,
+    "nickname": u.NickName,
+    "email": u.Email,
+    "role": u.Role,
+    "createTime": u.CreateTime,
+    "username": u.UserName,
+    "departmentId": u.Department.Id,
+    "departmentName": department.Name,
+    "status": u.Status,
+  }
 }

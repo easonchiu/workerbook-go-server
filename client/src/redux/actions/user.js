@@ -11,16 +11,6 @@ const login = payload => async () => {
   return res
 }
 
-// create user
-const create = payload => async () => {
-  const res = await http.request({
-    url: '/users',
-    method: 'POST',
-    data: payload,
-  })
-  return res
-}
-
 // my daily
 const fetchMyTodayDaily = () => async dispatch => {
   const res = await http.request({
@@ -84,7 +74,6 @@ const fetchList = ({ departmentId, skip, limit } = {}) => async dispatch => {
 
 export default {
   login,
-  create,
   fetchList,
   fetchProfile,
   appendDailyItem,
