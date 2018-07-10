@@ -13,7 +13,17 @@ class Err {
   }
 
   static IfEmpty(str, msg) {
-    if (this.errMsg === '' && str.trim() === '') {
+    let string = str
+    if (typeof string === 'string') {
+      string = string.trim()
+    }
+    if (this.errMsg === '' && (string === '' || string === null || typeof string === 'undefined')) {
+      this.errMsg = msg
+    }
+  }
+
+  static IfEmptyArr(arr, msg) {
+    if (this.errMsg === '' && (!Array.isArray(arr) || arr.length === 0)) {
       this.errMsg = msg
     }
   }

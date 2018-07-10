@@ -18,15 +18,12 @@ func Register(g *gin.Engine) {
   // registerDailyRouter(g.Group("/dailies"))
 
   // 注册项目相关的路由
-  // registerProjectRouter(g.Group("/projects"))
+  registerProjectRouter(g.Group("/projects"))
 
   // 登录
   // g.POST("/login", controller.UserLogin)
 
   // 获取个人信息
   g.GET("/profile", middleware.Jwt, controller.GetProfile)
-
-  // 注册管理后台的路由
-  registerConsoleRouter(g.Group("/console"))
 
 }

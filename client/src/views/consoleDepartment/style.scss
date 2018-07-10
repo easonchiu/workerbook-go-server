@@ -1,5 +1,5 @@
 
-.console-user-list {
+.console-department {
   header {
     display: flex;
     align-items: center;
@@ -8,7 +8,7 @@
       flex: 1;
       font-size: 20px;
       line-height: 1.5;
-      color: #222;
+      color: #586069;
       font-weight: bold;
     }
   }
@@ -17,29 +17,22 @@
       width: 120px;
       text-align: center;
     }
-    td:nth-child(2), td:nth-child(3) {
-      width: 200px;
-    }
-    td:nth-child(5) {
-      width: 200px;
+    td:nth-child(3) {
+      width: 150px;
       text-align: center;
     }
-    td:nth-child(6) {
-      width: 100px;
-      text-align: center;
-    }
-    td:nth-child(7) {
-      width: 200px;
+    td:nth-child(4) {
+      width: 150px;
       text-align: center;
     }
     td:last-child {
-      width: 150px;
+      width: 120px;
       text-align: center;
     }
   }
 }
 
-.dialog-console-edit-user {
+.dialog-console-edit-department {
   .wb-form {
     padding-bottom: 20px;
   }

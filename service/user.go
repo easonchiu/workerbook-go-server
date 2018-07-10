@@ -22,7 +22,7 @@ func CreateUser(data model.User) error {
   }
 
   // supplement other data.
-  if data.Role != 0 && data.Role != 1 && data.Role != 2 {
+  if data.Role != 1 && data.Role != 2 && data.Role != 3 {
     data.Role = 1
   }
 
@@ -68,8 +68,8 @@ func CreateUser(data model.User) error {
     return errors.New(errno.ErrCreateUserFailed)
   }
 
-  // refresh user count in department
-  // RefreshGroupCount(group.Id)
+  // update count in department
+  UpdateDepartmentsUserCount()
 
   return nil
 }
@@ -128,8 +128,8 @@ func UpdateUser(id bson.ObjectId, m bson.M) error {
     return errors.New(errno.ErrUpdateUserFailed)
   }
 
-  // refresh user count in department
-  // RefreshGroupCount(group.Id)
+  // update count in department
+  UpdateDepartmentsUserCount()
 
   return nil
 }
@@ -187,7 +187,7 @@ func GetUserInfoById(id bson.ObjectId) (gin.H, error) {
 
 // 获取用户列表
 // 如果departmentId为空，查找所有用户
-func GetUsersList(departmentId string, skip int, limit int) (gin.H, error) {
+func GetUsersList(skip int, limit int, query bson.M) (gin.H, error) {
   db, closer, err := mongo.CloneDB()
 
   if err != nil {
@@ -204,14 +204,8 @@ func GetUsersList(departmentId string, skip int, limit int) (gin.H, error) {
     limit = 100
   }
 
-  // 设置查找sql
-  sql := bson.M{}
-  if departmentId != "" {
-    sql["departmentId"] = departmentId
-  }
-
   // find it
-  err = db.C(model.UserCollection).Find(sql).Skip(skip).Limit(limit).Sort("-createTime").All(data)
+  err = db.C(model.UserCollection).Find(query).Skip(skip).Limit(limit).Sort("-createTime").All(data)
 
   if err != nil {
     if err == mgo.ErrNotFound {
@@ -221,7 +215,7 @@ func GetUsersList(departmentId string, skip int, limit int) (gin.H, error) {
   }
 
   // get count
-  count, err := db.C(model.UserCollection).Find(sql).Count()
+  count, err := db.C(model.UserCollection).Find(query).Count()
 
   if err != nil {
     return nil, errors.New(errno.ErrUserNotFound)

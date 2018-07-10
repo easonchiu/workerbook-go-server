@@ -33,8 +33,11 @@ type User struct {
   // 密码
   Password string `bson:"password"`
 
-  // 1: 普通用户， 2: 部门Leader，99: 管理员
+  // 职位 1: 开发者， 2: 部门主管，3: 观察员, 99: 管理员
   Role int `bson:"role"`
+
+  // 职称
+  Title string `bson:"title"`
 
   // 创建时间
   CreateTime time.Time `bson:"createTime"`
@@ -48,14 +51,15 @@ func (u User) GetMap(db *mgo.Database) gin.H {
   db.FindRef(&u.Department).One(department)
 
   return gin.H{
-    "id": u.Id,
-    "nickname": u.NickName,
-    "email": u.Email,
-    "role": u.Role,
-    "createTime": u.CreateTime,
-    "username": u.UserName,
-    "departmentId": u.Department.Id,
+    "id":             u.Id,
+    "nickname":       u.NickName,
+    "email":          u.Email,
+    "role":           u.Role,
+    "title":          u.Title,
+    "createTime":     u.CreateTime,
+    "username":       u.UserName,
+    "departmentId":   u.Department.Id,
     "departmentName": department.Name,
-    "status": u.Status,
+    "status":         u.Status,
   }
 }

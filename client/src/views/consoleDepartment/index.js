@@ -12,7 +12,7 @@ import MainDialog from 'src/containers/mainDialog'
 
 @VIEW
 @ComponentEvent('evt', Event)
-class ConsoleDepartmentList extends React.PureComponent {
+class ConsoleDepartment extends React.PureComponent {
   constructor(props) {
     super(props)
     this.state = {
@@ -60,7 +60,7 @@ class ConsoleDepartmentList extends React.PureComponent {
   }
 
   render() {
-    const { departments } = this.props.console$
+    const { departments } = this.props.department$
     const header = (
       <tr>
         <td>编号</td>
@@ -84,7 +84,7 @@ class ConsoleDepartmentList extends React.PureComponent {
       </tr>
     ))
     return (
-      <div className="console-department-list">
+      <div className="console-department">
         <header>
           <h1>部门管理</h1>
           <Button onClick={this.evt.onAppendClick}>添加</Button>
@@ -104,4 +104,4 @@ class ConsoleDepartmentList extends React.PureComponent {
   }
 }
 
-export default ConsoleDepartmentList
+export default ConsoleDepartment

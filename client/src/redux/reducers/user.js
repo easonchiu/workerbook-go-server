@@ -1,10 +1,14 @@
 import { handleActions } from 'easy-action'
 
 const initialState = {
-  fetchMyTodayDaily: [],
-  list: [],
-  activeDepartment: '', // 当前list对应的id
   profile: {},
+  users: {
+    list: [],
+    departmentId: null,
+    count: 0,
+    skip: 0,
+    limit: 0,
+  }
 }
 
 export default handleActions({
@@ -17,8 +21,13 @@ export default handleActions({
   USER_LIST(state, action) {
     return {
       ...state,
-      list: action.payload.list,
-      activeDepartment: action.payload.departmentId || '',
+      users: {
+        list: action.payload.list,
+        departmentId: action.payload.departmentId,
+        count: action.payload.count,
+        skip: action.payload.skip,
+        limit: action.payload.limit,
+      },
     }
   },
   USER_PROFILE(state, action) {

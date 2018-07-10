@@ -55,7 +55,7 @@ func GetUsersList(c *gin.Context) {
     ctx.ErrorIfStringNotObjectId(departmentId, errno.ErrDepartmentIdError)
   }
   ctx.ErrorIfIntLessThen(skip, 0, errno.ErrSkipRange)
-  ctx.ErrorIfIntLessThen(limit, 0, errno.ErrLimitRange)
+  ctx.ErrorIfIntLessThen(limit, 1, errno.ErrLimitRange)
   ctx.ErrorIfIntMoreThen(limit, 100, errno.ErrLimitRange)
 
   if ctx.HandleErrorIf() {
@@ -63,7 +63,14 @@ func GetUsersList(c *gin.Context) {
   }
 
   // query
-  data, err := service.GetUsersList(departmentId, skip, limit)
+  var query bson.M
+  if departmentId != "" {
+    query = bson.M{
+      "departmentId": departmentId,
+    }
+  }
+
+  data, err := service.GetUsersList(skip, limit, query)
 
   // check
   if err != nil {
@@ -122,6 +129,7 @@ func GetProfile(c *gin.Context) {
 
   // query
   userInfo, err := service.GetUserInfoById(bson.ObjectIdHex(id))
+  delete(userInfo, "username")
 
   // check
   if err != nil {
@@ -140,17 +148,27 @@ func CreateUser(c *gin.Context) {
   ctx := CreateCtx(c)
 
   // get
-  nickName := ctx.getRaw("nickname")
-  userName := ctx.getRaw("username")
+  nickname := ctx.getRaw("nickname")
+  username := ctx.getRaw("username")
   departmentId := ctx.getRaw("departmentId")
+  title := ctx.getRaw("title")
   role := ctx.getRawInt("role")
   password := ctx.getRaw("password")
 
   // check
-  ctx.ErrorIfStringIsEmpty(userName, errno.ErrUsernameEmpty)
-  ctx.ErrorIfStringIsEmpty(password, errno.ErrPasswordEmpty)
-  ctx.ErrorIfStringIsEmpty(nickName, errno.ErrNicknameEmpty)
+  ctx.ErrorIfStringIsEmpty(nickname, errno.ErrNicknameEmpty)
+  ctx.ErrorIfLenLessThen(nickname, 2, errno.ErrNicknameTooShort)
+  ctx.ErrorIfLenMoreThen(nickname, 14, errno.ErrNicknameTooLong)
   ctx.ErrorIfStringNotObjectId(departmentId, errno.ErrDepartmentIdError)
+  ctx.ErrorIfStringIsEmpty(title, errno.ErrUserTitleIsEmpty)
+  ctx.ErrorIfLenMoreThen(title, 14, errno.ErrUserTitleTooLong)
+  if role != 1 && role != 2 && role != 3 {
+    ctx.Error(errno.ErrUserRoleError)
+  }
+  ctx.ErrorIfStringIsEmpty(username, errno.ErrUsernameEmpty)
+  ctx.ErrorIfLenLessThen(username, 6, errno.ErrUsernameTooShort)
+  ctx.ErrorIfLenMoreThen(username, 14, errno.ErrUsernameTooLong)
+  ctx.ErrorIfStringIsEmpty(password, errno.ErrPasswordEmpty)
 
   if ctx.HandleErrorIf() {
     return
@@ -158,14 +176,15 @@ func CreateUser(c *gin.Context) {
 
   // create
   data := model.User{
-    NickName: nickName,
+    NickName: nickname,
     Email:    "",
-    UserName: userName,
+    UserName: username,
     Department: mgo.DBRef{
       Id:         bson.ObjectIdHex(departmentId),
       Collection: model.DepartmentCollection,
       Database:   conf.DBName,
     },
+    Title:    title,
     Role:     role,
     Mobile:   "",
     Password: password,
@@ -180,9 +199,6 @@ func CreateUser(c *gin.Context) {
     return
   }
 
-  // update count in department
-  service.UpdateDepartmentsUserCount()
-
   // return
   ctx.Success(nil)
 }
@@ -195,13 +211,20 @@ func UpdateUser(c *gin.Context) {
   id := ctx.getParam("id")
   nickname := ctx.getRaw("nickname")
   departmentId := ctx.getRaw("departmentId")
+  title := ctx.getRaw("title")
   role := ctx.getRawInt("role")
   status := ctx.getRawInt("status")
 
   // check
-  ctx.ErrorIfStringNotObjectId(id, errno.ErrUserIdError)
   ctx.ErrorIfStringIsEmpty(nickname, errno.ErrNicknameEmpty)
+  ctx.ErrorIfLenLessThen(nickname, 2, errno.ErrNicknameTooShort)
+  ctx.ErrorIfLenMoreThen(nickname, 14, errno.ErrNicknameTooLong)
   ctx.ErrorIfStringNotObjectId(departmentId, errno.ErrDepartmentIdError)
+  ctx.ErrorIfStringIsEmpty(title, errno.ErrUserTitleIsEmpty)
+  ctx.ErrorIfLenMoreThen(title, 14, errno.ErrUserTitleTooLong)
+  if role != 1 && role != 2 && role != 3 {
+    ctx.Error(errno.ErrUserRoleError)
+  }
 
   if ctx.HandleErrorIf() {
     return
@@ -210,6 +233,7 @@ func UpdateUser(c *gin.Context) {
   // update
   err := service.UpdateUser(bson.ObjectIdHex(id), bson.M{
     "nickname": nickname,
+    "title":    title,
     "role":     role,
     "status":   status,
     "department": mgo.DBRef{
@@ -224,9 +248,6 @@ func UpdateUser(c *gin.Context) {
     ctx.Error(err)
     return
   }
-
-  // update count in department
-  service.UpdateDepartmentsUserCount()
 
   ctx.Success(nil)
 }

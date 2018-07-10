@@ -5,7 +5,7 @@ export default class Event {
   fetchData = async (pager = 1) => {
     try {
       await Promise.all([
-        this.props.$console.fetchDepartmentsList({
+        this.props.$department.fetchList({
           skip: pager * 10 - 10,
           limit: 10,
         })
@@ -35,7 +35,7 @@ export default class Event {
 
     if (!Err.Handle()) {
       try {
-        await this.props.$console.createDepartment({
+        await this.props.$department.create({
           name: this.state.name,
         })
         this.onCloseDialog()
@@ -54,7 +54,7 @@ export default class Event {
 
     if (!Err.Handle()) {
       try {
-        await this.props.$console.updateDepartment({
+        await this.props.$department.update({
           id: this.state.departmentId,
           name: this.state.name,
         })

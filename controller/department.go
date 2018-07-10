@@ -18,11 +18,11 @@ func GetDepartmentsList(c *gin.Context) {
 
   // check
   ctx.ErrorIfIntLessThen(skip, 0, errno.ErrSkipRange)
-  ctx.ErrorIfIntLessThen(limit, 0, errno.ErrLimitRange)
+  ctx.ErrorIfIntLessThen(limit, 1, errno.ErrLimitRange)
   ctx.ErrorIfIntMoreThen(limit, 100, errno.ErrLimitRange)
 
   // query
-  data, err := service.GetDepartmentsList(skip, limit)
+  data, err := service.GetDepartmentsList(skip, limit, nil)
 
   // check
   if err != nil {
@@ -35,30 +35,23 @@ func GetDepartmentsList(c *gin.Context) {
   })
 }
 
-// 获取单个部门的信息
-// func GetDepartmentOne(c *gin.Context) {
-//   ctx := CreateCtx(c)
-//   defer ctx.HandleError()
-//
-//   // get
-//   id := ctx.getParam("id")
-//
-//   // check
-//   ctx.ErrorIfStringNotObjectId(id, errno.ErrorDepartmentIdError)
-//
-//   // query
-//   groupInfo, err := service.GetGroupInfoById(bson.ObjectIdHex(id))
-//
-//   // check
-//   if err != nil {
-//     ctx.Error(errno.ErrorDepartmentNotFound)
-//   }
-//
-//   // return
-//   ctx.Success(gin.H{
-//     "data": groupInfo,
-//   })
-// }
+// 获取全部部门列表
+func GetAllDepartmentsList(c *gin.Context) {
+  ctx := CreateCtx(c)
+
+  // query
+  data, err := service.GetDepartmentsList(0, 0, nil)
+
+  // check
+  if err != nil {
+    ctx.Error(errno.ErrDepartmentNotFound)
+  }
+
+  // return
+  ctx.Success(gin.H{
+    "data": data,
+  })
+}
 
 // 创建部门
 func CreateDepartment(c *gin.Context) {

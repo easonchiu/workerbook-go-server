@@ -6,8 +6,8 @@ import classNames from 'classnames'
 const Header = props => {
   const { profile, nav } = props
   return (
-    <header className="app-header">
-      <div className="app-header__inner">
+    <header className="wb-header">
+      <div className="wb-header__inner">
         <a className="logo" href="javascript:;" />
         <nav>
           <Link className={nav === 'index' ? 'active' : ''} to="/index">日报</Link>
@@ -18,7 +18,7 @@ const Header = props => {
         </nav>
         <div className="profile">
           <h6>晚上好：{profile.nickname}</h6>
-          <p>{profile.groupName}前端开发部门</p>
+          <p>{profile.title}@{profile.departmentName}</p>
           <span>
             <a href="javascript:;">修改密码</a>
             <a href="javascript:;">退出帐号</a>
@@ -31,7 +31,7 @@ const Header = props => {
 
 const Body = props => {
   return (
-    <div className="app-body">
+    <div className="wb-body">
       {props.children}
     </div>
   )
@@ -39,7 +39,7 @@ const Body = props => {
 
 Body.Main = props => {
   return (
-    <main className="app-body__main">
+    <main className="wb-body__main">
       {props.children}
     </main>
   )
@@ -47,7 +47,7 @@ Body.Main = props => {
 
 Body.Aside = props => {
   return (
-    <aside className="app-body__aside">
+    <aside className="wb-body__aside">
       {props.children}
     </aside>
   )
@@ -55,17 +55,17 @@ Body.Aside = props => {
 
 const Footer = props => {
   return (
-    <div className="app-footer">
+    <div className="wb-footer">
       <p>WorkerBook @2017-2019 React & Gin</p>
     </div>
   )
 }
 
 const Full = props => {
-  const css = classNames('app-full', props.className)
+  const css = classNames('wb-full', props.className)
   return (
     <div className={css}>
-      <div className="app-full__inner">
+      <div className="wb-full__inner">
         {props.children}
       </div>
     </div>

@@ -1,5 +1,5 @@
 
-.app-dialog {
+.wb-dialog {
   position: fixed;
   left: 0;
   top: 0;
@@ -17,7 +17,7 @@
     transition: all 0.2s ease-out;
   }
   &--in {
-    .app-dialog__bg {
+    .wb-dialog__bg {
       opacity: 1;
     }
   }

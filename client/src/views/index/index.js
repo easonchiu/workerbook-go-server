@@ -53,7 +53,7 @@ export default class View extends PureComponent {
   renderGroupList() {
     return (
       <AsideDepartmentList
-        data={this.props.group$.list}
+        data={this.props.department$.departments}
         active={this.props.user$.activeGroup}
         itemClick={this.evt.groupClick}
         onPageChange={this.evt.groupPageChange}

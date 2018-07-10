@@ -1,0 +1,58 @@
+
+.wb-select {
+  display: block;
+  width: 100%;
+  border: 1px solid #dee3e8;
+  height: 40px;
+  border-radius: 3px;
+  background: #fff;
+  max-width: 260px;
+  position: relative;
+  &__value {
+    font-size: 14px;
+    color: #586069;
+    width: 100%;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    padding: 5px 10px;
+    &:empty {
+      &:before {
+        color: #a8b0b9;
+        content: '请选择';
+      }
+    }
+  }
+  &__list {
+    position: absolute;
+    z-index: 999999;
+    left: -1px;
+    right: -1px;
+    top: 42px;
+    background: #fff;
+    border-radius: 3px;
+    border: 1px solid #dee3e8;
+    box-shadow: 0 10px 15px rgba(0, 39, 61, 0.05);
+    overflow: auto;
+    max-height: 41 * 5px;
+    li a {
+      display: block;
+      line-height: 1.5;
+      font-size: 14px;
+      color: #586069;
+      padding: 10px;
+      border-radius: 3px;
+      &:hover {
+        color: #5081ff;
+        background: #f7f9fc;
+      }
+      &.wb-select__list-active {
+        color: #5081ff;
+        font-weight: bold;
+      }
+      &.wb-select__list-none {
+        color: #a8b0b9 !important;
+      }
+    }
+  }
+}

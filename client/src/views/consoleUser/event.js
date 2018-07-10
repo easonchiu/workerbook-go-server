@@ -5,11 +5,21 @@ export default class Event {
   fetchData = async (pager = 1) => {
     try {
       await Promise.all([
-        this.props.$console.fetchUsersList({
+        this.props.$user.fetchList({
           skip: pager * 10 - 10,
           limit: 10,
         })
       ])
+    }
+    catch (err) {
+      Toast.error(err.message)
+    }
+  }
+
+  // 获取所有部门信息
+  fetchDepartments = async () => {
+    try {
+      await this.props.$department.fetchSelectList()
     }
     catch (err) {
       Toast.error(err.message)
@@ -29,18 +39,35 @@ export default class Event {
     })
   }
 
+  // 表单部门字段修改
+  onFormDepartmentChange = e => {
+    this.setState({
+      departmentId: e
+    })
+  }
+
+  // 表单职位字段修改
+  onFormRoleChange = e => {
+    this.setState({
+      role: e
+    })
+  }
+
   // 新增人员提交
   onFormSubmit = async () => {
     Err.IfEmpty(this.state.nickname, '姓名不能为空')
     Err.IfEmpty(this.state.departmentId, '请选择部门')
+    Err.IfEmpty(this.state.title, '职称不能为空')
+    Err.IfEmpty(this.state.role, '请选择职位')
     Err.IfEmpty(this.state.username, '登录帐号不能为空')
     Err.IfEmpty(this.state.password, '初始密码不能为空')
 
     if (!Err.Handle()) {
       try {
-        await this.props.$console.createUser({
+        await this.props.$user.create({
           nickname: this.state.nickname,
           departmentId: this.state.departmentId,
+          title: this.state.title,
           role: this.state.role,
           username: this.state.username,
           password: this.state.password,
@@ -59,13 +86,16 @@ export default class Event {
   onFormEditSubmit = async () => {
     Err.IfEmpty(this.state.nickname, '姓名不能为空')
     Err.IfEmpty(this.state.departmentId, '请选择部门')
+    Err.IfEmpty(this.state.title, '职称不能为空')
+    Err.IfEmpty(this.state.role, '请选择职位')
 
     if (!Err.Handle()) {
       try {
-        await this.props.$console.updateUser({
+        await this.props.$user.update({
           id: this.state.userId,
           nickname: this.state.nickname,
           departmentId: this.state.departmentId,
+          title: this.state.title,
           role: this.state.role,
           status: this.state.status,
         })
@@ -93,6 +123,7 @@ export default class Event {
       nickname: data.nickname,
       username: data.username,
       departmentId: data.departmentId,
+      title: data.title,
       role: data.role,
       status: data.status,
       userId: data.id,
@@ -113,7 +144,8 @@ export default class Event {
       userDialogVisible: false,
       nickname: '',
       username: '',
-      departmentId: '5b424feeaea6f431c2655006',
+      departmentId: '',
+      title: '',
       role: '',
       status: '',
       password: '',

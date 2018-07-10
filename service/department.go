@@ -46,7 +46,7 @@ func CreateDepartment(data model.Department) error {
   return nil
 }
 
-// Query group info by id.
+// 根据id查找部门信息
 func GetDepartmentInfoById(id bson.ObjectId) (*model.Department, error) {
   db, close, err := mongo.CloneDB()
 
@@ -67,8 +67,9 @@ func GetDepartmentInfoById(id bson.ObjectId) (*model.Department, error) {
   return data, nil
 }
 
-// Query groups list with skip and limit.
-func GetDepartmentsList(skip int, limit int) (gin.H, error) {
+// 查找部门列表
+// 当skip和limit都为0时，查找全部
+func GetDepartmentsList(skip int, limit int, query bson.M) (gin.H, error) {
   db, closer, err := mongo.CloneDB()
 
   if err != nil {
@@ -86,7 +87,11 @@ func GetDepartmentsList(skip int, limit int) (gin.H, error) {
   }
 
   // find it
-  err = db.C(model.DepartmentCollection).Find(nil).Skip(skip).Limit(limit).Sort("-createTime").All(data)
+  if skip == 0 && limit == 0 {
+    err = db.C(model.DepartmentCollection).Find(query).Sort("-createTime").All(data)
+  } else {
+    err = db.C(model.DepartmentCollection).Find(query).Skip(skip).Limit(limit).Sort("-createTime").All(data)
+  }
 
   if err != nil {
     if err == mgo.ErrNotFound {
@@ -107,6 +112,12 @@ func GetDepartmentsList(skip int, limit int) (gin.H, error) {
 
   for _, r := range *data {
     list = append(list, r.GetMap(db))
+  }
+
+  if skip == 0 && limit == 0 {
+    return gin.H{
+      "list":  list,
+    }, nil
   }
 
   return gin.H{

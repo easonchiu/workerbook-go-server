@@ -20,9 +20,12 @@ const (
   ErrSameNickname            = "100013"
   ErrNicknameTooShort        = "100014"
   ErrNicknameTooLong         = "100015"
-  ErrCreateUserFailed        = "100016"
-  ErrUpdateUserFailed        = "100017"
-  ErrLoginFailed             = "100018"
+  ErrUserTitleIsEmpty        = "100016"
+  ErrUserTitleTooLong        = "100017"
+  ErrUserRoleError           = "100018"
+  ErrCreateUserFailed        = "100019"
+  ErrUpdateUserFailed        = "100020"
+  ErrLoginFailed             = "100021"
 
   // 部门相关错误 101xxx
   ErrDepartmentIdError      = "101001"
@@ -32,9 +35,22 @@ const (
   ErrCreateDepartmentFailed = "101005"
   ErrUpdateDepartmentFailed = "101006"
 
-  // 日报相关错误 102xxx
-  ErrDailyIdError  = "102001"
-  ErrDailyNotFound = "102002"
+  // 项目相关错误 102xxx
+  ErrProjectIdError            = "102001"
+  ErrProjectNotFound           = "102002"
+  ErrProjectNameEmpty          = "102003"
+  ErrProjectNameTooShort       = "102005"
+  ErrProjectNameTooLong        = "102006"
+  ErrProjectDeadlineEmpty      = "102007"
+  ErrProjectDeadlineTooSoon    = "102008"
+  ErrProjectDepartmentsEmpty   = "102009"
+  ErrProjectDepartmentNotFound = "102010"
+  ErrCreateProjectFailed       = "102011"
+  ErrUpdateProjectFailed       = "102012"
+
+  // 日报相关错误 104xxx
+  ErrDailyIdError  = "104001"
+  ErrDailyNotFound = "104002"
 
   // 系统级错误 200xxx
   ErrSkipRange  = "200001"
@@ -68,9 +84,24 @@ var Error = map[string]ErrType{
   ErrUsernameTooLong:         {"帐号不得多于14个字", http.StatusOK, ""},
   ErrSameNickname:            {"已存在相同的姓名", http.StatusOK, ""},
   ErrNicknameTooShort:        {"姓名不得于少2个字", http.StatusOK, ""},
-  ErrNicknameTooLong:         {"姓名不得多于8个字", http.StatusOK, ""},
+  ErrNicknameTooLong:         {"姓名不得多于14个字", http.StatusOK, ""},
+  ErrUserTitleIsEmpty:        {"职称不能为空", http.StatusOK, ""},
+  ErrUserTitleTooLong:        {"职称不得多于14个字", http.StatusOK, ""},
+  ErrUserRoleError:           {"用户职位错误", http.StatusOK, ""},
   ErrCreateUserFailed:        {"创建用户失败", http.StatusOK, ""},
   ErrUpdateUserFailed:        {"更新用户失败", http.StatusOK, ""},
+
+  ErrProjectIdError:            {"项目id错误", http.StatusOK, ""},
+  ErrProjectNotFound:           {"找不到该项目", http.StatusOK, ""},
+  ErrProjectNameEmpty:          {"项目名称不能为空", http.StatusOK, ""},
+  ErrProjectNameTooShort:       {"项目名称不得少于4个字", http.StatusOK, ""},
+  ErrProjectNameTooLong:        {"项目名称不得多于15个字", http.StatusOK, ""},
+  ErrProjectDeadlineEmpty:      {"截至时间不能不空", http.StatusOK, ""},
+  ErrProjectDeadlineTooSoon:    {"截至时间不能早于当前时间", http.StatusOK, ""},
+  ErrProjectDepartmentsEmpty:   {"参与部门不能为空", http.StatusOK, ""},
+  ErrProjectDepartmentNotFound: {"没有找到相关的参与部门", http.StatusOK, ""},
+  ErrCreateProjectFailed:       {"创建项目失败", http.StatusOK, ""},
+  ErrUpdateProjectFailed:       {"更新项目失败", http.StatusOK, ""},
 
   ErrDailyIdError:  {"日报id错误", http.StatusOK, ""},
   ErrDailyNotFound: {"找不到相关日报", http.StatusOK, ""},

@@ -9,6 +9,7 @@ import (
   "gopkg.in/mgo.v2/bson"
   "net/http"
   "strconv"
+  "time"
   "workerbook/errno"
 )
 
@@ -72,9 +73,21 @@ func (c *Context) ErrorIfStringIsEmpty(str string, errNo string) error {
   return nil
 }
 
+// check array is empty
+func (c *Context) ErrorIfIntIsZero(val int, errNo string) error {
+  if val == 0 {
+    err := errors.New(errNo)
+    if c.Err == nil {
+      c.Err = err
+    }
+    return err
+  }
+  return nil
+}
+
 // check length of string is less then.
 func (c *Context) ErrorIfLenLessThen(str string, length int, errNo string) error {
-  if len(str) < length {
+  if len([]rune(str)) < length {
     err := errors.New(errNo)
     if c.Err == nil {
       c.Err = err
@@ -86,7 +99,31 @@ func (c *Context) ErrorIfLenLessThen(str string, length int, errNo string) error
 
 // check length of string is more then.
 func (c *Context) ErrorIfLenMoreThen(str string, length int, errNo string) error {
-  if len(str) > length {
+  if len([]rune(str)) > length {
+    err := errors.New(errNo)
+    if c.Err == nil {
+      c.Err = err
+    }
+    return err
+  }
+  return nil
+}
+
+// check time earlier then some time
+func (c *Context) ErrorIfTimeEarlierThen(t time.Time, t2 time.Time, errNo string) error {
+  if t.Before(t2) == true {
+    err := errors.New(errNo)
+    if c.Err == nil {
+      c.Err = err
+    }
+    return err
+  }
+  return nil
+}
+
+// check time later then some time
+func (c *Context) ErrorIfTimeLaterThen(t time.Time, t2 time.Time, errNo string) error {
+  if t.After(t2) == true {
     err := errors.New(errNo)
     if c.Err == nil {
       c.Err = err
@@ -184,6 +221,16 @@ func (c *Context) Error(errNo interface{}) {
 func (c *Context) getRaw(key string) string {
   res := gjson.GetBytes(c.RawData, key)
   return res.Str
+}
+
+func (c *Context) getRawArray(key string) []gjson.Result {
+  res := gjson.GetBytes(c.RawData, key)
+  return res.Array()
+}
+
+func (c *Context) getRawTime(key string) time.Time {
+  res := gjson.GetBytes(c.RawData, key)
+  return res.Time()
 }
 
 // get body by int

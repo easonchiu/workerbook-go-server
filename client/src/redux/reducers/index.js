@@ -2,14 +2,12 @@ import { combineReducers } from 'redux'
 
 import user$ from './user'
 import daily$ from './daily'
-import group$ from './group'
+import department$ from './department'
 import project$ from './project'
-import console$ from './console'
 
 export default combineReducers({
   user$,
   daily$,
-  group$,
+  department$,
   project$,
-  console$,
 })

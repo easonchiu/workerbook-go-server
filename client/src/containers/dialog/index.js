@@ -19,10 +19,10 @@ class Dialog extends React.PureComponent {
       })
     }
 
-    this.el = document.getElementById('app_dialogs')
+    this.el = document.getElementById('wb_dialogs')
     if (!this.el) {
       this.el = document.createElement('div')
-      this.el.id = 'app_dialogs'
+      this.el.id = 'wb_dialogs'
       document.body.appendChild(this.el)
     }
     this.dialogEl = document.createElement('div')
@@ -66,16 +66,16 @@ class Dialog extends React.PureComponent {
   }
 
   renderContent() {
-    const css = classNames('app-dialog', this.props.className, `app-dialog--${this.state.ani}`)
+    const css = classNames('wb-dialog', this.props.className, `wb-dialog--${this.state.ani}`)
     return (
       <div
         style={{ display: this.state.visible ? '' : 'none' }}
         className={css}
       >
-        <div className="app-dialog__content">
+        <div className="wb-dialog__content">
           {this.props.children}
         </div>
-        <div className="app-dialog__bg" />
+        <div className="wb-dialog__bg" />
       </div>
     )
   }

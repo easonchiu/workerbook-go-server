@@ -30,7 +30,7 @@ export default class View extends PureComponent {
       <div className="view-project">
         <Wrapper.Header nav="project" profile={profile} />
 
-        <div className="app-body">
+        <Wrapper.Body>
 
           <div className="project-list">
             <header>
@@ -47,7 +47,7 @@ export default class View extends PureComponent {
             </div>
           </div>
 
-        </div>
+        </Wrapper.Body>
 
         <Wrapper.Footer />
 

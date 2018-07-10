@@ -8,10 +8,16 @@ import (
 
 func registerDepartmentRouter(g *gin.RouterGroup) {
 
-  // g.GET("", middleware.Jwt, controller.GetDepartmentsList)
+  // 部门列表
+  g.GET("", middleware.ConsoleJwt, controller.GetDepartmentsList)
 
-  // g.GET("/:id", middleware.Jwt, controller.GetDepartmentOne)
+  // 全部部门列表
+  g.GET("all", middleware.ConsoleJwt, controller.GetAllDepartmentsList)
 
-  g.POST("", middleware.Jwt, controller.CreateDepartment)
+  // 添加部门
+  g.POST("", middleware.ConsoleJwt, controller.CreateDepartment)
+
+  // 修改部门
+  g.PUT("/:id", middleware.ConsoleJwt, controller.UpdateDepartment)
 
 }

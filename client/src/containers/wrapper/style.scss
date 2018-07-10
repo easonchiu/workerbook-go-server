@@ -4,7 +4,7 @@ body {
   background: #f7f9fc;
 }
 
-.app-header {
+.wb-header {
   height: 80px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
   background: #fff;
@@ -73,6 +73,7 @@ body {
     }
     span {
       display: flex;
+      justify-content: flex-end;
     }
     a {
       margin-left: 10px;
@@ -87,7 +88,7 @@ body {
   }
 }
 
-.app-full {
+.wb-full {
   border-bottom: 1px solid #dee3e8;
   background: #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
@@ -99,7 +100,7 @@ body {
   }
 }
 
-.app-body {
+.wb-body {
   display: flex;
   width: 1040px;
   margin: 0 auto;
@@ -112,7 +113,7 @@ body {
   }
 }
 
-.app-footer {
+.wb-footer {
   display: block;
   text-align: center;
   color: #a8b0b9;

@@ -6,13 +6,14 @@ import Event from './event'
 
 import Button from 'src/components/button'
 import Input from 'src/components/input'
+import Select from 'src/components/select'
 import Form from 'src/containers/form'
 import Pager from 'src/components/pager'
 import MainDialog from 'src/containers/mainDialog'
 
 @VIEW
 @ComponentEvent('evt', Event)
-class ConsoleUserList extends React.PureComponent {
+class ConsoleUser extends React.PureComponent {
   constructor(props) {
     super(props)
     this.state = {
@@ -20,7 +21,8 @@ class ConsoleUserList extends React.PureComponent {
       userId: '',
       nickname: '',
       username: '',
-      departmentId: '5b424feeaea6f431c2655006',
+      departmentId: '',
+      title: '',
       role: '',
       status: '',
       password: '',
@@ -29,9 +31,11 @@ class ConsoleUserList extends React.PureComponent {
 
   componentDidMount() {
     this.evt.fetchData()
+    this.evt.fetchDepartments()
   }
 
   renderDialog() {
+    const { select } = this.props.department$
     return (
       <MainDialog
         className="dialog-console-edit-user"
@@ -49,19 +53,37 @@ class ConsoleUserList extends React.PureComponent {
           </Form.Row>
 
           <Form.Row label="部门">
-            <Input
-              name="departmentId"
+            <Select
               value={this.state.departmentId}
+              onClick={this.evt.onFormDepartmentChange}
+            >
+              {
+                select.list.map(item => (
+                  <Select.Option key={item.id} value={item.id}>
+                    {item.name}
+                  </Select.Option>
+                ))
+              }
+            </Select>
+          </Form.Row>
+
+          <Form.Row label="职称">
+            <Input
+              name="title"
+              value={this.state.title}
               onChange={this.evt.onFormChange}
             />
           </Form.Row>
 
-          <Form.Row label="部门主管">
-            <Input
-              name="role"
+          <Form.Row label="职位">
+            <Select
               value={this.state.role}
-              onChange={this.evt.onFormChange}
-            />
+              onClick={this.evt.onFormRoleChange}
+            >
+              <Select.Option value={1}>开发者</Select.Option>
+              <Select.Option value={2}>部门管理者</Select.Option>
+              <Select.Option value={3}>观察者</Select.Option>
+            </Select>
           </Form.Row>
 
           {
@@ -117,26 +139,33 @@ class ConsoleUserList extends React.PureComponent {
   }
 
   render() {
-    const { users } = this.props.console$
+    const { users } = this.props.user$
     const header = (
       <tr>
         <td>编号</td>
         <td>姓名</td>
         <td>帐号</td>
         <td>部门</td>
+        <td>职称</td>
         <td>职位</td>
         <td>状态</td>
         <td>创建时间</td>
         <td>操作</td>
       </tr>
     )
+    const roles = {
+      1: '开发者',
+      2: '部门管理者',
+      3: '观察者',
+    }
     const body = users.list.map((res, i) => (
       <tr key={res.id}>
         <td>{users.skip + i + 1}</td>
         <td>{res.nickname}</td>
         <td>{res.username}</td>
         <td>{res.departmentName}</td>
-        <td>{res.role}</td>
+        <td>{res.title}</td>
+        <td>{roles[res.role]}</td>
         <td>{res.status}</td>
         <td>{new Date(res.createTime).format('yyyy-MM-dd hh:mm')}</td>
         <td className="c">
@@ -147,7 +176,7 @@ class ConsoleUserList extends React.PureComponent {
       </tr>
     ))
     return (
-      <div className="console-user-list">
+      <div className="console-user">
         <header>
           <h1>人员管理</h1>
           <Button onClick={this.evt.onAppendClick}>添加</Button>
@@ -167,4 +196,4 @@ class ConsoleUserList extends React.PureComponent {
   }
 }
 
-export default ConsoleUserList
+export default ConsoleUser

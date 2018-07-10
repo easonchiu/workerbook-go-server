@@ -7,7 +7,10 @@ export default class Event {
         this.props.$user.fetchProfile(),
         this.props.$user.fetchMyTodayDaily(),
         this.props.$daily.fetchListByDay(),
-        this.props.$group.fetchList(),
+        this.props.$department.fetchList({
+          skip: 0,
+          limit: 5,
+        }),
         this.props.$user.fetchList(),
         this.props.$project.fetchList({
           status: 1
@@ -37,8 +40,11 @@ export default class Event {
   // 侧栏分组翻页
   groupPageChange = async page => {
     try {
-      const { limit } = this.props.group$.list
-      await this.props.$group.fetchList({ skip: (page - 1) * limit })
+      const { limit } = this.props.department$.departments
+      await this.props.$department.fetchList({
+        skip: (page - 1) * limit,
+        limit
+      })
     }
     catch (err) {
       alert(err.message)

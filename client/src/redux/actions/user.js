@@ -1,5 +1,6 @@
 import http from 'src/utils/http'
 import { createAction } from 'easy-action'
+import ignore from 'src/utils/ignore'
 
 // user login
 const login = payload => async () => {
@@ -57,8 +58,28 @@ const fetchProfile = () => async (dispatch, getState) => {
   dispatch(createAction('USER_PROFILE')(res))
 }
 
-// fetch list
-const fetchList = ({ departmentId, skip, limit } = {}) => async dispatch => {
+// create user
+const create = payload => async () => {
+  const res = await http.request({
+    url: '/users',
+    method: 'POST',
+    data: payload,
+  })
+  return res
+}
+
+// update user
+const update = payload => async () => {
+  const res = await http.request({
+    url: '/users/' + payload.id,
+    method: 'PUT',
+    data: ignore(payload, 'id'),
+  })
+  return res
+}
+
+// fetch users list.
+const fetchList = ({ departmentId, skip, limit = 10 } = {}) => async dispatch => {
   const res = await http.request({
     url: '/users',
     method: 'GET',
@@ -68,12 +89,13 @@ const fetchList = ({ departmentId, skip, limit } = {}) => async dispatch => {
       limit,
     }
   })
-  res.departmentId = departmentId
   dispatch(createAction('USER_LIST')(res))
 }
 
 export default {
   login,
+  create,
+  update,
   fetchList,
   fetchProfile,
   appendDailyItem,

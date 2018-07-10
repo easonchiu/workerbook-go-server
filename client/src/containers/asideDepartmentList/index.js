@@ -19,7 +19,7 @@ const Item = props => {
 
 const AsideDepartmentList = props => {
   const { data = {}, active, itemClick = () => {} } = props
-  const { data: list, skip, limit, count } = data
+  const { list, skip, limit, count } = data
   return (
     <AsidePanel
       title="部门"
@@ -45,7 +45,7 @@ const AsideDepartmentList = props => {
                 <Item active={active === item.id} onClick={itemClick.bind(null, item.id)}>
                   <i />
                   <span>{item.name}</span>
-                  <em>{item.count}人</em>
+                  <em>{item.userCount}人</em>
                 </Item>
               </li>
             )

@@ -6,8 +6,9 @@ import Event from './event'
 import { Link, Route, Switch } from 'react-router-dom'
 
 import Wrapper from 'src/containers/wrapper'
-import ConsoleUserList from 'src/views/consoleUserList'
-import ConsoleDepartmentList from 'src/views/consoleDepartmentList'
+import ConsoleUser from 'src/views/consoleUser'
+import ConsoleDepartment from 'src/views/consoleDepartment'
+import ConsoleProject from 'src/views/consoleProject'
 
 @VIEW
 @ComponentEvent('evt', Event)
@@ -71,8 +72,9 @@ export default class View extends PureComponent {
           {this.renderAside()}
           <div className="console-body">
             <Switch>
-              <Route exact path="/console/user" component={ConsoleUserList} />
-              <Route exact path="/console/department" component={ConsoleDepartmentList} />
+              <Route exact path="/console/user" component={ConsoleUser} />
+              <Route exact path="/console/department" component={ConsoleDepartment} />
+              <Route exact path="/console/project" component={ConsoleProject} />
             </Switch>
           </div>
         </div>

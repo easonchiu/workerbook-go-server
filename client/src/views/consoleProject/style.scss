@@ -1,0 +1,44 @@
+
+.console-project {
+  header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    h1 {
+      flex: 1;
+      font-size: 20px;
+      line-height: 1.5;
+      color: #586069;
+      font-weight: bold;
+    }
+  }
+  .list {
+    overflow: hidden;
+    > .row {
+      display: flex;
+      margin-bottom: 10px;
+      &:last-child {
+        margin-bottom: 0;
+      }
+      > div {
+        display: block;
+        width: 100%;
+        flex: 1;
+        margin-right: 10px;
+        padding: 10px;
+        &:last-child {
+          margin-right: 0;
+        }
+      }
+    }
+  }
+}
+
+.dialog-console-edit-project {
+  .wb-form {
+    padding-bottom: 20px;
+    .wb-select {
+      max-width: 100%;
+    }
+  }
+}
