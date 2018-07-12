@@ -66,12 +66,7 @@ class ConsoleUserDialog extends React.PureComponent {
   }
 
   onFormSubmit = () => {
-    Err.IfEmpty(this.state.username, '登录帐号不能为空')
-    Err.IfEmpty(this.state.password, '初始密码不能为空')
-    Err.IfEmpty(this.state.nickname, '姓名不能为空')
-    Err.IfEmpty(this.state.departmentId, '请选择部门')
-    Err.IfEmpty(this.state.title, '职称不能为空')
-    Err.IfEmpty(this.state.role, '请选择职位')
+    
 
     if (!Err.Handle()) {
       this.props.onSubmit && this.props.onSubmit(ignore(this.state, 'id'))

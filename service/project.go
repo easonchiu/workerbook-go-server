@@ -4,10 +4,9 @@ import (
   "errors"
   "github.com/gin-gonic/gin"
   "gopkg.in/mgo.v2"
-  `gopkg.in/mgo.v2/bson`
-  `time`
-  "workerbook/errno"
-  `workerbook/model`
+  "gopkg.in/mgo.v2/bson"
+  "workerbook/errgo"
+  "workerbook/model"
   "workerbook/mongo"
 )
 
@@ -21,15 +20,11 @@ func CreateProject(data model.Project) error {
     defer close()
   }
 
-  // supplement other data.
-  data.CreateTime = time.Now()
-  data.Status = 1
-
   // insert it.
   err = db.C(model.ProjectCollection).Insert(data)
 
   if err != nil {
-    return errors.New(errno.ErrCreateProjectFailed)
+    return errors.New(errgo.ErrCreateProjectFailed)
   }
 
   return nil
@@ -51,7 +46,7 @@ func UpdateProject(id bson.ObjectId, data model.Project) error {
   })
 
   if err != nil {
-    return errors.New(errno.ErrUpdateProjectFailed)
+    return errors.New(errgo.ErrUpdateProjectFailed)
   }
 
   return nil
@@ -73,7 +68,7 @@ func GetProjectInfoById(id bson.ObjectId) (gin.H, error) {
 
   if err != nil {
     if err == mgo.ErrNotFound {
-      return nil, errors.New(errno.ErrProjectNotFound)
+      return nil, errors.New(errgo.ErrProjectNotFound)
     }
     return nil, err
   }
@@ -109,7 +104,7 @@ func GetProjectsList(skip int, limit int, query bson.M) (gin.H, error) {
 
   if err != nil {
     if err == mgo.ErrNotFound {
-      return nil, errors.New(errno.ErrProjectNotFound)
+      return nil, errors.New(errgo.ErrProjectNotFound)
     }
     return nil, err
   }
@@ -118,7 +113,7 @@ func GetProjectsList(skip int, limit int, query bson.M) (gin.H, error) {
   count, err := db.C(model.ProjectCollection).Count()
 
   if err != nil {
-    return nil, errors.New(errno.ErrProjectNotFound)
+    return nil, errors.New(errgo.ErrProjectNotFound)
   }
 
   // result

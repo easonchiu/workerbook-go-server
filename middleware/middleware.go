@@ -1,11 +1,11 @@
 package middleware
 
 import (
-  `github.com/gin-gonic/gin`
-  `gopkg.in/mgo.v2/bson`
-  `regexp`
-  `workerbook/controller`
-  "workerbook/errno"
+  "github.com/gin-gonic/gin"
+  "gopkg.in/mgo.v2/bson"
+  "regexp"
+  "workerbook/controller"
+  "workerbook/errgo"
 )
 
 func Register(g *gin.Engine) {
@@ -27,12 +27,12 @@ func Jwt(c *gin.Context) {
       c.Next()
     } else {
       ctx := controller.CreateCtx(c)
-      ctx.Error(errno.ErrUserReLogin)
+      ctx.Error(errgo.ErrUserReLogin)
       c.Abort()
     }
   } else {
     ctx := controller.CreateCtx(c)
-    ctx.Error(errno.ErrUserReLogin)
+    ctx.Error(errgo.ErrUserReLogin)
     c.Abort()
   }
 }
@@ -53,12 +53,12 @@ func ConsoleJwt(c *gin.Context) {
       c.Next()
     } else {
       ctx := controller.CreateCtx(c)
-      ctx.Error(errno.ErrUserReLogin)
+      ctx.Error(errgo.ErrUserReLogin)
       c.Abort()
     }
   } else {
     ctx := controller.CreateCtx(c)
-    ctx.Error(errno.ErrUserReLogin)
+    ctx.Error(errgo.ErrUserReLogin)
     c.Abort()
   }
 }

@@ -4,6 +4,7 @@ import Loading from 'src/components/loading'
 export default class Event {
   fetchData = async (pager = 1) => {
     try {
+      Loading.show()
       await Promise.all([
         this.props.$project.fetchList({
           skip: pager * 9 - 9,
@@ -13,6 +14,9 @@ export default class Event {
     }
     catch (err) {
       Toast.error(err.message)
+    }
+    finally {
+      Loading.hide()
     }
   }
 
@@ -35,6 +39,7 @@ export default class Event {
   onProjectFormSubmit = async data => {
     data.deadline = new Date(2018, 11, 20)
     try {
+      Loading.show()
       await this.props.$project.create(data)
       this.onCloseProjectDialog()
       await this.fetchData()
@@ -43,12 +48,16 @@ export default class Event {
     catch (err) {
       Toast.error(err.message)
     }
+    finally {
+      Loading.hide()
+    }
   }
 
   // 修改项目提交
   onProjectFormEditSubmit = async data => {
     data.deadline = new Date(2018, 11, 20)
     try {
+      Loading.show()
       await this.props.$project.update(data)
       this.onCloseProjectDialog()
       await this.fetchData()
@@ -56,6 +65,9 @@ export default class Event {
     }
     catch (err) {
       Toast.error(err.message)
+    }
+    finally {
+      Loading.hide()
     }
   }
 
@@ -68,6 +80,7 @@ export default class Event {
   // 项目编辑按钮点击
   onProjectEditClick = async data => {
     try {
+      Loading.show()
       const res = await this.props.$project.fetchOneById(data.id)
       res.departments = res.departments ? res.departments.map(i => i.id) : []
       this.projectDialog && this.projectDialog.$fill(res)
@@ -122,8 +135,8 @@ export default class Event {
 
   // 新增任务提交
   onMissionFormSubmit = async data => {
-    console.log(data)
     try {
+      Loading.show()
       await this.props.$mission.create(data)
       this.onCloseMissionDialog()
       await this.fetchData()
@@ -132,11 +145,15 @@ export default class Event {
     catch (err) {
       Toast.error(err.message)
     }
+    finally {
+      Loading.hide()
+    }
   }
 
   // 修改任务提交
   onMissionFormEditSubmit = async data => {
     try {
+      Loading.show()
       await this.props.$mission.update(data)
       this.onCloseMissionDialog()
       await this.fetchData()
@@ -144,6 +161,9 @@ export default class Event {
     }
     catch (err) {
       Toast.error(err.message)
+    }
+    finally {
+      Loading.hide()
     }
   }
 

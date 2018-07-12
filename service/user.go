@@ -5,8 +5,7 @@ import (
   "github.com/gin-gonic/gin"
   "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
-  "time"
-  "workerbook/errno"
+  "workerbook/errgo"
   "workerbook/model"
   "workerbook/mongo"
 )
@@ -26,28 +25,26 @@ func CreateUser(data model.User) error {
     data.Role = 1
   }
 
-  data.CreateTime = time.Now()
-
   // username must be the only.
   count, err := db.C(model.UserCollection).Find(bson.M{"username": data.UserName}).Count()
 
   if err != nil {
-    return errors.New(errno.ErrCreateUserFailed)
+    return errors.New(errgo.ErrCreateUserFailed)
   }
 
   if count > 0 {
-    return errors.New(errno.ErrSameUsername)
+    return errors.New(errgo.ErrSameUsername)
   }
 
   // nickname must be the only.
   count, err = db.C(model.UserCollection).Find(bson.M{"nickname": data.NickName}).Count()
 
   if err != nil {
-    return errors.New(errno.ErrCreateUserFailed)
+    return errors.New(errgo.ErrCreateUserFailed)
   }
 
   if count > 0 {
-    return errors.New(errno.ErrSameNickname)
+    return errors.New(errgo.ErrSameNickname)
   }
 
   // department must be exist.
@@ -55,7 +52,7 @@ func CreateUser(data model.User) error {
   db.FindRef(&data.Department).One(department)
 
   if department.Name == "" {
-    return errors.New(errno.ErrDepartmentNotFound)
+    return errors.New(errgo.ErrDepartmentNotFound)
   }
 
   // set status
@@ -65,7 +62,7 @@ func CreateUser(data model.User) error {
   err = db.C(model.UserCollection).Insert(data)
 
   if err != nil {
-    return errors.New(errno.ErrCreateUserFailed)
+    return errors.New(errgo.ErrCreateUserFailed)
   }
 
   // update count in department
@@ -93,18 +90,18 @@ func UpdateUser(id bson.ObjectId, data model.User) error {
   }).Count()
 
   if err != nil {
-    return errors.New(errno.ErrUpdateUserFailed)
+    return errors.New(errgo.ErrUpdateUserFailed)
   }
 
   if count > 0 {
-    return errors.New(errno.ErrSameNickname)
+    return errors.New(errgo.ErrSameNickname)
   }
 
   // 部门必选并必须存在
   count, err = db.FindRef(&data.Department).Count()
 
   if count == 0 {
-    return errors.New(errno.ErrDepartmentNotFound)
+    return errors.New(errgo.ErrDepartmentNotFound)
   }
 
   // 更新数据
@@ -113,7 +110,7 @@ func UpdateUser(id bson.ObjectId, data model.User) error {
   })
 
   if err != nil {
-    return errors.New(errno.ErrUpdateUserFailed)
+    return errors.New(errgo.ErrUpdateUserFailed)
   }
 
   // update count in department
@@ -141,7 +138,7 @@ func UserLogin(username string, password string) (id string, err error) {
 
   if err != nil {
     if err == mgo.ErrNotFound {
-      return "", errors.New(errno.ErrUsernameOrPasswordError)
+      return "", errors.New(errgo.ErrUsernameOrPasswordError)
     }
     return "", err
   } else {
@@ -165,7 +162,7 @@ func GetUserInfoById(id bson.ObjectId) (gin.H, error) {
 
   if err != nil {
     if err == mgo.ErrNotFound {
-      return nil, errors.New(errno.ErrUserNotFound)
+      return nil, errors.New(errgo.ErrUserNotFound)
     }
     return nil, err
   }
@@ -197,7 +194,7 @@ func GetUsersList(skip int, limit int, query bson.M) (gin.H, error) {
 
   if err != nil {
     if err == mgo.ErrNotFound {
-      return nil, errors.New(errno.ErrUserNotFound)
+      return nil, errors.New(errgo.ErrUserNotFound)
     }
     return nil, err
   }
@@ -206,7 +203,7 @@ func GetUsersList(skip int, limit int, query bson.M) (gin.H, error) {
   count, err := db.C(model.UserCollection).Find(query).Count()
 
   if err != nil {
-    return nil, errors.New(errno.ErrUserNotFound)
+    return nil, errors.New(errgo.ErrUserNotFound)
   }
 
   // result

@@ -6,7 +6,7 @@ import (
   "gopkg.in/mgo.v2/bson"
   "time"
   "workerbook/conf"
-  "workerbook/errno"
+  "workerbook/errgo"
   "workerbook/model"
   "workerbook/service"
 )
@@ -19,9 +19,9 @@ func GetProjectOne(c *gin.Context) {
   id := ctx.getParam("id")
 
   // check
-  ctx.ErrorIfStringNotObjectId(id, errno.ErrProjectIdError)
+  errgo.ErrorIfStringNotObjectId(id, errgo.ErrProjectIdError)
 
-  if ctx.HandleErrorIf() {
+  if errgo.HandleError(ctx.Error) {
     return
   }
 
@@ -49,16 +49,17 @@ func GetProjectsList(c *gin.Context) {
   limit := ctx.getQueryInt("limit")
 
   // check
-  ctx.ErrorIfIntLessThen(skip, 0, errno.ErrSkipRange)
-  ctx.ErrorIfIntLessThen(limit, 1, errno.ErrLimitRange)
-  ctx.ErrorIfIntMoreThen(limit, 100, errno.ErrLimitRange)
+  errgo.ErrorIfIntLessThen(skip, 0, errgo.ErrSkipRange)
+  errgo.ErrorIfIntLessThen(limit, 1, errgo.ErrLimitRange)
+  errgo.ErrorIfIntMoreThen(limit, 100, errgo.ErrLimitRange)
 
   // query
   data, err := service.GetProjectsList(skip, limit, nil)
 
   // check
   if err != nil {
-    ctx.Error(errno.ErrProjectNotFound)
+    ctx.Error(errgo.ErrProjectNotFound)
+    return
   }
 
   // return
@@ -79,13 +80,14 @@ func CreateProject(c *gin.Context) {
   weight := ctx.getRawInt("weight")
 
   // check
-  ctx.ErrorIfStringIsEmpty(name, errno.ErrProjectNameEmpty)
-  ctx.ErrorIfLenLessThen(name, 4, errno.ErrProjectNameTooShort)
-  ctx.ErrorIfLenMoreThen(name, 15, errno.ErrProjectNameTooLong)
-  ctx.ErrorIfTimeEarlierThen(deadline, time.Now(), errno.ErrProjectDeadlineTooSoon)
-  ctx.ErrorIfIntIsZero(len(departments), errno.ErrProjectDepartmentsEmpty)
+  errgo.ErrorIfStringIsEmpty(name, errgo.ErrProjectNameEmpty)
+  errgo.ErrorIfLenLessThen(name, 4, errgo.ErrProjectNameTooShort)
+  errgo.ErrorIfLenMoreThen(name, 15, errgo.ErrProjectNameTooLong)
+  errgo.ErrorIfTimeEarlierThen(deadline, time.Now(), errgo.ErrProjectDeadlineTooSoon)
+  errgo.ErrorIfIntIsZero(len(departments), errgo.ErrProjectDepartmentsEmpty)
   if weight != 1 && weight != 2 && weight != 3 {
-    ctx.Error(errno.ErrProjectWeightError)
+    ctx.Error(errgo.ErrProjectWeightError)
+    return
   }
 
   // handle departments and check is really an objectId
@@ -98,11 +100,11 @@ func CreateProject(c *gin.Context) {
         Id:         bson.ObjectIdHex(department.Str),
       })
     } else {
-      ctx.ErrorIfStringNotObjectId(department.Str, errno.ErrProjectDepartmentNotFound)
+      errgo.ErrorIfStringNotObjectId(department.Str, errgo.ErrProjectDepartmentNotFound)
     }
   }
 
-  if ctx.HandleErrorIf() {
+  if errgo.HandleError(ctx.Error) {
     return
   }
 
@@ -113,6 +115,8 @@ func CreateProject(c *gin.Context) {
     Departments: departmentsRef,
     Description: description,
     Weight:      weight,
+    CreateTime:  time.Now(),
+    Status:      1,
   }
 
   // insert
@@ -141,14 +145,15 @@ func UpdateProject(c *gin.Context) {
   weight := ctx.getRawInt("weight")
 
   // check
-  ctx.ErrorIfStringNotObjectId(id, errno.ErrProjectIdError)
-  ctx.ErrorIfStringIsEmpty(name, errno.ErrProjectNameEmpty)
-  ctx.ErrorIfLenLessThen(name, 4, errno.ErrProjectNameTooShort)
-  ctx.ErrorIfLenMoreThen(name, 15, errno.ErrProjectNameTooLong)
-  ctx.ErrorIfTimeEarlierThen(deadline, time.Now(), errno.ErrProjectDeadlineTooSoon)
-  ctx.ErrorIfIntIsZero(len(departments), errno.ErrProjectDepartmentsEmpty)
+  errgo.ErrorIfStringNotObjectId(id, errgo.ErrProjectIdError)
+  errgo.ErrorIfStringIsEmpty(name, errgo.ErrProjectNameEmpty)
+  errgo.ErrorIfLenLessThen(name, 4, errgo.ErrProjectNameTooShort)
+  errgo.ErrorIfLenMoreThen(name, 15, errgo.ErrProjectNameTooLong)
+  errgo.ErrorIfTimeEarlierThen(deadline, time.Now(), errgo.ErrProjectDeadlineTooSoon)
+  errgo.ErrorIfIntIsZero(len(departments), errgo.ErrProjectDepartmentsEmpty)
   if weight != 1 && weight != 2 && weight != 3 {
-    ctx.Error(errno.ErrProjectWeightError)
+    ctx.Error(errgo.ErrProjectWeightError)
+    return
   }
 
   // handle departments and check is really an objectId
@@ -161,11 +166,11 @@ func UpdateProject(c *gin.Context) {
         Id:         bson.ObjectIdHex(department.Str),
       })
     } else {
-      ctx.ErrorIfStringNotObjectId(department.Str, errno.ErrProjectDepartmentNotFound)
+      errgo.ErrorIfStringNotObjectId(department.Str, errgo.ErrProjectDepartmentNotFound)
     }
   }
 
-  if ctx.HandleErrorIf() {
+  if errgo.HandleError(ctx.Error) {
     return
   }
 

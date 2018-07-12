@@ -1,12 +1,12 @@
 package controller
 
 import (
-  `github.com/gin-gonic/gin`
-  `gopkg.in/mgo.v2`
-  `gopkg.in/mgo.v2/bson`
-  "workerbook/errno"
-  `workerbook/model`
-  `workerbook/service`
+  "github.com/gin-gonic/gin"
+  "gopkg.in/mgo.v2"
+  "gopkg.in/mgo.v2/bson"
+  "workerbook/errgo"
+  "workerbook/model"
+  "workerbook/service"
 )
 
 // 获取日报列表
@@ -19,9 +19,9 @@ func GetDailiesList(c *gin.Context) {
   limit := ctx.getQueryInt("limit")
 
   // check
-  ctx.ErrorIfIntLessThen(skip, 0, errno.ErrorSkipRange)
-  ctx.ErrorIfIntLessThen(limit, 0, errno.ErrorSkipRange)
-  ctx.ErrorIfIntMoreThen(limit, 100, errno.ErrorSkipRange)
+  errgo.ErrorIfIntLessThen(skip, 0, errgo.ErrorSkipRange)
+  errgo.ErrorIfIntLessThen(limit, 0, errgo.ErrorSkipRange)
+  errgo.ErrorIfIntMoreThen(limit, 100, errgo.ErrorSkipRange)
 
   // query
   dailiesList, err := service.GetDailiesList(skip, limit)
@@ -46,7 +46,7 @@ func GetDailyOne(c *gin.Context) {
   id := ctx.getParam("id")
 
   // check
-  ctx.ErrorIfStringNotObjectId(id, errno.ErrorDailyIdError)
+  errgo.ErrorIfStringNotObjectId(id, errgo.ErrorDailyIdError)
 
   // query
   dailyInfo, err := service.GetDailyInfoById(bson.ObjectIdHex(id))
@@ -73,17 +73,17 @@ func CreateMyTodayDailyItem(c *gin.Context) {
   record := ctx.getRaw("record")
 
   // check
-  ctx.ErrorIfStringNotObjectId(uid, errno.ErrorUserIdError)
-  ctx.ErrorIfStringIsEmpty(record, "日报内容不能为空")
-  ctx.ErrorIfIntLessThen(progress, 0, "请设置正确的项目进度")
-  ctx.ErrorIfIntMoreThen(progress, 100, "请设置正确的项目进度")
+  errgo.ErrorIfStringNotObjectId(uid, errgo.ErrorUserIdError)
+  errgo.ErrorIfStringIsEmpty(record, "日报内容不能为空")
+  errgo.ErrorIfIntLessThen(progress, 0, "请设置正确的项目进度")
+  errgo.ErrorIfIntMoreThen(progress, 100, "请设置正确的项目进度")
 
   // check user is exist or not.
   _ := service.GetUserInfoById(bson.ObjectIdHex(uid))
 
   // find the project info if has pid
   if pid != "" {
-    ctx.ErrorIfStringNotObjectId(pid, "无效的项目")
+    errgo.ErrorIfStringNotObjectId(pid, "无效的项目")
 
     // find the project info.
     _, err := service.GetProjectInfoById(bson.ObjectIdHex(pid))
@@ -138,8 +138,8 @@ func DeleteUserTodayDailyItem(c *gin.Context) {
   itemId := ctx.getParam("itemId")
 
   // check
-  ctx.ErrorIfStringNotObjectId(uid, errno.ErrorUserIdError)
-  ctx.ErrorIfStringNotObjectId(itemId, errno.ErrorDailyIdError)
+  errgo.ErrorIfStringNotObjectId(uid, errgo.ErrorUserIdError)
+  errgo.ErrorIfStringNotObjectId(itemId, errgo.ErrorDailyIdError)
 
   // 删除今天中相应的日报
   err := service.DeleteTodayDailyItemFromUsersDailyList(bson.ObjectIdHex(uid), bson.ObjectIdHex(itemId))
@@ -158,7 +158,7 @@ func GetMyTodayDaily(c *gin.Context) {
 
   uid := ctx.get("uid")
 
-  ctx.ErrorIfStringNotObjectId(uid, errno.ErrorUserIdError)
+  errgo.ErrorIfStringNotObjectId(uid, errgo.ErrorUserIdError)
 
   dailyInfo, err := service.GetUserTodayDaily(bson.ObjectIdHex(uid))
 

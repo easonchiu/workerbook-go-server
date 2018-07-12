@@ -3,7 +3,7 @@ package controller
 import (
   "github.com/gin-gonic/gin"
   "gopkg.in/mgo.v2/bson"
-  "workerbook/errno"
+  "workerbook/errgo"
   "workerbook/model"
   "workerbook/service"
 )
@@ -18,9 +18,9 @@ func GetDepartmentsList(c *gin.Context) {
 
   // check
   if limit != 0 {
-    ctx.ErrorIfIntLessThen(skip, 0, errno.ErrSkipRange)
-    ctx.ErrorIfIntLessThen(limit, 1, errno.ErrLimitRange)
-    ctx.ErrorIfIntMoreThen(limit, 100, errno.ErrLimitRange)
+    errgo.ErrorIfIntLessThen(skip, 0, errgo.ErrSkipRange)
+    errgo.ErrorIfIntLessThen(limit, 1, errgo.ErrLimitRange)
+    errgo.ErrorIfIntMoreThen(limit, 100, errgo.ErrLimitRange)
   }
 
   // query
@@ -28,7 +28,8 @@ func GetDepartmentsList(c *gin.Context) {
 
   // check
   if err != nil {
-    ctx.Error(errno.ErrDepartmentNotFound)
+    ctx.Error(errgo.ErrDepartmentNotFound)
+    return
   }
 
   // return
@@ -45,9 +46,9 @@ func CreateDepartment(c *gin.Context) {
   name := ctx.getRaw("name")
 
   // check
-  ctx.ErrorIfStringIsEmpty(name, errno.ErrDepartmentNameEmpty)
+  errgo.ErrorIfStringIsEmpty(name, errgo.ErrDepartmentNameEmpty)
 
-  if ctx.HandleErrorIf() {
+  if errgo.HandleError(ctx.Error) {
     return
   }
 
@@ -78,9 +79,9 @@ func GetDepartmentOne(c *gin.Context) {
   id := ctx.getParam("id")
 
   // check
-  ctx.ErrorIfStringNotObjectId(id, errno.ErrDepartmentIdError)
+  errgo.ErrorIfStringNotObjectId(id, errgo.ErrDepartmentIdError)
 
-  if ctx.HandleErrorIf() {
+  if errgo.HandleError(ctx.Error) {
     return
   }
 
@@ -108,10 +109,10 @@ func UpdateDepartment(c *gin.Context) {
   name := ctx.getRaw("name")
 
   // check
-  ctx.ErrorIfStringNotObjectId(id, errno.ErrDepartmentIdError)
-  ctx.ErrorIfStringIsEmpty(name, errno.ErrDepartmentNameEmpty)
+  errgo.ErrorIfStringNotObjectId(id, errgo.ErrDepartmentIdError)
+  errgo.ErrorIfStringIsEmpty(name, errgo.ErrDepartmentNameEmpty)
 
-  if ctx.HandleErrorIf() {
+  if errgo.HandleError(ctx.Error) {
     return
   }
 

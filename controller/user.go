@@ -4,8 +4,9 @@ import (
   "github.com/gin-gonic/gin"
   "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
+  "time"
   "workerbook/conf"
-  "workerbook/errno"
+  "workerbook/errgo"
   "workerbook/model"
   "workerbook/service"
 )
@@ -19,10 +20,10 @@ func UserLogin(c *gin.Context) {
   password := ctx.getRaw("password")
 
   // check
-  ctx.ErrorIfStringIsEmpty(username, errno.ErrUsernameEmpty)
-  ctx.ErrorIfStringIsEmpty(password, errno.ErrPasswordEmpty)
+  errgo.ErrorIfStringIsEmpty(username, errgo.ErrUsernameEmpty)
+  errgo.ErrorIfStringIsEmpty(password, errgo.ErrPasswordEmpty)
 
-  if ctx.HandleErrorIf() {
+  if errgo.HandleError(ctx.Error) {
     return
   }
 
@@ -52,13 +53,13 @@ func GetUsersList(c *gin.Context) {
 
   // check
   if departmentId != "" {
-    ctx.ErrorIfStringNotObjectId(departmentId, errno.ErrDepartmentIdError)
+    errgo.ErrorIfStringNotObjectId(departmentId, errgo.ErrDepartmentIdError)
   }
-  ctx.ErrorIfIntLessThen(skip, 0, errno.ErrSkipRange)
-  ctx.ErrorIfIntLessThen(limit, 1, errno.ErrLimitRange)
-  ctx.ErrorIfIntMoreThen(limit, 100, errno.ErrLimitRange)
+  errgo.ErrorIfIntLessThen(skip, 0, errgo.ErrSkipRange)
+  errgo.ErrorIfIntLessThen(limit, 1, errgo.ErrLimitRange)
+  errgo.ErrorIfIntMoreThen(limit, 100, errgo.ErrLimitRange)
 
-  if ctx.HandleErrorIf() {
+  if errgo.HandleError(ctx.Error) {
     return
   }
 
@@ -92,9 +93,9 @@ func GetUserOne(c *gin.Context) {
   id := ctx.getParam("id")
 
   // check
-  ctx.ErrorIfStringNotObjectId(id, errno.ErrUserIdError)
+  errgo.ErrorIfStringNotObjectId(id, errgo.ErrUserIdError)
 
-  if ctx.HandleErrorIf() {
+  if errgo.HandleError(ctx.Error) {
     return
   }
 
@@ -121,9 +122,9 @@ func GetProfile(c *gin.Context) {
   id := ctx.get("uid")
 
   // check
-  ctx.ErrorIfStringNotObjectId(id, errno.ErrUserIdError)
+  errgo.ErrorIfStringNotObjectId(id, errgo.ErrUserIdError)
 
-  if ctx.HandleErrorIf() {
+  if errgo.HandleError(ctx.Error) {
     return
   }
 
@@ -156,21 +157,22 @@ func CreateUser(c *gin.Context) {
   password := ctx.getRaw("password")
 
   // check
-  ctx.ErrorIfStringIsEmpty(nickname, errno.ErrNicknameEmpty)
-  ctx.ErrorIfLenLessThen(nickname, 2, errno.ErrNicknameTooShort)
-  ctx.ErrorIfLenMoreThen(nickname, 14, errno.ErrNicknameTooLong)
-  ctx.ErrorIfStringNotObjectId(departmentId, errno.ErrDepartmentIdError)
-  ctx.ErrorIfStringIsEmpty(title, errno.ErrUserTitleIsEmpty)
-  ctx.ErrorIfLenMoreThen(title, 14, errno.ErrUserTitleTooLong)
+  errgo.ErrorIfStringIsEmpty(nickname, errgo.ErrNicknameEmpty)
+  errgo.ErrorIfLenLessThen(nickname, 2, errgo.ErrNicknameTooShort)
+  errgo.ErrorIfLenMoreThen(nickname, 14, errgo.ErrNicknameTooLong)
+  errgo.ErrorIfStringNotObjectId(departmentId, errgo.ErrDepartmentIdError)
+  errgo.ErrorIfStringIsEmpty(title, errgo.ErrUserTitleIsEmpty)
+  errgo.ErrorIfLenMoreThen(title, 14, errgo.ErrUserTitleTooLong)
   if role != 1 && role != 2 && role != 3 {
-    ctx.Error(errno.ErrUserRoleError)
+    ctx.Error(errgo.ErrUserRoleError)
+    return
   }
-  ctx.ErrorIfStringIsEmpty(username, errno.ErrUsernameEmpty)
-  ctx.ErrorIfLenLessThen(username, 6, errno.ErrUsernameTooShort)
-  ctx.ErrorIfLenMoreThen(username, 14, errno.ErrUsernameTooLong)
-  ctx.ErrorIfStringIsEmpty(password, errno.ErrPasswordEmpty)
+  errgo.ErrorIfStringIsEmpty(username, errgo.ErrUsernameEmpty)
+  errgo.ErrorIfLenLessThen(username, 6, errgo.ErrUsernameTooShort)
+  errgo.ErrorIfLenMoreThen(username, 14, errgo.ErrUsernameTooLong)
+  errgo.ErrorIfStringIsEmpty(password, errgo.ErrPasswordEmpty)
 
-  if ctx.HandleErrorIf() {
+  if errgo.HandleError(ctx.Error) {
     return
   }
 
@@ -184,10 +186,11 @@ func CreateUser(c *gin.Context) {
       Collection: model.DepartmentCollection,
       Database:   conf.DBName,
     },
-    Title:    title,
-    Role:     role,
-    Mobile:   "",
-    Password: password,
+    Title:      title,
+    Role:       role,
+    Mobile:     "",
+    Password:   password,
+    CreateTime: time.Now(),
   }
 
   // insert
@@ -216,17 +219,18 @@ func UpdateUser(c *gin.Context) {
   status := ctx.getRawInt("status")
 
   // check
-  ctx.ErrorIfStringIsEmpty(nickname, errno.ErrNicknameEmpty)
-  ctx.ErrorIfLenLessThen(nickname, 2, errno.ErrNicknameTooShort)
-  ctx.ErrorIfLenMoreThen(nickname, 14, errno.ErrNicknameTooLong)
-  ctx.ErrorIfStringNotObjectId(departmentId, errno.ErrDepartmentIdError)
-  ctx.ErrorIfStringIsEmpty(title, errno.ErrUserTitleIsEmpty)
-  ctx.ErrorIfLenMoreThen(title, 14, errno.ErrUserTitleTooLong)
+  errgo.ErrorIfStringIsEmpty(nickname, errgo.ErrNicknameEmpty)
+  errgo.ErrorIfLenLessThen(nickname, 2, errgo.ErrNicknameTooShort)
+  errgo.ErrorIfLenMoreThen(nickname, 14, errgo.ErrNicknameTooLong)
+  errgo.ErrorIfStringNotObjectId(departmentId, errgo.ErrDepartmentIdError)
+  errgo.ErrorIfStringIsEmpty(title, errgo.ErrUserTitleIsEmpty)
+  errgo.ErrorIfLenMoreThen(title, 14, errgo.ErrUserTitleTooLong)
   if role != 1 && role != 2 && role != 3 {
-    ctx.Error(errno.ErrUserRoleError)
+    ctx.Error(errgo.ErrUserRoleError)
+    return
   }
 
-  if ctx.HandleErrorIf() {
+  if errgo.HandleError(ctx.Error) {
     return
   }
 

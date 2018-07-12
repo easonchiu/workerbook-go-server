@@ -1,158 +1,25 @@
 package controller
 
 import (
-  "errors"
   "fmt"
   "github.com/gin-gonic/gin"
   "github.com/tidwall/gjson"
-  "gopkg.in/mgo.v2"
-  "gopkg.in/mgo.v2/bson"
   "net/http"
   "strconv"
   "strings"
   "time"
-  "workerbook/errno"
+  "workerbook/errgo"
 )
 
 type Context struct {
-  Ctx *gin.Context
-  Err error // 这个err用于错误的合并处理，在下列代码中只会存一次err，并在处理后设为nil
+  Ctx     *gin.Context
   RawData []byte
 }
 
 // create a new context
 func CreateCtx(c *gin.Context) *Context {
   bytes, _ := c.GetRawData()
-  return &Context{c, nil, bytes}
-}
-
-// check value is less then some int value.
-func (c *Context) ErrorIfIntLessThen(val int, min int, errNo string) error {
-  if val < min {
-    err := errors.New(errNo)
-    if c.Err == nil {
-      c.Err = err
-    }
-    return err
-  }
-  return nil
-}
-
-// check value is more then some int value.
-func (c *Context) ErrorIfIntMoreThen(val int, max int, errNo string) error {
-  if val > max {
-    err := errors.New(errNo)
-    if c.Err == nil {
-      c.Err = err
-    }
-    return err
-  }
-  return nil
-}
-
-// check value is objectId or not
-func (c *Context) ErrorIfStringNotObjectId(id string, errNo string) error {
-  if !bson.IsObjectIdHex(id) {
-    err := errors.New(errNo)
-    if c.Err == nil {
-      c.Err = err
-    }
-    return err
-  }
-  return nil
-}
-
-// check value is empty string
-func (c *Context) ErrorIfStringIsEmpty(str string, errNo string) error {
-  if str == "" {
-    err := errors.New(errNo)
-    if c.Err == nil {
-      c.Err = err
-    }
-    return err
-  }
-  return nil
-}
-
-// check array is empty
-func (c *Context) ErrorIfIntIsZero(val int, errNo string) error {
-  if val == 0 {
-    err := errors.New(errNo)
-    if c.Err == nil {
-      c.Err = err
-    }
-    return err
-  }
-  return nil
-}
-
-// check length of string is less then.
-func (c *Context) ErrorIfLenLessThen(str string, length int, errNo string) error {
-  if len([]rune(str)) < length {
-    err := errors.New(errNo)
-    if c.Err == nil {
-      c.Err = err
-    }
-    return err
-  }
-  return nil
-}
-
-// check length of string is more then.
-func (c *Context) ErrorIfLenMoreThen(str string, length int, errNo string) error {
-  if len([]rune(str)) > length {
-    err := errors.New(errNo)
-    if c.Err == nil {
-      c.Err = err
-    }
-    return err
-  }
-  return nil
-}
-
-// check time earlier then some time
-func (c *Context) ErrorIfTimeEarlierThen(t time.Time, t2 time.Time, errNo string) error {
-  if t.Before(t2) == true {
-    err := errors.New(errNo)
-    if c.Err == nil {
-      c.Err = err
-    }
-    return err
-  }
-  return nil
-}
-
-// check time later then some time
-func (c *Context) ErrorIfTimeLaterThen(t time.Time, t2 time.Time, errNo string) error {
-  if t.After(t2) == true {
-    err := errors.New(errNo)
-    if c.Err == nil {
-      c.Err = err
-    }
-    return err
-  }
-  return nil
-}
-
-// check value is mgo not-found
-func (c *Context) ErrorIfMgoNotFound(err error, errNo string) error {
-  if err == mgo.ErrNotFound {
-    err := errors.New(errNo)
-    if c.Err == nil {
-      c.Err = err
-    }
-    return err
-  }
-  return nil
-}
-
-// 处理ErrorIf相关的错误
-func (c *Context) HandleErrorIf() bool {
-  if c.Err != nil {
-    c.Error(c.Err)
-    return true
-  }
-  return false
+  return &Context{c, bytes}
 }
 
 // success handle
@@ -177,30 +44,15 @@ func (c *Context) Success(data gin.H) {
   }
 
   c.Ctx.JSON(status, respH)
+
+  c.Ctx.Done()
 }
 
 // 处理错误
 func (c *Context) Error(errNo interface{}) {
 
-  errStrNo := ""
-
-  switch errNo.(type) {
-  case string:
-    errStrNo = errNo.(string)
-  case error:
-    errStrNo = errNo.(error).Error()
-  default:
-    errStrNo = errno.DefaultType.Code
-  }
-
-  err := errno.Error[errStrNo]
-  err.Code = errStrNo
-
-  c.Err = nil
-
-  if err.Code == "" {
-    err = errno.DefaultType
-  }
+  // 根据错误号获取错误内容（错误号是个string或error）
+  err := errgo.Get(errNo)
 
   fmt.Println()
   fmt.Println(" >>> ERROR:", err.Message)
@@ -211,11 +63,16 @@ func (c *Context) Error(errNo interface{}) {
   fmt.Println(" >>> USER AUTH:", c.Ctx.Request.Header.Get("authorization"))
   fmt.Println()
 
+  // 清楚错误栈
+  errgo.ClearErrorStack()
+
   c.Ctx.JSON(err.Status, gin.H{
     "msg":  err.Message,
     "code": err.Code,
     "data": nil,
   })
+
+  c.Ctx.Done()
 }
 
 // get body by string

@@ -4,6 +4,7 @@ import Loading from 'src/components/loading'
 export default class Event {
   fetchData = async (pager = 1) => {
     try {
+      Loading.show()
       await Promise.all([
         this.props.$department.fetchList({
           skip: pager * 30 - 30,
@@ -13,6 +14,9 @@ export default class Event {
     }
     catch (err) {
       Toast.error(err.message)
+    }
+    finally {
+      Loading.hide()
     }
   }
 
@@ -24,6 +28,7 @@ export default class Event {
   // 新增部门提交
   onFormSubmit = async data => {
     try {
+      Loading.show()
       await this.props.$department.create(data)
       this.onCloseDialog()
       await this.fetchData()
@@ -32,11 +37,15 @@ export default class Event {
     catch (err) {
       Toast.error(err.message)
     }
+    finally {
+      Loading.hide()
+    }
   }
 
   // 修改部门提交
   onFormEditSubmit = async data => {
     try {
+      Loading.show()
       await this.props.$department.update(data)
       this.onCloseDialog()
       await this.fetchData()
@@ -44,6 +53,9 @@ export default class Event {
     }
     catch (err) {
       Toast.error(err.message)
+    }
+    finally {
+      Loading.hide()
     }
   }
 
@@ -56,6 +68,7 @@ export default class Event {
   // 编辑按钮点击
   onEditClick = async data => {
     try {
+      Loading.show()
       const res = await this.props.$department.fetchOneById(data.id)
       this.departmentDialog && this.departmentDialog.$fill(res)
       this.onOpenDialog()

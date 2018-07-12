@@ -15,6 +15,9 @@ export default class Event {
     catch (err) {
       Toast.error(err.message)
     }
+    finally {
+      Loading.hide()
+    }
   }
 
   // 获取所有部门信息
@@ -35,6 +38,7 @@ export default class Event {
   // 新增人员提交
   onFormSubmit = async data => {
     try {
+      Loading.show()
       await this.props.$user.create(data)
       this.onCloseDialog()
       await this.fetchData()
@@ -43,11 +47,15 @@ export default class Event {
     catch (err) {
       Toast.error(err.message)
     }
+    finally {
+      Loading.hide()
+    }
   }
 
   // 修改人员提交
   onFormEditSubmit = async data => {
     try {
+      Loading.show()
       await this.props.$user.update(data)
       this.onCloseDialog()
       await this.fetchData()
@@ -55,6 +63,9 @@ export default class Event {
     }
     catch (err) {
       Toast.error(err.message)
+    }
+    finally {
+      Loading.hide()
     }
   }
 

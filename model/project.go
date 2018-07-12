@@ -28,7 +28,7 @@ type Project struct {
   Departments []mgo.DBRef `bson:"departments,omitempty"`
 
   // 任务列表
-  Missions []Mission `bson:"missions,omitempty"`
+  Missions []mgo.DBRef `bson:"missions,omitempty"`
 
   // 项目说明
   Description string `bson:"description,omitempty"`
@@ -63,28 +63,4 @@ func (p Project) GetMap(db *mgo.Database) gin.H {
     "departments":  departments,
     "weight":       p.Weight,
   }
-}
-
-// collection schema
-type Mission struct {
-  // id
-  Id bson.ObjectId `json:"id" bson:"_id"`
-
-  // 任务名
-  Name string `json:"name"`
-
-  // 进度，这个值的算法为：于次日10点结算前一天的所有日报，该天如果有用户针对该任务写日报，则每人针该进度写的值取平均
-  Progress int `json:"progress"`
-
-  // 描述
-  Summary string `json:"summary"`
-
-  // 类型 1. 评估 2. 开发 3. 测试 4. 上线
-  Type int `json:"type"`
-
-  // 类型中文字
-  TypeText string `json:"typeText"`
-
-  // 状态 1. 正常 2. 停止
-  Status int `json:"status"`
 }

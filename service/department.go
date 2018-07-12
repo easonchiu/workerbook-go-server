@@ -6,7 +6,7 @@ import (
   "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
   "time"
-  "workerbook/errno"
+  "workerbook/errgo"
   "workerbook/model"
   "workerbook/mongo"
 )
@@ -33,14 +33,14 @@ func CreateDepartment(data model.Department) error {
   }
 
   if count > 0 {
-    return errors.New(errno.ErrSameDepartmentName)
+    return errors.New(errgo.ErrSameDepartmentName)
   }
 
   // insert it.
   err = db.C(model.DepartmentCollection).Insert(data)
 
   if err != nil {
-    return errors.New(errno.ErrCreateDepartmentFailed)
+    return errors.New(errgo.ErrCreateDepartmentFailed)
   }
 
   return nil
@@ -62,7 +62,7 @@ func GetDepartmentInfoById(id bson.ObjectId) (gin.H, error) {
 
   if err != nil {
     if err == mgo.ErrNotFound {
-      return nil, errors.New(errno.ErrDepartmentNotFound)
+      return nil, errors.New(errgo.ErrDepartmentNotFound)
     }
     return nil, err
   }
@@ -98,7 +98,7 @@ func GetDepartmentsList(skip int, limit int, query bson.M) (gin.H, error) {
 
   if err != nil {
     if err == mgo.ErrNotFound {
-      return nil, errors.New(errno.ErrDepartmentNotFound)
+      return nil, errors.New(errgo.ErrDepartmentNotFound)
     }
     return nil, err
   }
@@ -120,7 +120,7 @@ func GetDepartmentsList(skip int, limit int, query bson.M) (gin.H, error) {
   count, err := db.C(model.DepartmentCollection).Count()
 
   if err != nil {
-    return nil, errors.New(errno.ErrDepartmentNotFound)
+    return nil, errors.New(errgo.ErrDepartmentNotFound)
   }
 
   return gin.H{
@@ -181,11 +181,11 @@ func UpdateDepartment(id bson.ObjectId, data model.Department) error {
   }).Count()
 
   if err != nil {
-    return errors.New(errno.ErrUpdateDepartmentFailed)
+    return errors.New(errgo.ErrUpdateDepartmentFailed)
   }
 
   if count > 0 {
-    return errors.New(errno.ErrSameDepartmentName)
+    return errors.New(errgo.ErrSameDepartmentName)
   }
 
   // 更新数据
@@ -194,7 +194,7 @@ func UpdateDepartment(id bson.ObjectId, data model.Department) error {
   })
 
   if err != nil {
-    return errors.New(errno.ErrUpdateDepartmentFailed)
+    return errors.New(errgo.ErrUpdateDepartmentFailed)
   }
 
   return nil
