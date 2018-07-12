@@ -47,13 +47,13 @@ func CreateDepartment(data model.Department) error {
 }
 
 // 根据id查找部门信息
-func GetDepartmentInfoById(id bson.ObjectId) (*model.Department, error) {
+func GetDepartmentInfoById(id bson.ObjectId) (gin.H, error) {
   db, close, err := mongo.CloneDB()
 
   data := new(model.Department)
 
   if err != nil {
-    return data, err
+    return nil, err
   } else {
     defer close()
   }
@@ -61,10 +61,13 @@ func GetDepartmentInfoById(id bson.ObjectId) (*model.Department, error) {
   err = db.C(model.DepartmentCollection).FindId(id).One(data)
 
   if err != nil {
-    return data, err
+    if err == mgo.ErrNotFound {
+      return nil, errors.New(errno.ErrDepartmentNotFound)
+    }
+    return nil, err
   }
 
-  return data, nil
+  return data.GetMap(db), nil
 }
 
 // 查找部门列表
@@ -100,13 +103,6 @@ func GetDepartmentsList(skip int, limit int, query bson.M) (gin.H, error) {
     return nil, err
   }
 
-  // get count
-  count, err := db.C(model.DepartmentCollection).Count()
-
-  if err != nil {
-    return nil, errors.New(errno.ErrDepartmentNotFound)
-  }
-
   // result
   var list []gin.H
 
@@ -118,6 +114,13 @@ func GetDepartmentsList(skip int, limit int, query bson.M) (gin.H, error) {
     return gin.H{
       "list":  list,
     }, nil
+  }
+
+  // get count
+  count, err := db.C(model.DepartmentCollection).Count()
+
+  if err != nil {
+    return nil, errors.New(errno.ErrDepartmentNotFound)
   }
 
   return gin.H{
@@ -160,7 +163,7 @@ func UpdateDepartmentsUserCount() error {
   return nil
 }
 
-func UpdateDepartment(id bson.ObjectId, m bson.M) error {
+func UpdateDepartment(id bson.ObjectId, data model.Department) error {
   db, closer, err := mongo.CloneDB()
 
   if err != nil {
@@ -171,7 +174,7 @@ func UpdateDepartment(id bson.ObjectId, m bson.M) error {
 
   // 名称唯一
   count, err := db.C(model.DepartmentCollection).Find(bson.M{
-    "name": m["name"],
+    "name": data.Name,
     "_id": bson.M{
       "$ne": id,
     },
@@ -187,7 +190,7 @@ func UpdateDepartment(id bson.ObjectId, m bson.M) error {
 
   // 更新数据
   err = db.C(model.DepartmentCollection).UpdateId(id, bson.M{
-    "$set": m,
+    "$set": data,
   })
 
   if err != nil {

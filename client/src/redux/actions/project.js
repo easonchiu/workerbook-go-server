@@ -1,5 +1,26 @@
 import { createAction } from 'easy-action'
 import http from 'src/utils/http'
+import ignore from 'src/utils/ignore'
+
+// create project
+const create = payload => async () => {
+  const res = await http.request({
+    url: '/projects',
+    method: 'POST',
+    data: payload
+  })
+  return res
+}
+
+// update project
+const update = payload => async () => {
+  const res = await http.request({
+    url: '/projects/' + payload.id,
+    method: 'PUT',
+    data: ignore(payload, 'id'),
+  })
+  return res
+}
 
 // fetch project list.
 const fetchList = ({ status, skip, limit } = {}) => async dispatch => {
@@ -15,17 +36,18 @@ const fetchList = ({ status, skip, limit } = {}) => async dispatch => {
   dispatch(createAction('PROJECT_LIST')(res))
 }
 
-// create project
-const create = payload => async () => {
+// fetch project one by id
+const fetchOneById = id => async dispatch => {
   const res = await http.request({
-    url: '/projects',
-    method: 'POST',
-    data: payload
+    url: '/projects/' + id,
+    method: 'GET',
   })
   return res
 }
 
 export default {
-  fetchList,
   create,
+  update,
+  fetchOneById,
+  fetchList,
 }

@@ -92,12 +92,23 @@ const fetchList = ({ departmentId, skip, limit = 10 } = {}) => async dispatch =>
   dispatch(createAction('USER_LIST')(res))
 }
 
+// fetch user one by id
+const fetchOneById = id => async dispatch => {
+  const res = await http.request({
+    url: '/users/' + id,
+    method: 'GET',
+  })
+  return res
+}
+
 export default {
   login,
   create,
   update,
   fetchList,
   fetchProfile,
+  fetchOneById,
+
   appendDailyItem,
   deleteDailyItem,
   fetchMyTodayDaily,

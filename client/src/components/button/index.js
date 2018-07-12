@@ -3,7 +3,7 @@ import React from 'react'
 import classNames from 'classnames'
 
 const Button = props => {
-  const css = classNames('x-button', {
+  const css = classNames('wb-button', {
     mini: props.mini,
     light: props.light,
   }, props.className)

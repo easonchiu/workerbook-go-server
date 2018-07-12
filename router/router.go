@@ -20,6 +20,9 @@ func Register(g *gin.Engine) {
   // 注册项目相关的路由
   registerProjectRouter(g.Group("/projects"))
 
+  // 注册任务相关的路由
+  registerMissionRouter(g.Group("/missions"))
+
   // 登录
   // g.POST("/login", controller.UserLogin)
 

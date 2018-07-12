@@ -16,28 +16,31 @@ type Project struct {
   Id bson.ObjectId `bson:"_id,omitempty"`
 
   // 项目名
-  Name string `bson:"name"`
+  Name string `bson:"name,omitempty"`
 
   // 状态 1. 启用 2. 已归档 3. 停止
-  Status int `bson:"status"`
+  Status int `bson:"status,omitempty"`
 
   // 截至时间
-  Deadline time.Time `bson:"deadline"`
+  Deadline time.Time `bson:"deadline,omitempty"`
 
   // 参与的部门
-  Departments []mgo.DBRef `bson:"departments"`
+  Departments []mgo.DBRef `bson:"departments,omitempty"`
 
   // 任务列表
-  Missions []Mission `bson:"missions"`
+  Missions []Mission `bson:"missions,omitempty"`
 
   // 项目说明
-  Description string `bson:"description"`
+  Description string `bson:"description,omitempty"`
 
   // 创建时间
-  CreateTime time.Time `bson:"createTime"`
+  CreateTime time.Time `bson:"createTime,omitempty"`
 
   // 进度
-  Progress int `bson:"progress"`
+  Progress int `bson:"progress,omitempty"`
+
+  // 权重 1. 红(紧急) 2. 黄(重要) 3. 绿(一般)
+  Weight int `bson:"weight,omitempty"`
 }
 
 func (p Project) GetMap(db *mgo.Database) gin.H {
@@ -50,14 +53,15 @@ func (p Project) GetMap(db *mgo.Database) gin.H {
     }
   }
   return gin.H{
-    "id": p.Id,
-    "name": p.Name,
+    "id":           p.Id,
+    "name":         p.Name,
     "missionCount": len(p.Missions),
-    "deadline": p.Deadline,
-    "description": p.Description,
-    "createTime": p.CreateTime,
-    "progress": p.Progress,
-    "departments": departments,
+    "deadline":     p.Deadline,
+    "description":  p.Description,
+    "createTime":   p.CreateTime,
+    "progress":     p.Progress,
+    "departments":  departments,
+    "weight":       p.Weight,
   }
 }
 

@@ -1,13 +1,13 @@
 import Toast from 'src/components/toast'
-import Err from 'src/utils/errif'
+import Loading from 'src/components/loading'
 
 export default class Event {
   fetchData = async (pager = 1) => {
     try {
       await Promise.all([
         this.props.$department.fetchList({
-          skip: pager * 10 - 10,
-          limit: 10,
+          skip: pager * 30 - 30,
+          limit: 30,
         })
       ])
     }
@@ -21,68 +21,51 @@ export default class Event {
     this.fetchData(pager)
   }
 
-  // 表单字段修改
-  onFormChange = e => {
-    const key = e.target.name
-    this.setState({
-      [key]: e.target.value
-    })
-  }
-
   // 新增部门提交
-  onFormSubmit = async () => {
-    Err.IfEmpty(this.state.name, '部门名称不能为空')
-
-    if (!Err.Handle()) {
-      try {
-        await this.props.$department.create({
-          name: this.state.name,
-        })
-        this.onCloseDialog()
-        await this.fetchData()
-        Toast.success('添加成功')
-      }
-      catch (err) {
-        Toast.error(err.message)
-      }
+  onFormSubmit = async data => {
+    try {
+      await this.props.$department.create(data)
+      this.onCloseDialog()
+      await this.fetchData()
+      Toast.success('添加成功')
+    }
+    catch (err) {
+      Toast.error(err.message)
     }
   }
 
   // 修改部门提交
-  onFormEditSubmit = async () => {
-    Err.IfEmpty(this.state.name, '部门名称不能为空')
-
-    if (!Err.Handle()) {
-      try {
-        await this.props.$department.update({
-          id: this.state.departmentId,
-          name: this.state.name,
-        })
-        this.onCloseDialog()
-        await this.fetchData()
-        Toast.success('修改成功')
-      }
-      catch (err) {
-        Toast.error(err.message)
-      }
+  onFormEditSubmit = async data => {
+    try {
+      await this.props.$department.update(data)
+      this.onCloseDialog()
+      await this.fetchData()
+      Toast.success('修改成功')
+    }
+    catch (err) {
+      Toast.error(err.message)
     }
   }
 
   // 添加按钮点击
   onAppendClick = () => {
-    this.setState({
-      departmentId: ''
-    })
+    this.departmentDialog && this.departmentDialog.$clear()
     this.onOpenDialog()
   }
 
   // 编辑按钮点击
-  onEditClick = data => {
-    this.setState({
-      name: data.name,
-      departmentId: data.id,
-    })
-    this.onOpenDialog()
+  onEditClick = async data => {
+    try {
+      const res = await this.props.$department.fetchOneById(data.id)
+      this.departmentDialog && this.departmentDialog.$fill(res)
+      this.onOpenDialog()
+    }
+    catch (err) {
+      Toast.error(err.message)
+    }
+    finally {
+      Loading.hide()
+    }
   }
 
   // 打开弹层
@@ -95,8 +78,7 @@ export default class Event {
   // 关闭弹层
   onCloseDialog = () => {
     this.setState({
-      departmentDialogVisible: false,
-      name: '',
+      departmentDialogVisible: false
     })
   }
 

@@ -16,39 +16,40 @@ type User struct {
   Id bson.ObjectId `bson:"_id,omitempty"`
 
   // 昵称
-  NickName string `bson:"nickname"`
+  NickName string `bson:"nickname,omitempty"`
 
   // 邮箱
-  Email string `bson:"email"`
+  Email string `bson:"email,omitempty"`
 
   // 用户名
-  UserName string `bson:"username"`
+  UserName string `bson:"username,omitempty"`
 
   // 部门
-  Department mgo.DBRef `bson:"department"`
+  Department mgo.DBRef `bson:"department,omitempty"`
 
   // 手机号
-  Mobile string `bson:"mobile"`
+  Mobile string `bson:"mobile,omitempty"`
 
   // 密码
-  Password string `bson:"password"`
+  Password string `bson:"password,omitempty"`
 
   // 职位 1: 开发者， 2: 部门主管，3: 观察员, 99: 管理员
-  Role int `bson:"role"`
+  Role int `bson:"role,omitempty"`
 
   // 职称
-  Title string `bson:"title"`
+  Title string `bson:"title,omitempty"`
 
   // 创建时间
-  CreateTime time.Time `bson:"createTime"`
+  CreateTime time.Time `bson:"createTime,omitempty"`
 
   // 用户状态
-  Status int `bson:"status"`
+  Status int `bson:"status,omitempty"`
 }
 
 func (u User) GetMap(db *mgo.Database) gin.H {
   department := new(Department)
   db.FindRef(&u.Department).One(department)
+
 
   return gin.H{
     "id":             u.Id,

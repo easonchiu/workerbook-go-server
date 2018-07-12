@@ -75,7 +75,7 @@ class Dialog extends React.PureComponent {
         <div className="wb-dialog__content">
           {this.props.children}
         </div>
-        <div className="wb-dialog__bg" />
+        <div className="wb-dialog__bg" onClick={this.props.onBgClick} />
       </div>
     )
   }

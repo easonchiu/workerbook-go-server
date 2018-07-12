@@ -45,8 +45,9 @@ const (
   ErrProjectDeadlineTooSoon    = "102008"
   ErrProjectDepartmentsEmpty   = "102009"
   ErrProjectDepartmentNotFound = "102010"
-  ErrCreateProjectFailed       = "102011"
-  ErrUpdateProjectFailed       = "102012"
+  ErrProjectWeightError        = "102011"
+  ErrCreateProjectFailed       = "102012"
+  ErrUpdateProjectFailed       = "102013"
 
   // 日报相关错误 104xxx
   ErrDailyIdError  = "104001"
@@ -100,6 +101,7 @@ var Error = map[string]ErrType{
   ErrProjectDeadlineTooSoon:    {"截至时间不能早于当前时间", http.StatusOK, ""},
   ErrProjectDepartmentsEmpty:   {"参与部门不能为空", http.StatusOK, ""},
   ErrProjectDepartmentNotFound: {"没有找到相关的参与部门", http.StatusOK, ""},
+  ErrProjectWeightError:        {"权重号错误", http.StatusOK, ""},
   ErrCreateProjectFailed:       {"创建项目失败", http.StatusOK, ""},
   ErrUpdateProjectFailed:       {"更新项目失败", http.StatusOK, ""},
 

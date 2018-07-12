@@ -35,14 +35,36 @@ func CreateProject(data model.Project) error {
   return nil
 }
 
-// Query group info by id.
-func GetProjectInfoById(id bson.ObjectId) (*model.Project, error) {
+// 更新项目
+func UpdateProject(id bson.ObjectId, data model.Project) error {
+  db, close, err := mongo.CloneDB()
+
+  if err != nil {
+    return err
+  } else {
+    defer close()
+  }
+
+  // update
+  err = db.C(model.ProjectCollection).UpdateId(id, bson.M{
+    "$set": data,
+  })
+
+  if err != nil {
+    return errors.New(errno.ErrUpdateProjectFailed)
+  }
+
+  return nil
+}
+
+// 根据id查找项目
+func GetProjectInfoById(id bson.ObjectId) (gin.H, error) {
   db, close, err := mongo.CloneDB()
 
   data := new(model.Project)
 
   if err != nil {
-    return data, err
+    return nil, err
   } else {
     defer close()
   }
@@ -50,10 +72,13 @@ func GetProjectInfoById(id bson.ObjectId) (*model.Project, error) {
   err = db.C(model.ProjectCollection).FindId(id).One(data)
 
   if err != nil {
-    return data, err
+    if err == mgo.ErrNotFound {
+      return nil, errors.New(errno.ErrProjectNotFound)
+    }
+    return nil, err
   }
 
-  return data, nil
+  return data.GetMap(db), nil
 }
 
 // 查找项目列表

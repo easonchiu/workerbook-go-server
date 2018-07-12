@@ -9,6 +9,7 @@ import (
   "gopkg.in/mgo.v2/bson"
   "net/http"
   "strconv"
+  "strings"
   "time"
   "workerbook/errno"
 )
@@ -220,7 +221,7 @@ func (c *Context) Error(errNo interface{}) {
 // get body by string
 func (c *Context) getRaw(key string) string {
   res := gjson.GetBytes(c.RawData, key)
-  return res.Str
+  return strings.TrimSpace(res.Str)
 }
 
 func (c *Context) getRawArray(key string) []gjson.Result {

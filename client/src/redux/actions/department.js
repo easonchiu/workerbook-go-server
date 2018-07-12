@@ -38,16 +38,25 @@ const fetchList = ({ skip = 0, limit = 10 } = {}) => async dispatch => {
 // fetch departments list for select.
 const fetchSelectList = () => async dispatch => {
   const res = await http.request({
-    url: '/departments/all',
+    url: '/departments',
     method: 'GET',
   })
   dispatch(createAction('DEPARTMENT_SELECT_LIST')(res))
 }
 
+// fetch department one by id
+const fetchOneById = id => async dispatch => {
+  const res = await http.request({
+    url: '/departments/' + id,
+    method: 'GET',
+  })
+  return res
+}
 
 export default {
   create,
   update,
   fetchList,
+  fetchOneById,
   fetchSelectList,
 }

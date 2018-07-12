@@ -75,7 +75,7 @@ func CreateUser(data model.User) error {
 }
 
 // update user info.
-func UpdateUser(id bson.ObjectId, m bson.M) error {
+func UpdateUser(id bson.ObjectId, data model.User) error {
   db, closer, err := mongo.CloneDB()
 
   if err != nil {
@@ -84,20 +84,9 @@ func UpdateUser(id bson.ObjectId, m bson.M) error {
     defer closer()
   }
 
-  // 帐号唯一
-  count, err := db.C(model.UserCollection).Find(bson.M{"username": m["username"]}).Count()
-
-  if err != nil {
-    return errors.New(errno.ErrUpdateUserFailed)
-  }
-
-  if count > 0 {
-    return errors.New(errno.ErrSameUsername)
-  }
-
   // 姓名唯一
-  count, err = db.C(model.UserCollection).Find(bson.M{
-    "nickname": m["nickname"],
+  count, err := db.C(model.UserCollection).Find(bson.M{
+    "nickname": data.NickName,
     "_id": bson.M{
       "$ne": id,
     },
@@ -112,8 +101,7 @@ func UpdateUser(id bson.ObjectId, m bson.M) error {
   }
 
   // 部门必选并必须存在
-  ref := m["department"].(mgo.DBRef)
-  count, err = db.FindRef(&ref).Count()
+  count, err = db.FindRef(&data.Department).Count()
 
   if count == 0 {
     return errors.New(errno.ErrDepartmentNotFound)
@@ -121,7 +109,7 @@ func UpdateUser(id bson.ObjectId, m bson.M) error {
 
   // 更新数据
   err = db.C(model.UserCollection).UpdateId(id, bson.M{
-    "$set": m,
+    "$set": data,
   })
 
   if err != nil {

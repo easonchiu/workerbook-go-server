@@ -5,10 +5,8 @@ import ComponentEvent from 'src/hoc/componentEvent'
 import Event from './event'
 
 import Button from 'src/components/button'
-import Input from 'src/components/input'
-import Form from 'src/containers/form'
 import Pager from 'src/components/pager'
-import MainDialog from 'src/containers/mainDialog'
+import ConsoleDepartmentDialog from 'src/components/consoleDepartmentDialog'
 
 @VIEW
 @ComponentEvent('evt', Event)
@@ -17,8 +15,6 @@ class ConsoleDepartment extends React.PureComponent {
     super(props)
     this.state = {
       departmentDialogVisible: false,
-      departmentId: '',
-      name: '',
     }
   }
 
@@ -28,34 +24,13 @@ class ConsoleDepartment extends React.PureComponent {
 
   renderDialog() {
     return (
-      <MainDialog
-        className="dialog-console-edit-department"
-        title={this.state.departmentId ? '修改部门' : '添加部门'}
+      <ConsoleDepartmentDialog
+        ref={r => { this.departmentDialog = r }}
         visible={this.state.departmentDialogVisible}
         onClose={this.evt.onCloseDialog}
-      >
-        <Form>
-          <Form.Row label="部门名称">
-            <Input
-              name="name"
-              value={this.state.name}
-              onChange={this.evt.onFormChange}
-            />
-          </Form.Row>
-
-          <Form.Row>
-            {
-              this.state.departmentId ?
-                <Button onClick={this.evt.onFormEditSubmit}>
-                  修改
-                </Button> :
-                <Button onClick={this.evt.onFormSubmit}>
-                  提交
-                </Button>
-            }
-          </Form.Row>
-        </Form>
-      </MainDialog>
+        onSubmit={this.evt.onFormSubmit}
+        onEditSubmit={this.evt.onFormEditSubmit}
+      />
     )
   }
 

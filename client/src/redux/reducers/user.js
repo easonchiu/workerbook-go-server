@@ -8,7 +8,8 @@ const initialState = {
     count: 0,
     skip: 0,
     limit: 0,
-  }
+  },
+  one: {}
 }
 
 export default handleActions({

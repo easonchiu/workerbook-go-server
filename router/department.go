@@ -11,8 +11,8 @@ func registerDepartmentRouter(g *gin.RouterGroup) {
   // 部门列表
   g.GET("", middleware.ConsoleJwt, controller.GetDepartmentsList)
 
-  // 全部部门列表
-  g.GET("all", middleware.ConsoleJwt, controller.GetAllDepartmentsList)
+  // 获取单个部门
+  g.GET("/:id", middleware.Jwt, controller.GetDepartmentOne)
 
   // 添加部门
   g.POST("", middleware.ConsoleJwt, controller.CreateDepartment)

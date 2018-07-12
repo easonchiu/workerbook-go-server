@@ -5,11 +5,8 @@ import ComponentEvent from 'src/hoc/componentEvent'
 import Event from './event'
 
 import Button from 'src/components/button'
-import Input from 'src/components/input'
-import Select from 'src/components/select'
-import Form from 'src/containers/form'
 import Pager from 'src/components/pager'
-import MainDialog from 'src/containers/mainDialog'
+import ConsoleUserDialog from 'src/components/consoleUserDialog'
 
 @VIEW
 @ComponentEvent('evt', Event)
@@ -17,15 +14,7 @@ class ConsoleUser extends React.PureComponent {
   constructor(props) {
     super(props)
     this.state = {
-      userDialogVisible: false,
-      userId: '',
-      nickname: '',
-      username: '',
-      departmentId: '',
-      title: '',
-      role: '',
-      status: '',
-      password: '',
+      userDialogVisible: false
     }
   }
 
@@ -37,104 +26,14 @@ class ConsoleUser extends React.PureComponent {
   renderDialog() {
     const { select } = this.props.department$
     return (
-      <MainDialog
-        className="dialog-console-edit-user"
-        title={this.state.userId ? '修改人员' : '添加人员'}
+      <ConsoleUserDialog
+        ref={r => { this.userDialog = r }}
+        departments={select ? select.list || [] : []}
         visible={this.state.userDialogVisible}
         onClose={this.evt.onCloseDialog}
-      >
-        <Form>
-          <Form.Row label="姓名">
-            <Input
-              name="nickname"
-              value={this.state.nickname}
-              onChange={this.evt.onFormChange}
-            />
-          </Form.Row>
-
-          <Form.Row label="部门">
-            <Select
-              value={this.state.departmentId}
-              onClick={this.evt.onFormDepartmentChange}
-            >
-              {
-                select.list.map(item => (
-                  <Select.Option key={item.id} value={item.id}>
-                    {item.name}
-                  </Select.Option>
-                ))
-              }
-            </Select>
-          </Form.Row>
-
-          <Form.Row label="职称">
-            <Input
-              name="title"
-              value={this.state.title}
-              onChange={this.evt.onFormChange}
-            />
-          </Form.Row>
-
-          <Form.Row label="职位">
-            <Select
-              value={this.state.role}
-              onClick={this.evt.onFormRoleChange}
-            >
-              <Select.Option value={1}>开发者</Select.Option>
-              <Select.Option value={2}>部门管理者</Select.Option>
-              <Select.Option value={3}>观察者</Select.Option>
-            </Select>
-          </Form.Row>
-
-          {
-            this.state.userId ?
-              <Form.Row label="状态">
-                <Input
-                  name="role"
-                  value={this.state.status}
-                  onChange={this.evt.onFormChange}
-                />
-              </Form.Row> :
-              null
-          }
-
-          {
-            !this.state.userId ?
-              <Form.Row label="帐号">
-                <Input
-                  name="username"
-                  value={this.state.username}
-                  onChange={this.evt.onFormChange}
-                />
-              </Form.Row> :
-              null
-          }
-
-          {
-            !this.state.userId ?
-              <Form.Row label="初始密码">
-                <Input
-                  name="password"
-                  value={this.state.password}
-                  onChange={this.evt.onFormChange}
-                />
-              </Form.Row> :
-              null
-          }
-
-          <Form.Row>
-            {
-              this.state.userId ?
-                <Button onClick={this.evt.onFormEditSubmit}>
-                  修改
-                </Button> :
-                <Button onClick={this.evt.onFormSubmit}>
-                  提交
-                </Button>
-            }
-          </Form.Row>
-        </Form>
-      </MainDialog>
+        onSubmit={this.evt.onFormSubmit}
+        onEditSubmit={this.evt.onFormEditSubmit}
+      />
     )
   }
 
@@ -149,7 +48,7 @@ class ConsoleUser extends React.PureComponent {
         <td>职称</td>
         <td>职位</td>
         <td>状态</td>
-        <td>创建时间</td>
+        <td>加入时间</td>
         <td>操作</td>
       </tr>
     )

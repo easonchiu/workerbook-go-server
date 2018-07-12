@@ -231,17 +231,19 @@ func UpdateUser(c *gin.Context) {
   }
 
   // update
-  err := service.UpdateUser(bson.ObjectIdHex(id), bson.M{
-    "nickname": nickname,
-    "title":    title,
-    "role":     role,
-    "status":   status,
-    "department": mgo.DBRef{
+  data := model.User{
+    NickName: nickname,
+    Department: mgo.DBRef{
       Id:         bson.ObjectIdHex(departmentId),
       Collection: model.DepartmentCollection,
       Database:   conf.DBName,
     },
-  })
+    Title:  title,
+    Role:   role,
+    Status: status,
+  }
+
+  err := service.UpdateUser(bson.ObjectIdHex(id), data)
 
   // check
   if err != nil {

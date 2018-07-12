@@ -17,30 +17,14 @@ func GetDepartmentsList(c *gin.Context) {
   limit := ctx.getQueryInt("limit")
 
   // check
-  ctx.ErrorIfIntLessThen(skip, 0, errno.ErrSkipRange)
-  ctx.ErrorIfIntLessThen(limit, 1, errno.ErrLimitRange)
-  ctx.ErrorIfIntMoreThen(limit, 100, errno.ErrLimitRange)
+  if limit != 0 {
+    ctx.ErrorIfIntLessThen(skip, 0, errno.ErrSkipRange)
+    ctx.ErrorIfIntLessThen(limit, 1, errno.ErrLimitRange)
+    ctx.ErrorIfIntMoreThen(limit, 100, errno.ErrLimitRange)
+  }
 
   // query
   data, err := service.GetDepartmentsList(skip, limit, nil)
-
-  // check
-  if err != nil {
-    ctx.Error(errno.ErrDepartmentNotFound)
-  }
-
-  // return
-  ctx.Success(gin.H{
-    "data": data,
-  })
-}
-
-// 获取全部部门列表
-func GetAllDepartmentsList(c *gin.Context) {
-  ctx := CreateCtx(c)
-
-  // query
-  data, err := service.GetDepartmentsList(0, 0, nil)
 
   // check
   if err != nil {
@@ -86,6 +70,35 @@ func CreateDepartment(c *gin.Context) {
   ctx.Success(nil)
 }
 
+// 获取单个部门
+func GetDepartmentOne(c *gin.Context) {
+  ctx := CreateCtx(c)
+
+  // get
+  id := ctx.getParam("id")
+
+  // check
+  ctx.ErrorIfStringNotObjectId(id, errno.ErrDepartmentIdError)
+
+  if ctx.HandleErrorIf() {
+    return
+  }
+
+  // query
+  departmentInfo, err := service.GetDepartmentInfoById(bson.ObjectIdHex(id))
+
+  // check
+  if err != nil {
+    ctx.Error(err)
+    return
+  }
+
+  // return
+  ctx.Success(gin.H{
+    "data": departmentInfo,
+  })
+}
+
 // 修改部门
 func UpdateDepartment(c *gin.Context) {
   ctx := CreateCtx(c)
@@ -103,9 +116,10 @@ func UpdateDepartment(c *gin.Context) {
   }
 
   // update
-  err := service.UpdateDepartment(bson.ObjectIdHex(id), bson.M{
-    "name": name,
-  })
+  data := model.Department{
+    Name: name,
+  }
+  err := service.UpdateDepartment(bson.ObjectIdHex(id), data)
 
   // check
   if err != nil {
