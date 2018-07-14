@@ -57,6 +57,10 @@ class ConsoleUser extends React.PureComponent {
       2: '部门管理者',
       3: '观察者',
     }
+    const status = {
+      1: '正常',
+      2: '停用'
+    }
     const body = users.list.map((res, i) => (
       <tr key={res.id}>
         <td>{users.skip + i + 1}</td>
@@ -65,7 +69,7 @@ class ConsoleUser extends React.PureComponent {
         <td>{res.departmentName}</td>
         <td>{res.title}</td>
         <td>{roles[res.role]}</td>
-        <td>{res.status}</td>
+        <td>{status[res.status]}</td>
         <td>{new Date(res.createTime).format('yyyy-MM-dd hh:mm')}</td>
         <td className="c">
           <a href="javascript:;" onClick={() => this.evt.onEditClick(res)}>

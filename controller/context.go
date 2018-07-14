@@ -44,8 +44,6 @@ func (c *Context) Success(data gin.H) {
   }
 
   c.Ctx.JSON(status, respH)
-
-  c.Ctx.Done()
 }
 
 // 处理错误
@@ -63,7 +61,7 @@ func (c *Context) Error(errNo interface{}) {
   fmt.Println(" >>> USER AUTH:", c.Ctx.Request.Header.Get("authorization"))
   fmt.Println()
 
-  // 清楚错误栈
+  // 清除错误栈
   errgo.ClearErrorStack()
 
   c.Ctx.JSON(err.Status, gin.H{
@@ -71,8 +69,6 @@ func (c *Context) Error(errNo interface{}) {
     "code": err.Code,
     "data": nil,
   })
-
-  c.Ctx.Done()
 }
 
 // get body by string

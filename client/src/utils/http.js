@@ -37,7 +37,7 @@ const http = axios.create({
  * 请求拦截器，在发起请求之前
  */
 http.interceptors.request.use(config => {
-  const token = '5b430b3c7179e585bf200220' // getToken()
+  const token = '5b4315467179e585bf2005c4' // getToken()
   if (token) {
     config.headers.authorization = 'Bearer ' + token
   }

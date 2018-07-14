@@ -1,12 +1,82 @@
 import './style'
 import React from 'react'
-import classNames from 'classnames'
+import ignore from 'src/utils/ignore'
 
 import IconSetting from 'src/components/svg/setting'
 import IconAdd from 'src/components/svg/add'
+import IconDelete from 'src/components/svg/delete'
 
 const ProjectItem = props => {
   const source = props.source || {}
+
+  const renderTools = () => (
+    <div className="tools">
+      <a
+        href="javascript:;"
+        className="del"
+        onClick={() => {
+          props.onProjectDeleteClick && props.onProjectDeleteClick(props.source)
+        }}
+      >
+        <IconDelete />
+      </a>
+      <a
+        href="javascript:;"
+        onClick={() => {
+          props.onProjectEditClick && props.onProjectEditClick(props.source)
+        }}
+      >
+        <IconSetting />
+      </a>
+    </div>
+  )
+
+  const renderMissions = () => (
+    <div className="missions">
+      <h6>包含任务 {source.missions ? source.missions.length + '个' : ''}</h6>
+      {
+        source.missions && source.missions.length ?
+          <ul>
+            {
+              source.missions.map(item => (
+                <li key={item.id}>
+                  <p>{item.name}</p>
+                  <a
+                    href="javascript:;"
+                    onClick={() => {
+                      props.onMissionEditClick &&
+                      props.onMissionEditClick(item, ignore(source, 'missions'))
+                    }}
+                  >
+                    编辑
+                  </a>
+                </li>
+              ))
+            }
+          </ul> :
+          <p className="empty">暂无任务</p>
+      }
+      <a
+        href="javascript:;"
+        className="append"
+        onClick={() => {
+          props.onAppendMissionClick && props.onAppendMissionClick(props.source)
+        }}
+      >
+        <IconAdd />
+      </a>
+    </div>
+  )
+
+  const renderFooter = () => (
+    <footer>
+      <span>时间周期</span>
+      {new Date(source.deadline).format('yyyy年MM月dd日 hh:mm')}
+      {' ~ '}
+      {new Date(source.deadline).format('MM月dd日 hh:mm')}
+    </footer>
+  )
+
   return (
     <div className="wbc-project-item">
       <h2>
@@ -29,52 +99,9 @@ const ProjectItem = props => {
             null
         }
       </div>
-      <div className="missions">
-        <h6>包含任务</h6>
-        <ul>
-          <li>
-            <p>前端页面开发</p>
-            <a href="javascript:;">编辑</a>
-          </li>
-          <li>
-            <p>接口设计</p>
-            <a href="javascript:;">编辑</a>
-          </li>
-          <li>
-            <p>测试及上线</p>
-            <a href="javascript:;">编辑</a>
-          </li>
-        </ul>
-        <a
-          href="javascript:;"
-          className="append"
-          onClick={() => {
-            props.onAppendMissionClick && props.onAppendMissionClick(props.source)
-          }}
-        >
-          <IconAdd />
-        </a>
-      </div>
-      <div className={classNames('description', { empty: !source.description })}>
-        <p>{source.description || '暂无说明内容'}</p>
-      </div>
-      <div className="tools">
-        <a
-          href="javascript:;"
-          className="edit"
-          onClick={() => {
-            props.onEditClick && props.onEditClick(props.source)
-          }}
-        >
-          <IconSetting />
-        </a>
-      </div>
-      <footer>
-        <span>时间周期</span>
-        {new Date(source.deadline).format('yyyy年MM月dd日 hh:mm')}
-        {' ~ '}
-        {new Date(source.deadline).format('MM月dd日 hh:mm')}
-      </footer>
+      {renderMissions()}
+      {renderTools()}
+      {renderFooter()}
     </div>
   )
 }

@@ -15,6 +15,7 @@ class ConsoleMissionDialog extends React.PureComponent {
     this.nilForm = {
       name: '',
       description: '',
+      deadline: '',
       id: '',
     }
     this.state = {
@@ -28,11 +29,11 @@ class ConsoleMissionDialog extends React.PureComponent {
     })
   }
 
-  $project(data) {
-    this.projectInfo = data
+  $projectId(id) {
+    this.projectId = id
   }
 
-  $fill(data) {
+  $fill(data = {}) {
     const d = {}
     Object.keys(this.nilForm).forEach(i => {
       if (typeof data[i] !== 'undefined') {
@@ -53,7 +54,7 @@ class ConsoleMissionDialog extends React.PureComponent {
   }
 
   onFormSubmit = () => {
-    if (!this.projectInfo || !this.projectInfo.id) {
+    if (!this.projectId) {
       Toast.error('找不到相关的项目')
       return
     }
@@ -62,13 +63,13 @@ class ConsoleMissionDialog extends React.PureComponent {
     if (!Err.Handle()) {
       this.props.onSubmit && this.props.onSubmit(ignore({
         ...this.state,
-        projectId: this.projectInfo.id,
+        projectId: this.projectId,
       }, 'id'))
     }
   }
 
   onFormEditSubmit = () => {
-    if (!this.projectInfo || !this.projectInfo.id) {
+    if (!this.projectId) {
       Toast.error('找不到相关的项目')
       return
     }
@@ -77,7 +78,7 @@ class ConsoleMissionDialog extends React.PureComponent {
     if (!Err.Handle()) {
       this.props.onEditSubmit && this.props.onEditSubmit({
         ...this.state,
-        projectId: this.projectInfo.id,
+        projectId: this.projectId,
       })
     }
   }
@@ -95,6 +96,13 @@ class ConsoleMissionDialog extends React.PureComponent {
             <Input
               name="name"
               value={this.state.name}
+              onChange={this.onFormChange}
+            />
+          </Form.Row>
+          <Form.Row label="截至时间">
+            <Input
+              name="deadline"
+              value={this.state.deadline}
               onChange={this.onFormChange}
             />
           </Form.Row>

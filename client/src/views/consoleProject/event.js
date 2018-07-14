@@ -94,6 +94,46 @@ export default class Event {
     }
   }
 
+  // 项目删除按钮点击
+  onProjectDeleteClick = data => {
+    if (data.name && data.id) {
+      this.setState({
+        projectDelDialogVisible: true,
+        projectDelDialogData: data,
+      })
+    }
+    else {
+      Toast.error('系统错误')
+    }
+  }
+
+  // 关闭项目删除弹层
+  onCloseDelProjectDialog = () => {
+    this.setState({
+      projectDelDialogVisible: false
+    })
+  }
+
+  // 确定删除项目
+  onDelProject = async data => {
+    if (data.name && data.id) {
+      try {
+        Loading.show()
+        await this.props.$project.del(data.id)
+        Toast.success('删除成功')
+      }
+      catch (err) {
+        Toast.error(err.message)
+      }
+      finally {
+        Loading.hide()
+      }
+    }
+    else {
+      Toast.error('系统错误')
+    }
+  }
+
   // 打开项目弹层
   onOpenProjectDialog = () => {
     this.setState({
@@ -111,12 +151,31 @@ export default class Event {
   // ------------任务-------------
 
   // 添加任务按钮点击
-  onAppendMissionClick = data => {
+  onAppendMissionClick = project => {
     if (this.missionDialog) {
       this.missionDialog.$clear()
-      this.missionDialog.$project(data)
+      this.missionDialog.$projectId(project.id)
     }
     this.onOpenMissionDialog()
+  }
+
+  // 编辑任务点击
+  onMissionEditClick = async (data, project) => {
+    try {
+      Loading.show()
+      const res = await this.props.$mission.fetchOneById(data.id)
+      if (this.missionDialog) {
+        this.missionDialog.$fill(res)
+        this.missionDialog.$projectId(project.id)
+      }
+      this.onOpenMissionDialog()
+    }
+    catch (err) {
+      Toast.error(err.message)
+    }
+    finally {
+      Loading.hide()
+    }
   }
 
   // 打开任务弹层
@@ -135,6 +194,7 @@ export default class Event {
 
   // 新增任务提交
   onMissionFormSubmit = async data => {
+    data.deadline = new Date(2018, 11, 20)
     try {
       Loading.show()
       await this.props.$mission.create(data)
@@ -152,6 +212,7 @@ export default class Event {
 
   // 修改任务提交
   onMissionFormEditSubmit = async data => {
+    data.deadline = new Date(2018, 11, 20)
     try {
       Loading.show()
       await this.props.$mission.update(data)

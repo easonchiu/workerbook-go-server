@@ -68,6 +68,9 @@
     font-size: 13px;
     line-height: 1.5;
     position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 200px;
     .append {
       position: absolute;
       right: 10px;
@@ -145,6 +148,14 @@
         }
       }
     }
+    .empty {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #a8b0b9;
+      font-size: 12px;
+    }
   }
   > footer {
     border-top: 1px solid #dee3e8;
@@ -180,7 +191,7 @@
     top: 10px;
     display: flex;
     a {
-      margin-left: 5px;
+      margin-left: 3px;
       display: block;
       width: 20px;
       height: 20px;
@@ -188,12 +199,23 @@
       &:hover svg {
         fill: #5081ff;
       }
+      &.del:hover svg {
+        fill: #ff3300;
+      }
     }
     svg {
       fill: #a8b0b9;
       display: block;
       width: 16px;
       height: 16px;
+    }
+  }
+  .tools a.del {
+    display: none;
+  }
+  &:hover {
+    .tools a.del {
+      display: block;
     }
   }
 }

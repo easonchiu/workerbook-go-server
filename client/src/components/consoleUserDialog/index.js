@@ -33,7 +33,7 @@ class ConsoleUserDialog extends React.PureComponent {
     })
   }
 
-  $fill(data) {
+  $fill(data = {}) {
     const d = {}
     Object.keys(this.nilForm).forEach(i => {
       if (typeof data[i] !== 'undefined') {
@@ -65,8 +65,19 @@ class ConsoleUserDialog extends React.PureComponent {
     })
   }
 
+  onStatusChange = e => {
+    this.setState({
+      status: e
+    })
+  }
+
   onFormSubmit = () => {
-    
+    Err.IfEmpty(this.state.username, '登录帐号不能为空')
+    Err.IfEmpty(this.state.password, '初始密码不能为空')
+    Err.IfEmpty(this.state.nickname, '姓名不能为空')
+    Err.IfEmpty(this.state.departmentId, '请选择部门')
+    Err.IfEmpty(this.state.title, '职称不能为空')
+    Err.IfEmpty(this.state.role, '请选择职位')
 
     if (!Err.Handle()) {
       this.props.onSubmit && this.props.onSubmit(ignore(this.state, 'id'))
@@ -160,11 +171,13 @@ class ConsoleUserDialog extends React.PureComponent {
           {
             this.state.id ?
               <Form.Row label="状态">
-                <Input
-                  name="role"
+                <Select
                   value={this.state.status}
-                  onChange={this.onFormChange}
-                />
+                  onClick={this.onStatusChange}
+                >
+                  <Select.Option value={1}>正常</Select.Option>
+                  <Select.Option value={2}>停用</Select.Option>
+                </Select>
               </Form.Row> :
               null
           }

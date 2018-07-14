@@ -42,8 +42,11 @@ type User struct {
   // 创建时间
   CreateTime time.Time `bson:"createTime,omitempty"`
 
-  // 用户状态
+  // 用户状态 1: 正常 2: 停用
   Status int `bson:"status,omitempty"`
+
+  // 是否存在
+  Exist bool `bson:"exist"`
 }
 
 func (u User) GetMap(db *mgo.Database) gin.H {

@@ -32,6 +32,12 @@ type Mission struct {
 
   // 创建时间
   CreateTime time.Time `bson:"createTime,omitempty"`
+
+  // 所属任务的id
+  ProjectId bson.ObjectId `bson:"projectId,omitempty"`
+
+  // 是否存在
+  Exist bool `bson:"exist"`
 }
 
 func (m Mission) GetMap(db *mgo.Database) gin.H {

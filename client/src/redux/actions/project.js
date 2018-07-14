@@ -45,9 +45,19 @@ const fetchOneById = id => async dispatch => {
   return res
 }
 
+// delete
+const del = id => async dispatch => {
+  const res = await http.request({
+    url: '/projects/' + id,
+    method: 'DELETE',
+  })
+  return res
+}
+
 export default {
   create,
   update,
   fetchOneById,
   fetchList,
+  del,
 }

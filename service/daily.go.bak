@@ -133,7 +133,7 @@ func AppendDailyItemIntoUsersDailyList(data model.DailyItem, id bson.ObjectId) e
     defer close()
   }
 
-  err = db.C(model.DailyCollection).UpdateId(id, bson.M{
+  err = db.C(model.DailyCollection).UpdateId(bson.ObjectIdHex(id), bson.M{
     "$push": bson.M{
       "dailyList": data,
     },

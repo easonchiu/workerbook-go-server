@@ -5,7 +5,8 @@ import classNames from 'classnames'
 const Button = props => {
   const css = classNames('wb-button', {
     mini: props.mini,
-    light: props.light,
+    light: props.light && !props.danger,
+    danger: props.danger,
   }, props.className)
 
   return (

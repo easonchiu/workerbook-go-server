@@ -3,6 +3,7 @@
 .wb-button {
   display: flex;
   align-items: center;
+  justify-content: center;
   height: 40px;
   line-height: 1;
   background: #5081ff;
@@ -33,6 +34,13 @@
     background: #f7f9fc;
     &:hover {
       background: #f7f9fc - 5;
+    }
+  }
+  &.danger {
+    background: #eb5555;
+    border: 1px solid #c61414;
+    &:hover {
+      background: #eb5555 - 15;
     }
   }
 }

@@ -23,6 +23,9 @@ type Department struct {
 
   // 创建时间
   CreateTime time.Time `bson:"createTime,omitempty"`
+
+  // 是否存在
+  Exist bool `bson:"exist"`
 }
 
 func (d Department) GetMap(db *mgo.Database) gin.H {

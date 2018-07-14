@@ -5,13 +5,14 @@ import (
   "github.com/gin-gonic/gin"
   "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
+  "workerbook/conf"
   "workerbook/errgo"
   "workerbook/model"
   "workerbook/mongo"
 )
 
-// Insert user info into database.
-func CreateUser(data model.User) error {
+// 创建用户
+func CreateUser(data model.User, departmentId string) error {
   db, closer, err := mongo.CloneDB()
 
   if err != nil {
@@ -20,13 +21,44 @@ func CreateUser(data model.User) error {
     defer closer()
   }
 
-  // supplement other data.
+  // 是否存在的标志
+  data.Exist = true
+
+  // 用户状态
+  data.Status = 1
+
+  // check
+  errgo.ErrorIfStringIsEmpty(data.NickName, errgo.ErrNicknameEmpty)
+  errgo.ErrorIfLenLessThen(data.NickName, 2, errgo.ErrNicknameTooShort)
+  errgo.ErrorIfLenMoreThen(data.NickName, 14, errgo.ErrNicknameTooLong)
+  errgo.ErrorIfStringNotObjectId(departmentId, errgo.ErrDepartmentIdError)
+  errgo.ErrorIfStringIsEmpty(data.Title, errgo.ErrUserTitleIsEmpty)
+  errgo.ErrorIfLenMoreThen(data.Title, 14, errgo.ErrUserTitleTooLong)
   if data.Role != 1 && data.Role != 2 && data.Role != 3 {
-    data.Role = 1
+    return errors.New(errgo.ErrUserRoleError)
+  }
+  errgo.ErrorIfStringIsEmpty(data.UserName, errgo.ErrUsernameEmpty)
+  errgo.ErrorIfLenLessThen(data.UserName, 6, errgo.ErrUsernameTooShort)
+  errgo.ErrorIfLenMoreThen(data.UserName, 14, errgo.ErrUsernameTooLong)
+  errgo.ErrorIfStringIsEmpty(data.Password, errgo.ErrPasswordEmpty)
+
+  if err = errgo.PopError(); err != nil {
+    errgo.ClearErrorStack()
+    return err
+  }
+
+  // save department id
+  data.Department = mgo.DBRef{
+    Id:         bson.ObjectIdHex(departmentId),
+    Collection: model.DepartmentCollection,
+    Database:   conf.DBName,
   }
 
   // username must be the only.
-  count, err := db.C(model.UserCollection).Find(bson.M{"username": data.UserName}).Count()
+  count, err := db.C(model.UserCollection).Find(model.User{
+    UserName: data.UserName,
+    Exist:    true,
+  }).Count()
 
   if err != nil {
     return errors.New(errgo.ErrCreateUserFailed)
@@ -37,7 +69,10 @@ func CreateUser(data model.User) error {
   }
 
   // nickname must be the only.
-  count, err = db.C(model.UserCollection).Find(bson.M{"nickname": data.NickName}).Count()
+  count, err = db.C(model.UserCollection).Find(model.User{
+    NickName: data.NickName,
+    Exist:    true,
+  }).Count()
 
   if err != nil {
     return errors.New(errgo.ErrCreateUserFailed)
@@ -55,9 +90,6 @@ func CreateUser(data model.User) error {
     return errors.New(errgo.ErrDepartmentNotFound)
   }
 
-  // set status
-  data.Status = 1
-
   // insert it.
   err = db.C(model.UserCollection).Insert(data)
 
@@ -71,8 +103,8 @@ func CreateUser(data model.User) error {
   return nil
 }
 
-// update user info.
-func UpdateUser(id bson.ObjectId, data model.User) error {
+// 更新用户
+func UpdateUser(id string, data model.User, departmentId string) error {
   db, closer, err := mongo.CloneDB()
 
   if err != nil {
@@ -81,11 +113,40 @@ func UpdateUser(id bson.ObjectId, data model.User) error {
     defer closer()
   }
 
+  // check
+  errgo.ErrorIfStringIsEmpty(data.NickName, errgo.ErrNicknameEmpty)
+  errgo.ErrorIfLenLessThen(data.NickName, 2, errgo.ErrNicknameTooShort)
+  errgo.ErrorIfLenMoreThen(data.NickName, 14, errgo.ErrNicknameTooLong)
+  if departmentId != "" {
+    errgo.ErrorIfStringNotObjectId(departmentId, errgo.ErrDepartmentIdError)
+  }
+  errgo.ErrorIfStringIsEmpty(data.Title, errgo.ErrUserTitleIsEmpty)
+  errgo.ErrorIfLenMoreThen(data.Title, 14, errgo.ErrUserTitleTooLong)
+  if data.Role != 1 && data.Role != 2 && data.Role != 3 {
+    return errors.New(errgo.ErrUserRoleError)
+  }
+
+  if err = errgo.PopError(); err != nil {
+    errgo.ClearErrorStack()
+    return err
+  }
+
+  // save department id
+  if departmentId != "" {
+    data.Department = mgo.DBRef{
+      Id:         bson.ObjectIdHex(departmentId),
+      Collection: model.DepartmentCollection,
+      Database:   conf.DBName,
+    }
+  } else {
+    data.Department = mgo.DBRef{}
+  }
+
   // 姓名唯一
   count, err := db.C(model.UserCollection).Find(bson.M{
     "nickname": data.NickName,
     "_id": bson.M{
-      "$ne": id,
+      "$ne": bson.ObjectIdHex(id),
     },
   }).Count()
 
@@ -105,7 +166,8 @@ func UpdateUser(id bson.ObjectId, data model.User) error {
   }
 
   // 更新数据
-  err = db.C(model.UserCollection).UpdateId(id, bson.M{
+  data.Exist = true
+  err = db.C(model.UserCollection).UpdateId(bson.ObjectIdHex(id), bson.M{
     "$set": data,
   })
 
@@ -119,6 +181,38 @@ func UpdateUser(id bson.ObjectId, data model.User) error {
   return nil
 }
 
+// 根据id查找用户信息
+func GetUserInfoById(id string) (gin.H, error) {
+  db, closer, err := mongo.CloneDB()
+
+  if err != nil {
+    return nil, err
+  } else {
+    defer closer()
+  }
+
+  // check
+  errgo.ErrorIfStringNotObjectId(id, errgo.ErrUserIdError)
+
+  if err = errgo.PopError(); err != nil {
+    errgo.ClearErrorStack()
+    return nil, err
+  }
+
+  data := new(model.User)
+
+  err = db.C(model.UserCollection).FindId(bson.ObjectIdHex(id)).One(&data)
+
+  if err != nil {
+    if err == mgo.ErrNotFound {
+      return nil, errors.New(errgo.ErrUserNotFound)
+    }
+    return nil, err
+  }
+
+  return data.GetMap(db), nil
+}
+
 // 用户登录并返回用户id
 func UserLogin(username string, password string) (id string, err error) {
   db, closer, err := mongo.CloneDB()
@@ -127,6 +221,15 @@ func UserLogin(username string, password string) (id string, err error) {
     return "", err
   } else {
     defer closer()
+  }
+
+  // check
+  errgo.ErrorIfStringIsEmpty(username, errgo.ErrUsernameEmpty)
+  errgo.ErrorIfStringIsEmpty(password, errgo.ErrPasswordEmpty)
+
+  if err = errgo.PopError(); err != nil {
+    errgo.ClearErrorStack()
+    return "", err
   }
 
   data := new(model.User)
@@ -146,48 +249,28 @@ func UserLogin(username string, password string) (id string, err error) {
   }
 }
 
-// 根据id查找用户信息
-func GetUserInfoById(id bson.ObjectId) (gin.H, error) {
-  db, closer, err := mongo.CloneDB()
-
-  data := new(model.User)
-
-  if err != nil {
-    return nil, err
-  } else {
-    defer closer()
-  }
-
-  err = db.C(model.UserCollection).FindId(id).One(&data)
-
-  if err != nil {
-    if err == mgo.ErrNotFound {
-      return nil, errors.New(errgo.ErrUserNotFound)
-    }
-    return nil, err
-  }
-
-  return data.GetMap(db), nil
-}
-
 // 获取用户列表
-// 如果departmentId为空，查找所有用户
-func GetUsersList(skip int, limit int, query bson.M) (gin.H, error) {
+func GetUsersList(skip int, limit int, query model.User) (gin.H, error) {
   db, closer, err := mongo.CloneDB()
 
   if err != nil {
     return nil, err
   } else {
     defer closer()
+  }
+
+  // check
+  errgo.ErrorIfIntLessThen(skip, 0, errgo.ErrSkipRange)
+  errgo.ErrorIfIntLessThen(limit, 1, errgo.ErrLimitRange)
+  errgo.ErrorIfIntMoreThen(limit, 100, errgo.ErrLimitRange)
+
+  if err = errgo.PopError(); err != nil {
+    errgo.ClearErrorStack()
+    return nil, err
   }
 
   data := new([]model.User)
-
-  if limit < 0 {
-    limit = 0
-  } else if limit > 100 {
-    limit = 100
-  }
+  query.Exist = true
 
   // find it
   err = db.C(model.UserCollection).Find(query).Skip(skip).Limit(limit).Sort("-createTime").All(data)

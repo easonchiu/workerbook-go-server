@@ -27,9 +27,6 @@ type Project struct {
   // 参与的部门
   Departments []mgo.DBRef `bson:"departments,omitempty"`
 
-  // 任务列表
-  Missions []mgo.DBRef `bson:"missions,omitempty"`
-
   // 项目说明
   Description string `bson:"description,omitempty"`
 
@@ -41,6 +38,12 @@ type Project struct {
 
   // 权重 1. 红(紧急) 2. 黄(重要) 3. 绿(一般)
   Weight int `bson:"weight,omitempty"`
+
+  // 任务
+  Missions []mgo.DBRef `bson:"missions,omitempty"`
+
+  // 是否存在
+  Exist bool `bson:"exist"`
 }
 
 func (p Project) GetMap(db *mgo.Database) gin.H {
@@ -52,15 +55,23 @@ func (p Project) GetMap(db *mgo.Database) gin.H {
       departments = append(departments, department.GetMap(db))
     }
   }
+  var missions []gin.H
+  for _, item := range p.Missions {
+    mission := new(Mission)
+    err := db.FindRef(&item).One(mission)
+    if err == nil {
+      missions = append(missions, mission.GetMap(db))
+    }
+  }
   return gin.H{
-    "id":           p.Id,
-    "name":         p.Name,
-    "missionCount": len(p.Missions),
-    "deadline":     p.Deadline,
-    "description":  p.Description,
-    "createTime":   p.CreateTime,
-    "progress":     p.Progress,
-    "departments":  departments,
-    "weight":       p.Weight,
+    "id":          p.Id,
+    "name":        p.Name,
+    "deadline":    p.Deadline,
+    "description": p.Description,
+    "createTime":  p.CreateTime,
+    "progress":    p.Progress,
+    "departments": departments,
+    "missions":    missions,
+    "weight":      p.Weight,
   }
 }

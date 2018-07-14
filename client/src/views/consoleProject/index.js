@@ -7,6 +7,7 @@ import Event from './event'
 import Button from 'src/components/button'
 import ProjectItem from 'src/components/consoleProjectItem'
 import Pager from 'src/components/pager'
+import MainDialog from 'src/containers/mainDialog'
 import ConsoleProjectDialog from 'src/components/consoleProjectDialog'
 import ConsoleMissionDialog from 'src/components/consoleMissionDialog'
 
@@ -17,6 +18,8 @@ class ConsoleProject extends React.PureComponent {
     super(props)
     this.state = {
       projectDialogVisible: false,
+      projectDelDialogVisible: false,
+      projectDelDialogData: null,
       missionDialogVisible: false,
     }
   }
@@ -37,6 +40,30 @@ class ConsoleProject extends React.PureComponent {
         onSubmit={this.evt.onProjectFormSubmit}
         onEditSubmit={this.evt.onProjectFormEditSubmit}
       />
+    )
+  }
+
+  renderDelProjectDialog() {
+    const data = this.state.projectDelDialogData || {}
+    return (
+      <MainDialog
+        title="删除项目"
+        visible={this.state.projectDelDialogVisible}
+        className="dialog-console-del-project"
+        onClose={this.evt.onCloseDelProjectDialog}
+      >
+        <p>
+          确定要删除项目<span>{data.name}</span>吗？该操作不可逆
+        </p>
+        <div className="btn">
+          <Button danger onClick={this.evt.onDelProject.bind(this, data)}>
+            删除项目
+          </Button>
+          <Button onClick={this.evt.onCloseDelProjectDialog}>
+            取消
+          </Button>
+        </div>
+      </MainDialog>
     )
   }
 
@@ -66,7 +93,9 @@ class ConsoleProject extends React.PureComponent {
                   <ProjectItem
                     key={j}
                     onAppendMissionClick={this.evt.onAppendMissionClick}
-                    onEditClick={this.evt.onProjectEditClick}
+                    onMissionEditClick={this.evt.onMissionEditClick}
+                    onProjectEditClick={this.evt.onProjectEditClick}
+                    onProjectDeleteClick={this.evt.onProjectDeleteClick}
                     source={item}
                   />
                 )
@@ -92,6 +121,7 @@ class ConsoleProject extends React.PureComponent {
           onClick={this.evt.onPageClick}
         />
         {this.renderProjectDialog()}
+        {this.renderDelProjectDialog()}
         {this.renderMissionDialog()}
       </div>
     )

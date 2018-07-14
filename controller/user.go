@@ -19,14 +19,6 @@ func UserLogin(c *gin.Context) {
   username := ctx.getRaw("username")
   password := ctx.getRaw("password")
 
-  // check
-  errgo.ErrorIfStringIsEmpty(username, errgo.ErrUsernameEmpty)
-  errgo.ErrorIfStringIsEmpty(password, errgo.ErrPasswordEmpty)
-
-  if errgo.HandleError(ctx.Error) {
-    return
-  }
-
   // query
   id, err := service.UserLogin(username, password)
 
@@ -51,23 +43,18 @@ func GetUsersList(c *gin.Context) {
   skip := ctx.getQueryIntDefault("skip", 0)
   limit := ctx.getQueryIntDefault("limit", 10)
 
-  // check
-  if departmentId != "" {
-    errgo.ErrorIfStringNotObjectId(departmentId, errgo.ErrDepartmentIdError)
-  }
-  errgo.ErrorIfIntLessThen(skip, 0, errgo.ErrSkipRange)
-  errgo.ErrorIfIntLessThen(limit, 1, errgo.ErrLimitRange)
-  errgo.ErrorIfIntMoreThen(limit, 100, errgo.ErrLimitRange)
-
-  if errgo.HandleError(ctx.Error) {
-    return
-  }
-
   // query
-  var query bson.M
+  var query model.User
   if departmentId != "" {
-    query = bson.M{
-      "departmentId": departmentId,
+    // check id
+    if !bson.IsObjectIdHex(departmentId) {
+      ctx.Error(errgo.ErrDepartmentIdError)
+      return
+    }
+    query.Department = mgo.DBRef{
+      Id:         bson.ObjectIdHex(departmentId),
+      Collection: model.DepartmentCollection,
+      Database:   conf.DBName,
     }
   }
 
@@ -92,15 +79,8 @@ func GetUserOne(c *gin.Context) {
   // get
   id := ctx.getParam("id")
 
-  // check
-  errgo.ErrorIfStringNotObjectId(id, errgo.ErrUserIdError)
-
-  if errgo.HandleError(ctx.Error) {
-    return
-  }
-
   // query
-  userInfo, err := service.GetUserInfoById(bson.ObjectIdHex(id))
+  userInfo, err := service.GetUserInfoById(id)
 
   // check
   if err != nil {
@@ -121,22 +101,16 @@ func GetProfile(c *gin.Context) {
   // get
   id := ctx.get("uid")
 
-  // check
-  errgo.ErrorIfStringNotObjectId(id, errgo.ErrUserIdError)
-
-  if errgo.HandleError(ctx.Error) {
-    return
-  }
-
   // query
-  userInfo, err := service.GetUserInfoById(bson.ObjectIdHex(id))
-  delete(userInfo, "username")
+  userInfo, err := service.GetUserInfoById(id)
 
   // check
   if err != nil {
     ctx.Error(err)
     return
   }
+
+  delete(userInfo, "username")
 
   // return
   ctx.Success(gin.H{
@@ -156,36 +130,11 @@ func CreateUser(c *gin.Context) {
   role := ctx.getRawInt("role")
   password := ctx.getRaw("password")
 
-  // check
-  errgo.ErrorIfStringIsEmpty(nickname, errgo.ErrNicknameEmpty)
-  errgo.ErrorIfLenLessThen(nickname, 2, errgo.ErrNicknameTooShort)
-  errgo.ErrorIfLenMoreThen(nickname, 14, errgo.ErrNicknameTooLong)
-  errgo.ErrorIfStringNotObjectId(departmentId, errgo.ErrDepartmentIdError)
-  errgo.ErrorIfStringIsEmpty(title, errgo.ErrUserTitleIsEmpty)
-  errgo.ErrorIfLenMoreThen(title, 14, errgo.ErrUserTitleTooLong)
-  if role != 1 && role != 2 && role != 3 {
-    ctx.Error(errgo.ErrUserRoleError)
-    return
-  }
-  errgo.ErrorIfStringIsEmpty(username, errgo.ErrUsernameEmpty)
-  errgo.ErrorIfLenLessThen(username, 6, errgo.ErrUsernameTooShort)
-  errgo.ErrorIfLenMoreThen(username, 14, errgo.ErrUsernameTooLong)
-  errgo.ErrorIfStringIsEmpty(password, errgo.ErrPasswordEmpty)
-
-  if errgo.HandleError(ctx.Error) {
-    return
-  }
-
   // create
   data := model.User{
-    NickName: nickname,
-    Email:    "",
-    UserName: username,
-    Department: mgo.DBRef{
-      Id:         bson.ObjectIdHex(departmentId),
-      Collection: model.DepartmentCollection,
-      Database:   conf.DBName,
-    },
+    NickName:   nickname,
+    Email:      "",
+    UserName:   username,
     Title:      title,
     Role:       role,
     Mobile:     "",
@@ -194,7 +143,7 @@ func CreateUser(c *gin.Context) {
   }
 
   // insert
-  err := service.CreateUser(data)
+  err := service.CreateUser(data, departmentId)
 
   // check
   if err != nil {
@@ -218,36 +167,15 @@ func UpdateUser(c *gin.Context) {
   role := ctx.getRawInt("role")
   status := ctx.getRawInt("status")
 
-  // check
-  errgo.ErrorIfStringIsEmpty(nickname, errgo.ErrNicknameEmpty)
-  errgo.ErrorIfLenLessThen(nickname, 2, errgo.ErrNicknameTooShort)
-  errgo.ErrorIfLenMoreThen(nickname, 14, errgo.ErrNicknameTooLong)
-  errgo.ErrorIfStringNotObjectId(departmentId, errgo.ErrDepartmentIdError)
-  errgo.ErrorIfStringIsEmpty(title, errgo.ErrUserTitleIsEmpty)
-  errgo.ErrorIfLenMoreThen(title, 14, errgo.ErrUserTitleTooLong)
-  if role != 1 && role != 2 && role != 3 {
-    ctx.Error(errgo.ErrUserRoleError)
-    return
-  }
-
-  if errgo.HandleError(ctx.Error) {
-    return
-  }
-
   // update
   data := model.User{
     NickName: nickname,
-    Department: mgo.DBRef{
-      Id:         bson.ObjectIdHex(departmentId),
-      Collection: model.DepartmentCollection,
-      Database:   conf.DBName,
-    },
-    Title:  title,
-    Role:   role,
-    Status: status,
+    Title:    title,
+    Role:     role,
+    Status:   status,
   }
 
-  err := service.UpdateUser(bson.ObjectIdHex(id), data)
+  err := service.UpdateUser(id, data, departmentId)
 
   // check
   if err != nil {

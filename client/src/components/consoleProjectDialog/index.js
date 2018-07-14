@@ -32,7 +32,7 @@ class ConsoleProjectDialog extends React.PureComponent {
     })
   }
 
-  $fill(data) {
+  $fill(data = {}) {
     const d = {}
     Object.keys(this.nilForm).forEach(i => {
       if (typeof data[i] !== 'undefined') {
