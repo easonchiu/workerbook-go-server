@@ -24,6 +24,7 @@ func CreateMission(data model.Mission, projectId string) error {
 
   // 是否存在的标志
   data.Exist = true
+  data.CreateTime = time.Now()
 
   // check
   errgo.ErrorIfStringIsEmpty(data.Name, errgo.ErrMissionNameEmpty)
@@ -68,7 +69,7 @@ func CreateMission(data model.Mission, projectId string) error {
 }
 
 // 更新任务
-func UpdateMission(id string, data model.Mission, projectId string) error {
+func UpdateMission(id string, data bson.M) error {
   db, close, err := mongo.CloneDB()
 
   if err != nil {
@@ -79,19 +80,59 @@ func UpdateMission(id string, data model.Mission, projectId string) error {
 
   // check
   errgo.ErrorIfStringNotObjectId(id, errgo.ErrMissionIdError)
-  errgo.ErrorIfStringIsEmpty(data.Name, errgo.ErrMissionNameEmpty)
-  errgo.ErrorIfLenMoreThen(data.Name, 15, errgo.ErrMissionNameTooLong)
-  errgo.ErrorIfTimeEarlierThen(data.Deadline, time.Now(), errgo.ErrMissionDeadlineTooSoon)
-  errgo.ErrorIfLenMoreThen(data.Description, 500, errgo.ErrMissionDescriptionTooLong)
-  errgo.ErrorIfStringNotObjectId(projectId, errgo.ErrProjectIdError)
 
+  if name, ok := data["name"]; ok {
+    errgo.ErrorIfLenMoreThen(name.(string), 15, errgo.ErrMissionNameTooLong)
+  }
+
+  if deadline, ok := data["deadline"]; ok {
+    errgo.ErrorIfTimeEarlierThen(deadline.(time.Time), time.Now(), errgo.ErrMissionDeadlineTooSoon)
+  }
+
+  if description, ok := data["description"]; ok {
+    errgo.ErrorIfLenMoreThen(description.(string), 500, errgo.ErrMissionDescriptionTooLong)
+  }
+
+  if projectId, ok := data["projectId"]; ok {
+    errgo.ErrorIfStringNotObjectId(projectId.(string), errgo.ErrProjectIdError)
+  }
+
+  // check
+  if err = errgo.PopError(); err != nil {
+    errgo.ClearErrorStack()
+    return err
+  }
+
+  // 查找项目
+  if projectId, ok := data["projectId"]; ok {
+    var project = new(model.Project)
+
+    err = db.C(model.ProjectCollection).Find(bson.M{
+      "_id":   bson.ObjectIdHex(projectId.(string)),
+      "exist": true,
+    }).One(project)
+
+    if err != nil {
+      return errors.New(errgo.ErrProjectNotFound)
+    }
+
+    // 任务截至时间不能晚于项目截至时间
+    if deadline, ok := data["deadline"]; ok {
+      errgo.ErrorIfTimeLaterThen(deadline.(time.Time), project.Deadline, errgo.ErrMissionDeadlineTooLate)
+    }
+  }
+
+  // check
   if err = errgo.PopError(); err != nil {
     errgo.ClearErrorStack()
     return err
   }
 
   // update
-  data.Exist = true
+  if projectId, ok := data["projectId"]; ok {
+    data["projectId"] = bson.ObjectIdHex(projectId.(string))
+  }
+
   err = db.C(model.MissionCollection).UpdateId(bson.ObjectIdHex(id), bson.M{
     "$set": data,
   })

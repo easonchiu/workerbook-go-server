@@ -6,16 +6,20 @@ import (
   "workerbook/middleware"
 )
 
-func registerMissionRouter(g *gin.RouterGroup) {
+func registerConsoleMissionRouter(g *gin.RouterGroup) {
   // 任务列表
-  g.GET("", middleware.Jwt, controller.GetMissionsList)
+  g.GET("", middleware.ConsoleJwt, controller.C_GetMissionsList)
 
   // 获取单个任务
-  g.GET("/:id", middleware.Jwt, controller.GetMissionOne)
+  g.GET("/:id", middleware.ConsoleJwt, controller.C_GetMissionOne)
 
   // 添加任务
-  g.POST("", middleware.Jwt, controller.CreateMission)
+  g.POST("", middleware.ConsoleJwt, controller.C_CreateMission)
 
   // 修改任务
-  g.PUT("/:id", middleware.Jwt, controller.UpdateMission)
+  g.PUT("/:id", middleware.ConsoleJwt, controller.C_UpdateMission)
+}
+
+func registerMissionRouter(g *gin.RouterGroup) {
+
 }

@@ -3,9 +3,9 @@ import http from 'src/utils/http'
 import ignore from 'src/utils/ignore'
 
 // create department
-const create = payload => async () => {
+const c_create = payload => async () => {
   const res = await http.request({
-    url: '/departments',
+    url: '/console/departments',
     method: 'POST',
     data: payload,
   })
@@ -13,9 +13,9 @@ const create = payload => async () => {
 }
 
 // update department
-const update = payload => async () => {
+const c_update = payload => async () => {
   const res = await http.request({
-    url: '/departments/' + payload.id,
+    url: '/console/departments/' + payload.id,
     method: 'PUT',
     data: ignore(payload, 'id'),
   })
@@ -23,40 +23,50 @@ const update = payload => async () => {
 }
 
 // fetch departments list.
-const fetchList = ({ skip = 0, limit = 10 } = {}) => async dispatch => {
+const c_fetchList = ({ skip = 0, limit = 10 } = {}) => async dispatch => {
   const res = await http.request({
-    url: '/departments',
+    url: '/console/departments',
     method: 'GET',
     params: {
       skip,
       limit,
     }
   })
-  dispatch(createAction('DEPARTMENT_LIST')(res))
+  dispatch(createAction('C_DEPARTMENT_LIST')(res))
 }
 
 // fetch departments list for select.
-const fetchSelectList = () => async dispatch => {
+const c_fetchSelectList = () => async dispatch => {
   const res = await http.request({
-    url: '/departments',
+    url: '/console/departments',
     method: 'GET',
   })
-  dispatch(createAction('DEPARTMENT_SELECT_LIST')(res))
+  dispatch(createAction('C_DEPARTMENT_SELECT_LIST')(res))
 }
 
 // fetch department one by id
-const fetchOneById = id => async dispatch => {
+const c_fetchOneById = id => async dispatch => {
   const res = await http.request({
-    url: '/departments/' + id,
+    url: '/console/departments/' + id,
     method: 'GET',
   })
   return res
 }
 
+// delete department
+const c_del = id => async dispatch => {
+  const res = await http.request({
+    url: '/console/departments/' + id,
+    method: 'DELETE',
+  })
+  return res
+}
+
 export default {
-  create,
-  update,
-  fetchList,
-  fetchOneById,
-  fetchSelectList,
+  c_update,
+  c_fetchOneById,
+  c_fetchList,
+  c_create,
+  c_del,
+  c_fetchSelectList,
 }

@@ -1,22 +1,22 @@
 import { handleActions } from 'easy-action'
 
 const initialState = {
-  departments: {
+  c_departments: {
     list: [],
     count: 0,
     skip: 0,
     limit: 0,
   },
-  select: {
+  c_select: {
     list: []
   }
 }
 
 export default handleActions({
-  DEPARTMENT_LIST(state, action) {
+  C_DEPARTMENT_LIST(state, action) {
     return {
       ...state,
-      departments: {
+      c_departments: {
         list: action.payload.list || [],
         skip: action.payload.skip,
         limit: action.payload.limit,
@@ -24,10 +24,10 @@ export default handleActions({
       }
     }
   },
-  DEPARTMENT_SELECT_LIST(state, action) {
+  C_DEPARTMENT_SELECT_LIST(state, action) {
     return {
       ...state,
-      select: {
+      c_select: {
         list: action.payload.list || [],
       }
     }

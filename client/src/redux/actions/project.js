@@ -3,9 +3,9 @@ import http from 'src/utils/http'
 import ignore from 'src/utils/ignore'
 
 // create project
-const create = payload => async () => {
+const c_create = payload => async () => {
   const res = await http.request({
-    url: '/projects',
+    url: '/console/projects',
     method: 'POST',
     data: payload
   })
@@ -13,9 +13,9 @@ const create = payload => async () => {
 }
 
 // update project
-const update = payload => async () => {
+const c_update = payload => async () => {
   const res = await http.request({
-    url: '/projects/' + payload.id,
+    url: '/console/projects/' + payload.id,
     method: 'PUT',
     data: ignore(payload, 'id'),
   })
@@ -23,41 +23,46 @@ const update = payload => async () => {
 }
 
 // fetch project list.
-const fetchList = ({ status, skip, limit } = {}) => async dispatch => {
+const c_fetchList = ({ status } = {}) => async dispatch => {
   const res = await http.request({
-    url: '/projects',
+    url: '/console/projects',
     method: 'GET',
-    params: {
-      status,
-      skip,
-      limit,
-    }
   })
-  dispatch(createAction('PROJECT_LIST')(res))
+  dispatch(createAction('C_PROJECT_LIST')(res))
 }
 
 // fetch project one by id
-const fetchOneById = id => async dispatch => {
+const c_fetchOneById = id => async dispatch => {
   const res = await http.request({
-    url: '/projects/' + id,
+    url: '/console/projects/' + id,
     method: 'GET',
   })
   return res
 }
 
-// delete
-const del = id => async dispatch => {
+// delete project
+const c_del = id => async dispatch => {
   const res = await http.request({
-    url: '/projects/' + id,
+    url: '/console/projects/' + id,
     method: 'DELETE',
   })
   return res
 }
 
+// fetch project list.
+const fetchList = () => async dispatch => {
+  const res = await http.request({
+    url: '/projects',
+    method: 'GET',
+  })
+  dispatch(createAction('PROJECT_LIST')(res))
+}
+
 export default {
-  create,
-  update,
-  fetchOneById,
   fetchList,
-  del,
+  c_update,
+  c_fetchOneById,
+  c_fetchList,
+  c_del,
+  c_create,
 }

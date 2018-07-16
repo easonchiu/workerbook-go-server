@@ -16,31 +16,31 @@ type Project struct {
   Id bson.ObjectId `bson:"_id,omitempty"`
 
   // 项目名
-  Name string `bson:"name,omitempty"`
+  Name string `bson:"name"`
 
   // 状态 1. 启用 2. 已归档 3. 停止
-  Status int `bson:"status,omitempty"`
+  Status int `bson:"status"`
 
   // 截至时间
-  Deadline time.Time `bson:"deadline,omitempty"`
+  Deadline time.Time `bson:"deadline"`
 
   // 参与的部门
-  Departments []mgo.DBRef `bson:"departments,omitempty"`
+  Departments []mgo.DBRef `bson:"departments"`
 
   // 项目说明
-  Description string `bson:"description,omitempty"`
+  Description string `bson:"description"`
 
   // 创建时间
-  CreateTime time.Time `bson:"createTime,omitempty"`
+  CreateTime time.Time `bson:"createTime"`
 
   // 进度
-  Progress int `bson:"progress,omitempty"`
+  Progress int `bson:"progress"`
 
   // 权重 1. 红(紧急) 2. 黄(重要) 3. 绿(一般)
-  Weight int `bson:"weight,omitempty"`
+  Weight int `bson:"weight"`
 
   // 任务
-  Missions []mgo.DBRef `bson:"missions,omitempty"`
+  Missions []mgo.DBRef `bson:"missions"`
 
   // 是否存在
   Exist bool `bson:"exist"`

@@ -2,14 +2,13 @@ package controller
 
 import (
   "github.com/gin-gonic/gin"
-  "time"
+  "gopkg.in/mgo.v2/bson"
   "workerbook/model"
   "workerbook/service"
 )
 
-
 // 获取单个任务
-func GetMissionOne(c *gin.Context) {
+func C_GetMissionOne(c *gin.Context) {
   ctx := CreateCtx(c)
 
   // get
@@ -31,7 +30,7 @@ func GetMissionOne(c *gin.Context) {
 }
 
 // 获取任务列表
-func GetMissionsList(c *gin.Context) {
+func C_GetMissionsList(c *gin.Context) {
   ctx := CreateCtx(c)
 
   // return
@@ -39,7 +38,7 @@ func GetMissionsList(c *gin.Context) {
 }
 
 // 创建任务
-func CreateMission(c *gin.Context) {
+func C_CreateMission(c *gin.Context) {
   ctx := CreateCtx(c)
 
   // get
@@ -53,7 +52,6 @@ func CreateMission(c *gin.Context) {
     Name:        name,
     Description: description,
     Deadline:    deadline,
-    CreateTime:  time.Now(),
     Progress:    0,
     Status:      1,
   }
@@ -71,27 +69,32 @@ func CreateMission(c *gin.Context) {
 }
 
 // 更新任务
-func UpdateMission(c *gin.Context) {
+func C_UpdateMission(c *gin.Context) {
   ctx := CreateCtx(c)
 
   // get
   id := ctx.getParam("id")
-  name := ctx.getRaw("name")
-  description := ctx.getRaw("description")
-  deadline := ctx.getRawTime("deadline")
-  projectId := ctx.getRaw("projectId")
 
   // update
-  data := model.Mission{
-    Name:        name,
-    Description: description,
-    Deadline:    deadline,
-    CreateTime:  time.Now(),
-    Progress:    0,
-    Status:      1,
+  data := bson.M{}
+
+  if name := ctx.getRaw("name"); name != "" {
+    data["name"] = name
   }
 
-  err := service.UpdateMission(id, data, projectId)
+  if description := ctx.getRaw("description"); description != "" {
+    data["description"] = description
+  }
+
+  if deadline := ctx.getRawTime("deadline"); !deadline.IsZero() {
+    data["deadline"] = deadline
+  }
+
+  if projectId := ctx.getRaw("projectId"); projectId != "" {
+    data["projectId"] = projectId
+  }
+
+  err := service.UpdateMission(id, data)
 
   // check
   if err != nil {

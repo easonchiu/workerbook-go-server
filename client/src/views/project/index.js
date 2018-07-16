@@ -24,7 +24,8 @@ export default class View extends PureComponent {
   }
 
   render(props, state) {
-    const profile = this.props.user$.profile
+    const { profile } = this.props.user$
+    const { projects } = this.props.project$
 
     return (
       <div className="view-project">
@@ -34,16 +35,18 @@ export default class View extends PureComponent {
 
           <div className="project-list">
             <header>
-              <h1>进行中的</h1>
+              <h1>参与中的</h1>
             </header>
             <div className="list">
-              <ProjectItem onMissionClick={this.evt.click} />
-              <ProjectItem onMissionClick={this.evt.click} />
-              <ProjectItem onMissionClick={this.evt.click} />
-              <ProjectItem onMissionClick={this.evt.click} />
-              <ProjectItem onMissionClick={this.evt.click} />
-              <ProjectItem onMissionClick={this.evt.click} />
-              <ProjectItem onMissionClick={this.evt.click} />
+              {
+                projects.map(item => (
+                  <ProjectItem
+                    key={item.id}
+                    source={item}
+                    onMissionClick={this.evt.click}
+                  />
+                ))
+              }
             </div>
           </div>
 

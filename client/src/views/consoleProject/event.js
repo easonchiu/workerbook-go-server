@@ -6,7 +6,7 @@ export default class Event {
     try {
       Loading.show()
       await Promise.all([
-        this.props.$project.fetchList({
+        this.props.$project.c_fetchList({
           skip: pager * 9 - 9,
           limit: 9
         })
@@ -23,7 +23,7 @@ export default class Event {
   // 获取所有部门信息
   fetchDepartments = async () => {
     try {
-      await this.props.$department.fetchSelectList()
+      await this.props.$department.c_fetchSelectList()
     }
     catch (err) {
       Toast.error(err.message)
@@ -36,11 +36,11 @@ export default class Event {
   }
 
   // 新增项目提交
-  onProjectFormSubmit = async data => {
+  onAddProjectSubmit = async data => {
     data.deadline = new Date(2018, 11, 20)
     try {
       Loading.show()
-      await this.props.$project.create(data)
+      await this.props.$project.c_create(data)
       this.onCloseProjectDialog()
       await this.fetchData()
       Toast.success('添加成功')
@@ -54,11 +54,11 @@ export default class Event {
   }
 
   // 修改项目提交
-  onProjectFormEditSubmit = async data => {
+  onEditProjectSubmit = async data => {
     data.deadline = new Date(2018, 11, 20)
     try {
       Loading.show()
-      await this.props.$project.update(data)
+      await this.props.$project.c_update(data)
       this.onCloseProjectDialog()
       await this.fetchData()
       Toast.success('修改成功')
@@ -72,16 +72,16 @@ export default class Event {
   }
 
   // 项目添加按钮点击
-  onAppendProjectClick = () => {
+  onAddProjectClick = () => {
     this.projectDialog && this.projectDialog.$clear()
     this.onOpenProjectDialog()
   }
 
   // 项目编辑按钮点击
-  onProjectEditClick = async data => {
+  onEditProjectClick = async data => {
     try {
       Loading.show()
-      const res = await this.props.$project.fetchOneById(data.id)
+      const res = await this.props.$project.c_fetchOneById(data.id)
       res.departments = res.departments ? res.departments.map(i => i.id) : []
       this.projectDialog && this.projectDialog.$fill(res)
       this.onOpenProjectDialog()
@@ -95,11 +95,11 @@ export default class Event {
   }
 
   // 项目删除按钮点击
-  onProjectDeleteClick = data => {
+  onDelProjectClick = data => {
     if (data.name && data.id) {
       this.setState({
-        projectDelDialogVisible: true,
-        projectDelDialogData: data,
+        delProjectDialogVisible: true,
+        delProjectDialogData: data,
       })
     }
     else {
@@ -110,16 +110,18 @@ export default class Event {
   // 关闭项目删除弹层
   onCloseDelProjectDialog = () => {
     this.setState({
-      projectDelDialogVisible: false
+      delProjectDialogVisible: false
     })
   }
 
   // 确定删除项目
-  onDelProject = async data => {
-    if (data.name && data.id) {
+  onDelProjectSubmit = async data => {
+    if (data && data.id) {
       try {
         Loading.show()
-        await this.props.$project.del(data.id)
+        await this.props.$project.c_del(data.id)
+        await this.fetchData()
+        this.onCloseDelProjectDialog()
         Toast.success('删除成功')
       }
       catch (err) {
@@ -151,7 +153,7 @@ export default class Event {
   // ------------任务-------------
 
   // 添加任务按钮点击
-  onAppendMissionClick = project => {
+  onAddMissionClick = project => {
     if (this.missionDialog) {
       this.missionDialog.$clear()
       this.missionDialog.$projectId(project.id)
@@ -160,10 +162,29 @@ export default class Event {
   }
 
   // 编辑任务点击
-  onMissionEditClick = async (data, project) => {
+  onEditMissionClick = async (data, project) => {
     try {
       Loading.show()
-      const res = await this.props.$mission.fetchOneById(data.id)
+      const res = await this.props.$mission.c_fetchOneById(data.id)
+      if (this.missionDialog) {
+        this.missionDialog.$fill(res)
+        this.missionDialog.$projectId(project.id)
+      }
+      this.onOpenMissionDialog()
+    }
+    catch (err) {
+      Toast.error(err.message)
+    }
+    finally {
+      Loading.hide()
+    }
+  }
+
+  // 编辑任务点击
+  onEditMissionClick = async (data, project) => {
+    try {
+      Loading.show()
+      const res = await this.props.$mission.c_fetchOneById(data.id)
       if (this.missionDialog) {
         this.missionDialog.$fill(res)
         this.missionDialog.$projectId(project.id)
@@ -193,11 +214,11 @@ export default class Event {
   }
 
   // 新增任务提交
-  onMissionFormSubmit = async data => {
+  onAddMissionSubmit = async data => {
     data.deadline = new Date(2018, 11, 20)
     try {
       Loading.show()
-      await this.props.$mission.create(data)
+      await this.props.$mission.c_create(data)
       this.onCloseMissionDialog()
       await this.fetchData()
       Toast.success('添加成功')
@@ -211,11 +232,11 @@ export default class Event {
   }
 
   // 修改任务提交
-  onMissionFormEditSubmit = async data => {
+  onEditMissionSubmit = async data => {
     data.deadline = new Date(2018, 11, 20)
     try {
       Loading.show()
-      await this.props.$mission.update(data)
+      await this.props.$mission.c_update(data)
       this.onCloseMissionDialog()
       await this.fetchData()
       Toast.success('修改成功')

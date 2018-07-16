@@ -31,14 +31,17 @@ const (
   ErrCreateUserFailed        = "100019"
   ErrUpdateUserFailed        = "100020"
   ErrLoginFailed             = "100021"
+  ErrDeleteUserFailed        = "100022"
 
   // 部门相关错误 101xxx
-  ErrDepartmentIdError      = "101001"
-  ErrDepartmentNotFound     = "101002"
-  ErrDepartmentNameEmpty    = "101003"
-  ErrSameDepartmentName     = "101004"
-  ErrCreateDepartmentFailed = "101005"
-  ErrUpdateDepartmentFailed = "101006"
+  ErrDepartmentIdError       = "101001"
+  ErrDepartmentNotFound      = "101002"
+  ErrDepartmentNameEmpty     = "101003"
+  ErrSameDepartmentName      = "101004"
+  ErrCreateDepartmentFailed  = "101005"
+  ErrUpdateDepartmentFailed  = "101006"
+  ErrDeleteDepartmentHasUser = "101007"
+  ErrDeleteDepartmentFailed  = "101008"
 
   // 项目相关错误 102xxx
   ErrProjectIdError            = "102001"
@@ -105,6 +108,7 @@ var Error = map[string]errType{
   ErrUserRoleError:           {"用户职位错误", http.StatusOK, ""},
   ErrCreateUserFailed:        {"创建用户失败", http.StatusOK, ""},
   ErrUpdateUserFailed:        {"更新用户失败", http.StatusOK, ""},
+  ErrDeleteUserFailed:        {"删除用户失败", http.StatusOK, ""},
 
   ErrProjectIdError:            {"项目id错误", http.StatusOK, ""},
   ErrProjectNotFound:           {"找不到该项目", http.StatusOK, ""},
@@ -135,12 +139,14 @@ var Error = map[string]errType{
   ErrDailyIdError:  {"日报id错误", http.StatusOK, ""},
   ErrDailyNotFound: {"找不到相关日报", http.StatusOK, ""},
 
-  ErrDepartmentIdError:      {"部门id错误", http.StatusOK, ""},
-  ErrDepartmentNotFound:     {"找不到相关部门", http.StatusOK, ""},
-  ErrDepartmentNameEmpty:    {"部门名称不能为空", http.StatusOK, ""},
-  ErrSameDepartmentName:     {"已存在相同部门名称", http.StatusOK, ""},
-  ErrCreateDepartmentFailed: {"创建部门失败", http.StatusOK, ""},
-  ErrUpdateDepartmentFailed: {"更新部门失败", http.StatusOK, ""},
+  ErrDepartmentIdError:       {"部门id错误", http.StatusOK, ""},
+  ErrDepartmentNotFound:      {"找不到相关部门", http.StatusOK, ""},
+  ErrDepartmentNameEmpty:     {"部门名称不能为空", http.StatusOK, ""},
+  ErrSameDepartmentName:      {"已存在相同部门名称", http.StatusOK, ""},
+  ErrCreateDepartmentFailed:  {"创建部门失败", http.StatusOK, ""},
+  ErrUpdateDepartmentFailed:  {"更新部门失败", http.StatusOK, ""},
+  ErrDeleteDepartmentHasUser: {"有用户的部门无法删除", http.StatusOK, ""},
+  ErrDeleteDepartmentFailed:  {"删除部门失败", http.StatusOK, ""},
 
   ErrSkipRange:  {"skip取值范围错误", http.StatusInternalServerError, ""},
   ErrLimitRange: {"limit取值范围错误", http.StatusInternalServerError, ""},

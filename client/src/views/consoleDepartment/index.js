@@ -7,6 +7,9 @@ import Event from './event'
 import Button from 'src/components/button'
 import Pager from 'src/components/pager'
 import ConsoleDepartmentDialog from 'src/components/consoleDepartmentDialog'
+import ConsoleDeleteDialog from 'src/components/consoleDeleteDialog'
+import IconRewrite from 'src/components/svg/rewrite'
+import IconDelete from 'src/components/svg/delete'
 
 @VIEW
 @ComponentEvent('evt', Event)
@@ -15,6 +18,8 @@ class ConsoleDepartment extends React.PureComponent {
     super(props)
     this.state = {
       departmentDialogVisible: false,
+      delDepartmentDialogVisible: false,
+      delDepartmentDialogData: null,
     }
   }
 
@@ -22,20 +27,34 @@ class ConsoleDepartment extends React.PureComponent {
     this.evt.fetchData()
   }
 
-  renderDialog() {
+  renderDepartmentDialog() {
     return (
       <ConsoleDepartmentDialog
         ref={r => { this.departmentDialog = r }}
         visible={this.state.departmentDialogVisible}
-        onClose={this.evt.onCloseDialog}
-        onSubmit={this.evt.onFormSubmit}
-        onEditSubmit={this.evt.onFormEditSubmit}
+        onClose={this.evt.onCloseDepartmentDialog}
+        onSubmit={this.evt.onAddDepartmentSubmit}
+        onEditSubmit={this.evt.onEditDepartmentSubmit}
+      />
+    )
+  }
+
+  // 删除部门弹层
+  renderDelDepartmentDialog() {
+    const data = this.state.delDepartmentDialogData || {}
+    return (
+      <ConsoleDeleteDialog
+        type="部门"
+        name={data.name}
+        visible={this.state.delDepartmentDialogVisible}
+        onClose={this.evt.onCloseDelDepartmentDialog}
+        onDelete={this.evt.onDelDepartmentSubmit.bind(this, data)}
       />
     )
   }
 
   render() {
-    const { departments } = this.props.department$
+    const { c_departments: departments } = this.props.department$
     const header = (
       <tr>
         <td>编号</td>
@@ -52,9 +71,12 @@ class ConsoleDepartment extends React.PureComponent {
         <td>{res.userCount}</td>
         <td>{new Date(res.createTime).format('yyyy-MM-dd hh:mm')}</td>
         <td className="c">
-          <a href="javascript:;" onClick={() => this.evt.onEditClick(res)}>
-            编辑
-          </a>
+          <IconRewrite.A
+            onClick={() => this.evt.onEditDepartmentClick(res)}
+          />
+          <IconDelete.A
+            onClick={() => this.evt.onDelDepartmentClick(res)}
+          />
         </td>
       </tr>
     ))
@@ -62,7 +84,7 @@ class ConsoleDepartment extends React.PureComponent {
       <div className="console-department">
         <header>
           <h1>部门管理</h1>
-          <Button onClick={this.evt.onAppendClick}>添加</Button>
+          <Button onClick={this.evt.onAddDepartmentClick}>添加</Button>
         </header>
         <table className="console-table">
           <thead>{header}</thead>
@@ -73,7 +95,8 @@ class ConsoleDepartment extends React.PureComponent {
           max={Math.ceil(departments.count / departments.limit)}
           onClick={this.evt.onPageClick}
         />
-        {this.renderDialog()}
+        {this.renderDepartmentDialog()}
+        {this.renderDelDepartmentDialog()}
       </div>
     )
   }

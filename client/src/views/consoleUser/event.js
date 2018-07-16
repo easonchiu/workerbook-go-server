@@ -6,7 +6,7 @@ export default class Event {
     try {
       Loading.show()
       await Promise.all([
-        this.props.$user.fetchList({
+        this.props.$user.c_fetchList({
           skip: pager * 30 - 30,
           limit: 30,
         })
@@ -23,7 +23,7 @@ export default class Event {
   // 获取所有部门信息
   fetchDepartments = async () => {
     try {
-      await this.props.$department.fetchSelectList()
+      await this.props.$department.c_fetchSelectList()
     }
     catch (err) {
       Toast.error(err.message)
@@ -36,11 +36,11 @@ export default class Event {
   }
 
   // 新增人员提交
-  onFormSubmit = async data => {
+  onAddUserSubmit = async data => {
     try {
       Loading.show()
-      await this.props.$user.create(data)
-      this.onCloseDialog()
+      await this.props.$user.c_create(data)
+      this.onCloseUserDialog()
       await this.fetchData()
       Toast.success('添加成功')
     }
@@ -53,11 +53,11 @@ export default class Event {
   }
 
   // 修改人员提交
-  onFormEditSubmit = async data => {
+  onEditUserSubmit = async data => {
     try {
       Loading.show()
-      await this.props.$user.update(data)
-      this.onCloseDialog()
+      await this.props.$user.c_update(data)
+      this.onCloseUserDialog()
       await this.fetchData()
       Toast.success('修改成功')
     }
@@ -70,18 +70,18 @@ export default class Event {
   }
 
   // 添加按钮点击
-  onAppendClick = () => {
+  onAddUserClick = () => {
     this.userDialog && this.userDialog.$clear()
-    this.onOpenDialog()
+    this.onOpenUserDialog()
   }
 
   // 编辑按钮点击
-  onEditClick = async data => {
+  onEditUserClick = async data => {
     try {
       Loading.show()
-      const res = await this.props.$user.fetchOneById(data.id)
+      const res = await this.props.$user.c_fetchOneById(data.id)
       this.userDialog && this.userDialog.$fill(res)
-      this.onOpenDialog()
+      this.onOpenUserDialog()
     }
     catch (err) {
       Toast.error(err.message)
@@ -91,18 +91,55 @@ export default class Event {
     }
   }
 
-  // 打开弹层
-  onOpenDialog = () => {
+  // 删除用户点击
+  onDelUserClick = data => {
+    this.setState({
+      delUserDialogVisible: true,
+      delUserDialogData: data,
+    })
+  }
+
+  // 打开用户弹层
+  onOpenUserDialog = () => {
     this.setState({
       userDialogVisible: true
     })
   }
 
-  // 关闭弹层
-  onCloseDialog = () => {
+  // 关闭用户弹层
+  onCloseUserDialog = () => {
     this.setState({
       userDialogVisible: false
     })
+  }
+
+  // 关闭删除用户弹层
+  onCloseDelUserDialog = () => {
+    this.setState({
+      delUserDialogVisible: false
+    })
+  }
+
+  // 确认删除用户
+  onDelUserSubmit = async data => {
+    if (data && data.id) {
+      try {
+        Loading.show()
+        await this.props.$user.c_del(data.id)
+        await this.fetchData()
+        this.onCloseDelUserDialog()
+        Toast.success('删除成功')
+      }
+      catch (err) {
+        Toast.error(err.message)
+      }
+      finally {
+        Loading.hide()
+      }
+    }
+    else {
+      Toast.error('系统错误')
+    }
   }
 
 }

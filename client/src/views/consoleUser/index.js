@@ -7,6 +7,9 @@ import Event from './event'
 import Button from 'src/components/button'
 import Pager from 'src/components/pager'
 import ConsoleUserDialog from 'src/components/consoleUserDialog'
+import ConsoleDeleteDialog from 'src/components/consoleDeleteDialog'
+import IconRewrite from 'src/components/svg/rewrite'
+import IconDelete from 'src/components/svg/delete'
 
 @VIEW
 @ComponentEvent('evt', Event)
@@ -14,7 +17,9 @@ class ConsoleUser extends React.PureComponent {
   constructor(props) {
     super(props)
     this.state = {
-      userDialogVisible: false
+      userDialogVisible: false,
+      delUserDialogVisible: false,
+      delUserDialogData: null,
     }
   }
 
@@ -23,22 +28,37 @@ class ConsoleUser extends React.PureComponent {
     this.evt.fetchDepartments()
   }
 
-  renderDialog() {
-    const { select } = this.props.department$
+  // 添加用户的弹层
+  renderUserDialog() {
+    const { c_select: select } = this.props.department$
     return (
       <ConsoleUserDialog
         ref={r => { this.userDialog = r }}
         departments={select ? select.list || [] : []}
         visible={this.state.userDialogVisible}
-        onClose={this.evt.onCloseDialog}
-        onSubmit={this.evt.onFormSubmit}
-        onEditSubmit={this.evt.onFormEditSubmit}
+        onClose={this.evt.onCloseUserDialog}
+        onSubmit={this.evt.onAddUserSubmit}
+        onEditSubmit={this.evt.onEditUserSubmit}
+      />
+    )
+  }
+
+  // 删除用户的弹层
+  renderDelUserDialog() {
+    const data = this.state.delUserDialogData || {}
+    return (
+      <ConsoleDeleteDialog
+        type="用户"
+        name={data.nickname}
+        visible={this.state.delUserDialogVisible}
+        onClose={this.evt.onCloseDelUserDialog}
+        onDelete={this.evt.onDelUserSubmit.bind(this, data)}
       />
     )
   }
 
   render() {
-    const { users } = this.props.user$
+    const { c_users: users } = this.props.user$
     const header = (
       <tr>
         <td>编号</td>
@@ -72,17 +92,20 @@ class ConsoleUser extends React.PureComponent {
         <td>{status[res.status]}</td>
         <td>{new Date(res.createTime).format('yyyy-MM-dd hh:mm')}</td>
         <td className="c">
-          <a href="javascript:;" onClick={() => this.evt.onEditClick(res)}>
-            编辑
-          </a>
+          <IconRewrite.A
+            onClick={() => this.evt.onEditUserClick(res)}
+          />
+          <IconDelete.A
+            onClick={() => this.evt.onDelUserClick(res)}
+          />
         </td>
       </tr>
     ))
     return (
       <div className="console-user">
-        <header>
+        <header className="console-header">
           <h1>人员管理</h1>
-          <Button onClick={this.evt.onAppendClick}>添加</Button>
+          <Button onClick={this.evt.onAddUserClick}>添加</Button>
         </header>
         <table className="console-table">
           <thead>{header}</thead>
@@ -93,7 +116,8 @@ class ConsoleUser extends React.PureComponent {
           max={Math.ceil(users.count / users.limit)}
           onClick={this.evt.onPageClick}
         />
-        {this.renderDialog()}
+        {this.renderUserDialog()}
+        {this.renderDelUserDialog()}
       </div>
     )
   }

@@ -7,9 +7,9 @@ import Event from './event'
 import Button from 'src/components/button'
 import ProjectItem from 'src/components/consoleProjectItem'
 import Pager from 'src/components/pager'
-import MainDialog from 'src/containers/mainDialog'
 import ConsoleProjectDialog from 'src/components/consoleProjectDialog'
 import ConsoleMissionDialog from 'src/components/consoleMissionDialog'
+import ConsoleDeleteDialog from 'src/components/consoleDeleteDialog'
 
 @VIEW
 @ComponentEvent('evt', Event)
@@ -18,8 +18,9 @@ class ConsoleProject extends React.PureComponent {
     super(props)
     this.state = {
       projectDialogVisible: false,
-      projectDelDialogVisible: false,
-      projectDelDialogData: null,
+      delProjectDialogVisible: false,
+      delProjectDialogData: null,
+
       missionDialogVisible: false,
     }
   }
@@ -30,40 +31,29 @@ class ConsoleProject extends React.PureComponent {
   }
 
   renderProjectDialog() {
-    const { select } = this.props.department$
+    const { c_select: select } = this.props.department$
     return (
       <ConsoleProjectDialog
         ref={r => { this.projectDialog = r }}
         departments={select ? select.list || [] : []}
         visible={this.state.projectDialogVisible}
         onClose={this.evt.onCloseProjectDialog}
-        onSubmit={this.evt.onProjectFormSubmit}
-        onEditSubmit={this.evt.onProjectFormEditSubmit}
+        onSubmit={this.evt.onAddProjectSubmit}
+        onEditSubmit={this.evt.onEditProjectSubmit}
       />
     )
   }
 
   renderDelProjectDialog() {
-    const data = this.state.projectDelDialogData || {}
+    const data = this.state.delProjectDialogData || {}
     return (
-      <MainDialog
-        title="删除项目"
-        visible={this.state.projectDelDialogVisible}
-        className="dialog-console-del-project"
+      <ConsoleDeleteDialog
+        type="项目"
+        name={data.name}
+        visible={this.state.delProjectDialogVisible}
         onClose={this.evt.onCloseDelProjectDialog}
-      >
-        <p>
-          确定要删除项目<span>{data.name}</span>吗？该操作不可逆
-        </p>
-        <div className="btn">
-          <Button danger onClick={this.evt.onDelProject.bind(this, data)}>
-            删除项目
-          </Button>
-          <Button onClick={this.evt.onCloseDelProjectDialog}>
-            取消
-          </Button>
-        </div>
-      </MainDialog>
+        onDelete={this.evt.onDelProjectSubmit.bind(this, data)}
+      />
     )
   }
 
@@ -73,18 +63,18 @@ class ConsoleProject extends React.PureComponent {
         ref={r => { this.missionDialog = r }}
         visible={this.state.missionDialogVisible}
         onClose={this.evt.onCloseMissionDialog}
-        onSubmit={this.evt.onMissionFormSubmit}
-        onEditSubmit={this.evt.onMissionFormEditSubmit}
+        onSubmit={this.evt.onAddMissionSubmit}
+        onEditSubmit={this.evt.onEditMissionSubmit}
       />
     )
   }
 
   render() {
-    const { projects } = this.props.project$
+    const { c_projects: projects } = this.props.project$
     const row = []
     for (let i = 0; i < projects.list.length; i += 3) {
       row.push(
-        <div className="row" key={i}>
+        <div className="console-row" key={i}>
           {
             [0, 1, 2].map(j => {
               const item = projects.list[i + j]
@@ -92,10 +82,11 @@ class ConsoleProject extends React.PureComponent {
                 return (
                   <ProjectItem
                     key={j}
-                    onAppendMissionClick={this.evt.onAppendMissionClick}
-                    onMissionEditClick={this.evt.onMissionEditClick}
-                    onProjectEditClick={this.evt.onProjectEditClick}
-                    onProjectDeleteClick={this.evt.onProjectDeleteClick}
+                    onAddMissionClick={this.evt.onAddMissionClick}
+                    onEditMissionClick={this.evt.onEditMissionClick}
+                    onDelMissionClick={this.evt.onDelMissionClick}
+                    onEditProjectClick={this.evt.onEditProjectClick}
+                    onDelProjectClick={this.evt.onDelProjectClick}
                     source={item}
                   />
                 )
@@ -108,11 +99,11 @@ class ConsoleProject extends React.PureComponent {
     }
     return (
       <div className="console-project">
-        <header>
+        <header className="console-header">
           <h1>项目管理</h1>
-          <Button onClick={this.evt.onAppendProjectClick}>添加</Button>
+          <Button onClick={this.evt.onAddProjectClick}>添加</Button>
         </header>
-        <div className="list">
+        <div className="console-list">
           {row}
         </div>
         <Pager

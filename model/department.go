@@ -16,13 +16,13 @@ type Department struct {
   Id bson.ObjectId `bson:"_id,omitempty"`
 
   // 部门名
-  Name string `bson:"name,omitempty"`
+  Name string `bson:"name"`
 
   // 部门下的用户数
-  UserCount int `bson:"userCount,omitempty"`
+  UserCount int `bson:"userCount"`
 
   // 创建时间
-  CreateTime time.Time `bson:"createTime,omitempty"`
+  CreateTime time.Time `bson:"createTime"`
 
   // 是否存在
   Exist bool `bson:"exist"`

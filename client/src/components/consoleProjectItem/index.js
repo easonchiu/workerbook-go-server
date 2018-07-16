@@ -11,67 +11,80 @@ const ProjectItem = props => {
 
   const renderTools = () => (
     <div className="tools">
-      <a
-        href="javascript:;"
+      <IconDelete.A
         className="del"
         onClick={() => {
-          props.onProjectDeleteClick && props.onProjectDeleteClick(props.source)
+          props.onDelProjectClick && props.onDelProjectClick(props.source)
         }}
-      >
-        <IconDelete />
-      </a>
-      <a
-        href="javascript:;"
+      />
+      <IconSetting.A
         onClick={() => {
-          props.onProjectEditClick && props.onProjectEditClick(props.source)
+          props.onEditProjectClick && props.onEditProjectClick(props.source)
         }}
-      >
-        <IconSetting />
-      </a>
+      />
     </div>
   )
 
-  const renderMissions = () => (
-    <div className="missions">
-      <h6>包含任务 {source.missions ? source.missions.length + '个' : ''}</h6>
-      {
-        source.missions && source.missions.length ?
-          <ul>
-            {
-              source.missions.map(item => (
-                <li key={item.id}>
-                  <p>{item.name}</p>
-                  <a
-                    href="javascript:;"
-                    onClick={() => {
-                      props.onMissionEditClick &&
-                      props.onMissionEditClick(item, ignore(source, 'missions'))
-                    }}
-                  >
-                    编辑
-                  </a>
-                </li>
-              ))
-            }
-          </ul> :
-          <p className="empty">暂无任务</p>
-      }
-      <a
-        href="javascript:;"
-        className="append"
-        onClick={() => {
-          props.onAppendMissionClick && props.onAppendMissionClick(props.source)
-        }}
-      >
-        <IconAdd />
-      </a>
-    </div>
-  )
+  const renderMissions = () => {
+    const Item = data => {
+      return (
+        <li key={data.id}>
+          <header>
+            <h6>{data.name}</h6>
+            <div className="tools">
+              <a
+                href="javascript:;"
+                onClick={() => {
+                  props.onDelMissionClick &&
+                  props.onDelMissionClick(data, ignore(source, 'missions'))
+                }}
+              >
+                删除
+              </a>
+              <a
+                href="javascript:;"
+                onClick={() => {
+                  props.onEditMissionClick &&
+                  props.onEditMissionClick(data, ignore(source, 'missions'))
+                }}
+              >
+                编辑
+              </a>
+            </div>
+          </header>
+          <p>
+            <strong>[{(new Date(data.deadline)).format('MM-dd hh:mm')}]</strong>
+            {data.description}
+          </p>
+        </li>
+      )
+    }
+    return (
+      <div className="missions">
+        <h5>包含任务 {source.missions ? source.missions.length + '个' : ''}</h5>
+        {
+          source.missions && source.missions.length ?
+            <ul>
+              {
+                source.missions.map(item => <Item key={item.id} {...item} />)
+              }
+            </ul> :
+            <p className="empty">暂无任务</p>
+        }
+        <IconAdd.A
+          className="append"
+          onClick={() => {
+            props.onAddMissionClick && props.onAddMissionClick(props.source)
+          }}
+        />
+      </div>
+    )
+  }
 
   const renderFooter = () => (
     <footer>
       <span>时间周期</span>
-      {new Date(source.deadline).format('yyyy年MM月dd日 hh:mm')}
+      {new Date(source.createTime).format('yyyy年MM月dd日 hh:mm')}
       {' ~ '}
       {new Date(source.deadline).format('MM月dd日 hh:mm')}
     </footer>
@@ -87,7 +100,7 @@ const ProjectItem = props => {
               <span className="weight-3">紧急</span> :
               null
         }
-        <a href="#">{source.name}</a>
+        {source.name}
       </h2>
       <div className="departments">
         <span>参与部门</span>

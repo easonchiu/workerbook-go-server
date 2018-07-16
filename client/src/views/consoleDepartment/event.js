@@ -6,7 +6,7 @@ export default class Event {
     try {
       Loading.show()
       await Promise.all([
-        this.props.$department.fetchList({
+        this.props.$department.c_fetchList({
           skip: pager * 30 - 30,
           limit: 30,
         })
@@ -26,11 +26,11 @@ export default class Event {
   }
 
   // 新增部门提交
-  onFormSubmit = async data => {
+  onAddDepartmentSubmit = async data => {
     try {
       Loading.show()
-      await this.props.$department.create(data)
-      this.onCloseDialog()
+      await this.props.$department.c_create(data)
+      this.onCloseDepartmentDialog()
       await this.fetchData()
       Toast.success('添加成功')
     }
@@ -43,11 +43,11 @@ export default class Event {
   }
 
   // 修改部门提交
-  onFormEditSubmit = async data => {
+  onEditDepartmentSubmit = async data => {
     try {
       Loading.show()
-      await this.props.$department.update(data)
-      this.onCloseDialog()
+      await this.props.$department.c_update(data)
+      this.onCloseDepartmentDialog()
       await this.fetchData()
       Toast.success('修改成功')
     }
@@ -60,18 +60,18 @@ export default class Event {
   }
 
   // 添加按钮点击
-  onAppendClick = () => {
+  onAddDepartmentClick = () => {
     this.departmentDialog && this.departmentDialog.$clear()
-    this.onOpenDialog()
+    this.onOpenDepartmentDialog()
   }
 
   // 编辑按钮点击
-  onEditClick = async data => {
+  onEditDepartmentClick = async data => {
     try {
       Loading.show()
-      const res = await this.props.$department.fetchOneById(data.id)
+      const res = await this.props.$department.c_fetchOneById(data.id)
       this.departmentDialog && this.departmentDialog.$fill(res)
-      this.onOpenDialog()
+      this.onOpenDepartmentDialog()
     }
     catch (err) {
       Toast.error(err.message)
@@ -81,15 +81,56 @@ export default class Event {
     }
   }
 
+  // 删除按钮点击
+  onDelDepartmentClick = data => {
+    this.setState({
+      delDepartmentDialogVisible: true,
+      delDepartmentDialogData: data,
+    })
+  }
+
   // 打开弹层
-  onOpenDialog = () => {
+  onOpenDepartmentDialog = () => {
     this.setState({
       departmentDialogVisible: true
     })
   }
 
+  // 关闭删除弹层
+  onCloseDelDepartmentDialog = () => {
+    this.setState({
+      delDepartmentDialogVisible: false
+    })
+  }
+
+  // 确定删除部门
+  onDelDepartmentSubmit = async data => {
+    if (data && data.id) {
+      if (data.userCount !== 0) {
+        Toast.error('请先将该部门内的用户移出')
+        return
+      }
+      try {
+        Loading.show()
+        await this.props.$department.c_del(data.id)
+        await this.fetchData()
+        this.onCloseDelDepartmentDialog()
+        Toast.success('删除成功')
+      }
+      catch (err) {
+        Toast.error(err.message)
+      }
+      finally {
+        Loading.hide()
+      }
+    }
+    else {
+      Toast.error('系统错误')
+    }
+  }
+
   // 关闭弹层
-  onCloseDialog = () => {
+  onCloseDepartmentDialog = () => {
     this.setState({
       departmentDialogVisible: false
     })

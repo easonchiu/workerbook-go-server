@@ -2,45 +2,66 @@ import http from 'src/utils/http'
 import { createAction } from 'easy-action'
 import ignore from 'src/utils/ignore'
 
-// user login
-const login = payload => async () => {
+
+// 管理后台相关接口
+// create user
+const c_create = payload => async () => {
   const res = await http.request({
-    url: '/login',
+    url: '/console/users',
     method: 'POST',
     data: payload,
   })
   return res
 }
 
-// my daily
-const fetchMyTodayDaily = () => async dispatch => {
+// update user
+const c_update = payload => async () => {
   const res = await http.request({
-    url: '/users/my/dailies/today',
-    method: 'GET',
-  })
-  dispatch(createAction('USER_MY_TODAY_DAILY')(res))
-}
-
-
-// append daily item.
-const appendDailyItem = ({ record, progress, project }) => async () => {
-  const res = await http.request({
-    url: '/users/my/dailies/today/items',
-    method: 'POST',
-    data: {
-      record: record.trim(),
-      progress,
-      project: project.trim(),
-    }
+    url: '/console/users/' + payload.id,
+    method: 'PUT',
+    data: ignore(payload, 'id'),
   })
   return res
 }
 
-// delete daily item
-const deleteDailyItem = ({ id }) => async () => {
+// fetch users list.
+const c_fetchList = ({ departmentId, skip, limit = 10 } = {}) => async dispatch => {
   const res = await http.request({
-    url: '/users/my/dailies/today/items/' + id,
+    url: '/console/users',
+    method: 'GET',
+    params: {
+      departmentId,
+      skip,
+      limit,
+    }
+  })
+  dispatch(createAction('C_USER_LIST')(res))
+}
+
+// fetch user one by id
+const c_fetchOneById = id => async dispatch => {
+  const res = await http.request({
+    url: '/console/users/' + id,
+    method: 'GET',
+  })
+  return res
+}
+
+// delete user
+const c_del = id => async dispatch => {
+  const res = await http.request({
+    url: '/console/users/' + id,
     method: 'DELETE',
+  })
+  return res
+}
+
+// user login
+const login = payload => async () => {
+  const res = await http.request({
+    url: '/users/login',
+    method: 'POST',
+    data: payload,
   })
   return res
 }
@@ -52,64 +73,18 @@ const fetchProfile = () => async (dispatch, getState) => {
     return
   }
   const res = await http.request({
-    url: '/profile',
+    url: '/users/profile',
     method: 'GET',
   })
   dispatch(createAction('USER_PROFILE')(res))
 }
 
-// create user
-const create = payload => async () => {
-  const res = await http.request({
-    url: '/users',
-    method: 'POST',
-    data: payload,
-  })
-  return res
-}
-
-// update user
-const update = payload => async () => {
-  const res = await http.request({
-    url: '/users/' + payload.id,
-    method: 'PUT',
-    data: ignore(payload, 'id'),
-  })
-  return res
-}
-
-// fetch users list.
-const fetchList = ({ departmentId, skip, limit = 10 } = {}) => async dispatch => {
-  const res = await http.request({
-    url: '/users',
-    method: 'GET',
-    params: {
-      departmentId,
-      skip,
-      limit,
-    }
-  })
-  dispatch(createAction('USER_LIST')(res))
-}
-
-// fetch user one by id
-const fetchOneById = id => async dispatch => {
-  const res = await http.request({
-    url: '/users/' + id,
-    method: 'GET',
-  })
-  return res
-}
-
 export default {
   login,
-  create,
-  update,
-  fetchList,
   fetchProfile,
-  fetchOneById,
-
-  appendDailyItem,
-  deleteDailyItem,
-  fetchMyTodayDaily,
+  c_create,
+  c_del,
+  c_fetchList,
+  c_fetchOneById,
+  c_update,
 }

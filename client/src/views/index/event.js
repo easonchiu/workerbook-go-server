@@ -5,16 +5,16 @@ export default class Event {
     try {
       await Promise.all([
         this.props.$user.fetchProfile(),
-        this.props.$user.fetchMyTodayDaily(),
-        this.props.$daily.fetchListByDay(),
-        this.props.$department.fetchList({
-          skip: 0,
-          limit: 5,
-        }),
-        this.props.$user.fetchList(),
-        this.props.$project.fetchList({
-          status: 1
-        }),
+        // this.props.$user.fetchMyTodayDaily(),
+        // this.props.$daily.fetchListByDay(),
+        // this.props.$department.fetchList({
+        //   skip: 0,
+        //   limit: 5,
+        // }),
+        // this.props.$user.fetchList(),
+        // this.props.$project.fetchList({
+        //   status: 1
+        // }),
       ])
     }
     catch (err) {
@@ -27,8 +27,8 @@ export default class Event {
   reload = async () => {
     try {
       await Promise.all([
-        this.props.$user.fetchMyTodayDaily(),
-        this.props.$daily.fetchListByDay(),
+        // this.props.$user.fetchMyTodayDaily(),
+        // this.props.$daily.fetchListByDay(),
       ])
     }
     catch (err) {

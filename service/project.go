@@ -2,7 +2,6 @@ package service
 
 import (
   "errors"
-  "fmt"
   "github.com/gin-gonic/gin"
   "github.com/tidwall/gjson"
   "gopkg.in/mgo.v2"
@@ -26,6 +25,7 @@ func CreateProject(data model.Project, departments []gjson.Result) error {
 
   // 是否存在的标志
   data.Exist = true
+  data.CreateTime = time.Now()
 
   // check
   errgo.ErrorIfStringIsEmpty(data.Name, errgo.ErrProjectNameEmpty)
@@ -69,7 +69,7 @@ func CreateProject(data model.Project, departments []gjson.Result) error {
 }
 
 // 更新项目
-func UpdateProject(id string, data model.Project, departments []gjson.Result) error {
+func UpdateProject(id string, data bson.M) error {
   db, close, err := mongo.CloneDB()
 
   if err != nil {
@@ -80,16 +80,26 @@ func UpdateProject(id string, data model.Project, departments []gjson.Result) er
 
   // check
   errgo.ErrorIfStringNotObjectId(id, errgo.ErrProjectIdError)
-  errgo.ErrorIfStringIsEmpty(data.Name, errgo.ErrProjectNameEmpty)
-  errgo.ErrorIfLenLessThen(data.Name, 4, errgo.ErrProjectNameTooShort)
-  errgo.ErrorIfLenMoreThen(data.Name, 15, errgo.ErrProjectNameTooLong)
-  errgo.ErrorIfTimeEarlierThen(data.Deadline, time.Now(), errgo.ErrProjectDeadlineTooSoon)
-  if data.Weight != 1 && data.Weight != 2 && data.Weight != 3 {
-    return errors.New(errgo.ErrProjectWeightError)
+
+  if name, ok := data["name"]; ok {
+    errgo.ErrorIfLenLessThen(name.(string), 4, errgo.ErrProjectNameTooShort)
+    errgo.ErrorIfLenMoreThen(name.(string), 15, errgo.ErrProjectNameTooLong)
+  }
+
+  if deadline, ok := data["deadline"]; ok && !deadline.(time.Time).IsZero() {
+    errgo.ErrorIfTimeEarlierThen(deadline.(time.Time), time.Now(), errgo.ErrProjectDeadlineTooSoon)
+  }
+
+  if weight, ok := data["weight"]; ok {
+    weight := weight.(int)
+    if weight != 1 && weight != 2 && weight != 3 {
+      return errors.New(errgo.ErrProjectWeightError)
+    }
   }
 
   // handle departments and check is really an objectId
-  if len(departments) > 0 {
+  if departments, ok := data["departments"]; ok {
+    departments := departments.([]gjson.Result)
     var departmentsRef []mgo.DBRef
     for _, department := range departments {
       if bson.IsObjectIdHex(department.Str) {
@@ -102,9 +112,7 @@ func UpdateProject(id string, data model.Project, departments []gjson.Result) er
         errgo.ErrorIfStringNotObjectId(department.Str, errgo.ErrProjectDepartmentNotFound)
       }
     }
-    data.Departments = departmentsRef
-  } else {
-    data.Departments = nil
+    data["departments"] = departmentsRef
   }
 
   if err = errgo.PopError(); err != nil {
@@ -113,7 +121,6 @@ func UpdateProject(id string, data model.Project, departments []gjson.Result) er
   }
 
   // update
-  data.Exist = true
   err = db.C(model.ProjectCollection).UpdateId(bson.ObjectIdHex(id), bson.M{
     "$set": data,
   })
@@ -145,9 +152,9 @@ func GetProjectInfoById(id string) (gin.H, error) {
 
   data := new(model.Project)
 
-  err = db.C(model.ProjectCollection).Find(model.Project{
-    Id:    bson.ObjectIdHex(id),
-    Exist: true,
+  err = db.C(model.ProjectCollection).Find(bson.M{
+    "_id":   bson.ObjectIdHex(id),
+    "exist": true,
   }).One(data)
 
   if err != nil {
@@ -180,13 +187,12 @@ func DelProjectById(id string) error {
 
   // 删除
   err = db.C(model.ProjectCollection).UpdateId(bson.ObjectIdHex(id), bson.M{
-    "$set": model.Project{
-      Exist: false,
+    "$set": bson.M{
+      "exist": false,
     },
   })
 
   if err != nil {
-    fmt.Println(err)
     if err == mgo.ErrNotFound {
       return errors.New(errgo.ErrProjectNotFound)
     }
@@ -201,7 +207,7 @@ func DelProjectById(id string) error {
 }
 
 // 查找项目列表(当skip和limit都为0时，查找全部)
-func GetProjectsList(skip int, limit int, query model.Project) (gin.H, error) {
+func GetProjectsList(skip int, limit int, query bson.M) (gin.H, error) {
   db, closer, err := mongo.CloneDB()
 
   if err != nil {
@@ -211,9 +217,11 @@ func GetProjectsList(skip int, limit int, query model.Project) (gin.H, error) {
   }
 
   // check
-  errgo.ErrorIfIntLessThen(skip, 0, errgo.ErrSkipRange)
-  errgo.ErrorIfIntLessThen(limit, 1, errgo.ErrLimitRange)
-  errgo.ErrorIfIntMoreThen(limit, 100, errgo.ErrLimitRange)
+  if skip != 0 {
+    errgo.ErrorIfIntLessThen(skip, 0, errgo.ErrSkipRange)
+    errgo.ErrorIfIntLessThen(limit, 1, errgo.ErrLimitRange)
+    errgo.ErrorIfIntMoreThen(limit, 100, errgo.ErrLimitRange)
+  }
 
   if err = errgo.PopError(); err != nil {
     errgo.ClearErrorStack()
@@ -221,15 +229,7 @@ func GetProjectsList(skip int, limit int, query model.Project) (gin.H, error) {
   }
 
   data := new([]model.Project)
-  query.Exist = true
-
-  if limit < 0 {
-    limit = 0
-  } else if limit > 100 {
-    limit = 100
-  }
-
-  fmt.Println(query)
+  query["exist"] = true
 
   // find it
   if skip == 0 && limit == 0 {

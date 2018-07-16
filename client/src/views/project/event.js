@@ -5,6 +5,7 @@ export default class Event {
     try {
       await Promise.all([
         this.props.$user.fetchProfile(),
+        this.props.$project.fetchList()
       ])
     }
     catch (err) {

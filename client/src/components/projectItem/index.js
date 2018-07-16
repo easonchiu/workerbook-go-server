@@ -7,22 +7,32 @@ const ProjectItem = props => {
   const source = props.source || {}
   return (
     <div className="project-item">
-      <h2>{source.name}</h2>
-      <time>截至日期：{new Date(source.deadline).format('yyyy年MM月dd日 hh时mm分')}</time>
-      <p className="join">
-        参与部门：
+      <h2>
         {
-          source.departments && (source.departments.map(item => item.name)).join('、')
+          source.weight === 2 ?
+            <span className="weight-2">重要</span> :
+            source.weight === 3 ?
+              <span className="weight-3">紧急</span> :
+              null
         }
-      </p>
-      <a className="mission-count" onClick={props.onMissionClick}>
-        <p>任务数</p>
-        <span>{source.missionCount}</span>
-      </a>
-      <div className="tools">
-        <Button mini light>项目说明</Button>
+        {source.name}
+      </h2>
+      <div className="departments">
+        <span>参与部门</span>
+        {
+          source.departments ?
+            source.departments.map(item => (
+              <em key={item.id}>{item.name}</em>
+            )) :
+            null
+        }
       </div>
-      <div className="progress"><span>{source.progress}</span></div>
+      <footer>
+        <span>时间周期</span>
+        {new Date(source.createTime).format('yyyy年MM月dd日 hh:mm')}
+        {' ~ '}
+        {new Date(source.deadline).format('MM月dd日 hh:mm')}
+      </footer>
     </div>
   )
 }

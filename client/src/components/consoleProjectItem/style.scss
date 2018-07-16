@@ -12,15 +12,10 @@
   > h2 {
     padding: 10px 10px 0 10px;
     margin-bottom: 5px;
-    a {
-      font-size: 18px;
-      font-weight: bold;
-      line-height: 1.5;
-      color: #222;
-      &:hover {
-        color: #5081ff;
-      }
-    }
+    font-size: 18px;
+    font-weight: bold;
+    line-height: 1.5;
+    color: #222;
     span {
       display: block;
       float: left;
@@ -88,64 +83,56 @@
         height: 16px;
       }
     }
-    h6 {
+    h5 {
       color: #8a929b;
       margin-bottom: 10px;
     }
     ul li {
       padding: 8px 10px;
       margin-bottom: 10px;
-      display: flex;
-      align-items: center;
       background: #f7f9fc;
       border-radius: 5px;
-      &:before {
+      header {
+        display: flex;
+        h6 {
+          font-size: 14px;
+          color: #586069;
+          flex: 1;
+          line-height: 20px;
+        }
+        .tools {
+          display: none;
+          margin-left: 5px;
+        }
+        a {
+          color: #a8b0b9;
+          font-size: 12px;
+          line-height: 20px;
+          margin-left: 5px;
+          &:hover {
+            color: #5081ff;
+          }
+        }
+      }
+      header:before {
         content: '';
         display: block;
         width: 8px;
         height: 8px;
+        margin: 6px 8px 0 0;
         background: #c7b3ff;
-        margin-right: 8px;
         border-radius: 50%;
       }
-      &:nth-child(6n+1):before {
-        background: #c7b3ff;
-      }
-      &:nth-child(6n+2):before {
-        background: #68e4b1;
-      }
-      &:nth-child(6n+3):before {
-        background: #a6ee5f;
-      }
-      &:nth-child(6n+4):before {
-        background: #82c6f1;
-      }
-      &:nth-child(6n+5):before {
-        background: #f8b981;
-      }
-      &:nth-child(6n+6):before {
-        background: #feb5cc;
-      }
-      &:last-child {
-        border-bottom: none;
-      }
       &:hover {
-        a {
+        header .tools {
           display: block;
         }
       }
       p {
-        flex: 1;
-        font-size: 13px;
-        color: #586069;
-      }
-      a {
-        display: none;
         color: #a8b0b9;
         font-size: 12px;
-        &:hover {
-          color: #5081ff;
-        }
+        line-height: 1.5;
+        margin-top: 5px;
       }
     }
     .empty {
@@ -153,7 +140,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #a8b0b9;
+      color: #d0d8e1;
       font-size: 12px;
     }
   }
@@ -168,24 +155,7 @@
       padding-right: 4px;
     }
   }
-  .description {
-    flex: 1;
-    display: none;
-    padding: 10px;
-    border-radius: 4px;
-    color: #586069;
-    font-size: 13px;
-    line-height: 1.5;
-    word-wrap: break-word;
-    p {
-      background: #f7f9fc;
-      padding: 10px;
-    }
-    &.empty {
-      color: #a8b0b9;
-    }
-  }
-  .tools {
+  > .tools {
     position: absolute;
     right: 10px;
     top: 10px;

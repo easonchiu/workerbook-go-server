@@ -3,9 +3,9 @@ import http from 'src/utils/http'
 import ignore from 'src/utils/ignore'
 
 // create mission
-const create = payload => async () => {
+const c_create = payload => async () => {
   const res = await http.request({
-    url: '/missions',
+    url: '/console/missions',
     method: 'POST',
     data: payload
   })
@@ -13,9 +13,9 @@ const create = payload => async () => {
 }
 
 // update mission
-const update = payload => async () => {
+const c_update = payload => async () => {
   const res = await http.request({
-    url: '/missions/' + payload.id,
+    url: '/console/missions/' + payload.id,
     method: 'PUT',
     data: ignore(payload, 'id'),
   })
@@ -23,9 +23,9 @@ const update = payload => async () => {
 }
 
 // fetch mission list.
-const fetchList = ({ status, skip, limit } = {}) => async dispatch => {
+const c_fetchList = ({ status, skip, limit } = {}) => async dispatch => {
   const res = await http.request({
-    url: '/missions',
+    url: '/console/missions',
     method: 'GET',
     params: {
       status,
@@ -33,21 +33,21 @@ const fetchList = ({ status, skip, limit } = {}) => async dispatch => {
       limit,
     }
   })
-  dispatch(createAction('MISSION_LIST')(res))
+  dispatch(createAction('C_MISSION_LIST')(res))
 }
 
 // fetch mission one by id
-const fetchOneById = id => async dispatch => {
+const c_fetchOneById = id => async dispatch => {
   const res = await http.request({
-    url: '/missions/' + id,
+    url: '/console/missions/' + id,
     method: 'GET',
   })
   return res
 }
 
 export default {
-  create,
-  update,
-  fetchOneById,
-  fetchList,
+  c_create,
+  c_fetchList,
+  c_fetchOneById,
+  c_update,
 }

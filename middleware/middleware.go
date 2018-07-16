@@ -23,7 +23,8 @@ func Jwt(c *gin.Context) {
 
     // check up your token here...
     if bson.IsObjectIdHex(token) {
-      c.Set("uid", token)
+      c.Set("DEPARTMENT_ID", "5b424feeaea6f431c2655006")
+      c.Set("UID", token)
       c.Next()
     } else {
       ctx := controller.CreateCtx(c)
