@@ -12,7 +12,7 @@ func C_CreateDepartment(c *gin.Context) {
   ctx := CreateCtx(c)
 
   // get
-  name := ctx.getRaw("name")
+  name, _ := ctx.getRaw("name")
 
   // create
   data := model.Department{
@@ -37,7 +37,7 @@ func C_DelDepartmentOne(c *gin.Context) {
   ctx := CreateCtx(c)
 
   // get
-  id := ctx.getParam("id")
+  id, _ := ctx.getParam("id")
 
   // query
   err := service.DelDepartmentById(id)
@@ -57,8 +57,8 @@ func C_GetDepartmentsList(c *gin.Context) {
   ctx := CreateCtx(c)
 
   // get
-  skip := ctx.getQueryInt("skip")
-  limit := ctx.getQueryInt("limit")
+  skip, _ := ctx.getQueryInt("skip")
+  limit, _ := ctx.getQueryInt("limit")
 
   // query
   data, err := service.GetDepartmentsList(skip, limit, bson.M{})
@@ -80,7 +80,7 @@ func C_GetDepartmentOne(c *gin.Context) {
   ctx := CreateCtx(c)
 
   // get
-  id := ctx.getParam("id")
+  id, _ := ctx.getParam("id")
 
   // query
   departmentInfo, err := service.GetDepartmentInfoById(id)
@@ -102,13 +102,16 @@ func C_UpdateDepartment(c *gin.Context) {
   ctx := CreateCtx(c)
 
   // get
-  id := ctx.getParam("id")
-  name := ctx.getRaw("name")
+  id, _ := ctx.getParam("id")
+
+  data := bson.M{}
+
+  if name, ok := ctx.getRaw("name"); ok {
+    data["name"] = name
+  }
 
   // update
-  err := service.UpdateDepartment(id, bson.M{
-    "name": name,
-  })
+  err := service.UpdateDepartment(id, data)
 
   // check
   if err != nil {

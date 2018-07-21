@@ -2,6 +2,7 @@ package service
 
 import (
   "errors"
+  "fmt"
   "github.com/gin-gonic/gin"
   "github.com/tidwall/gjson"
   "gopkg.in/mgo.v2"
@@ -86,7 +87,7 @@ func UpdateProject(id string, data bson.M) error {
     errgo.ErrorIfLenMoreThen(name.(string), 15, errgo.ErrProjectNameTooLong)
   }
 
-  if deadline, ok := data["deadline"]; ok && !deadline.(time.Time).IsZero() {
+  if deadline, ok := data["deadline"]; ok {
     errgo.ErrorIfTimeEarlierThen(deadline.(time.Time), time.Now(), errgo.ErrProjectDeadlineTooSoon)
   }
 
@@ -119,6 +120,8 @@ func UpdateProject(id string, data bson.M) error {
     errgo.ClearErrorStack()
     return err
   }
+
+  fmt.Println("deadline", data["deadline"])
 
   // update
   err = db.C(model.ProjectCollection).UpdateId(bson.ObjectIdHex(id), bson.M{

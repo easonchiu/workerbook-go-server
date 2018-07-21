@@ -13,7 +13,7 @@ import (
 )
 
 // 创建任务
-func CreateMission(data model.Mission, projectId string) error {
+func CreateMission(data model.Mission, projectId string, userId string) error {
   db, close, err := mongo.CloneDB()
 
   if err != nil {
@@ -30,8 +30,8 @@ func CreateMission(data model.Mission, projectId string) error {
   errgo.ErrorIfStringIsEmpty(data.Name, errgo.ErrMissionNameEmpty)
   errgo.ErrorIfLenMoreThen(data.Name, 15, errgo.ErrMissionNameTooLong)
   errgo.ErrorIfTimeEarlierThen(data.Deadline, time.Now(), errgo.ErrMissionDeadlineTooSoon)
-  errgo.ErrorIfLenMoreThen(data.Description, 500, errgo.ErrMissionDescriptionTooLong)
   errgo.ErrorIfStringNotObjectId(projectId, errgo.ErrProjectIdError)
+  errgo.ErrorIfStringNotObjectId(userId, errgo.ErrUserIdError)
 
   if err = errgo.PopError(); err != nil {
     errgo.ClearErrorStack()
@@ -40,6 +40,19 @@ func CreateMission(data model.Mission, projectId string) error {
 
   data.Id = bson.NewObjectId()
   data.ProjectId = bson.ObjectIdHex(projectId)
+
+  // find user
+  _, err = GetUserInfoById(userId)
+
+  if err != nil {
+    return err
+  }
+
+  data.User = mgo.DBRef{
+    Id:         bson.ObjectIdHex(userId),
+    Collection: model.UserCollection,
+    Database:   conf.DBName,
+  }
 
   // insert it.
   err = db.C(model.MissionCollection).Insert(data)
@@ -89,8 +102,8 @@ func UpdateMission(id string, data bson.M) error {
     errgo.ErrorIfTimeEarlierThen(deadline.(time.Time), time.Now(), errgo.ErrMissionDeadlineTooSoon)
   }
 
-  if description, ok := data["description"]; ok {
-    errgo.ErrorIfLenMoreThen(description.(string), 500, errgo.ErrMissionDescriptionTooLong)
+  if userId, ok := data["userId"]; ok {
+    errgo.ErrorIfStringNotObjectId(userId.(string), errgo.ErrUserIdError)
   }
 
   if projectId, ok := data["projectId"]; ok {
@@ -119,6 +132,21 @@ func UpdateMission(id string, data bson.M) error {
     // 任务截至时间不能晚于项目截至时间
     if deadline, ok := data["deadline"]; ok {
       errgo.ErrorIfTimeLaterThen(deadline.(time.Time), project.Deadline, errgo.ErrMissionDeadlineTooLate)
+    }
+  }
+
+  // 查找执行人
+  if userId, ok := data["userId"]; ok {
+    _, err := GetUserInfoById(userId.(string))
+
+    if err != nil {
+      return err
+    }
+
+    data["user"] = mgo.DBRef{
+      Id:         bson.ObjectIdHex(userId.(string)),
+      Collection: model.UserCollection,
+      Database:   conf.DBName,
     }
   }
 
@@ -173,5 +201,5 @@ func GetMissionInfoById(id string) (gin.H, error) {
     return nil, err
   }
 
-  return data.GetMap(db), nil
+  return data.GetMap(db, "user"), nil
 }

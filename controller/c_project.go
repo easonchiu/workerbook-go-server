@@ -1,6 +1,7 @@
 package controller
 
 import (
+  "fmt"
   "github.com/gin-gonic/gin"
   "gopkg.in/mgo.v2/bson"
   "workerbook/model"
@@ -12,7 +13,7 @@ func C_GetProjectOne(c *gin.Context) {
   ctx := CreateCtx(c)
 
   // get
-  id := ctx.getParam("id")
+  id, _ := ctx.getParam("id")
 
   // query
   projectInfo, err := service.GetProjectInfoById(id)
@@ -34,7 +35,7 @@ func C_DelProjectOne(c *gin.Context) {
   ctx := CreateCtx(c)
 
   // get
-  id := ctx.getParam("id")
+  id, _ := ctx.getParam("id")
 
   // query
   err := service.DelProjectById(id)
@@ -54,8 +55,8 @@ func C_GetProjectsList(c *gin.Context) {
   ctx := CreateCtx(c)
 
   // get
-  skip := ctx.getQueryInt("skip")
-  limit := ctx.getQueryInt("limit")
+  skip, _ := ctx.getQueryInt("skip")
+  limit, _ := ctx.getQueryInt("limit")
 
   // query
   data, err := service.GetProjectsList(skip, limit, bson.M{})
@@ -77,11 +78,11 @@ func C_CreateProject(c *gin.Context) {
   ctx := CreateCtx(c)
 
   // get
-  name := ctx.getRaw("name")
-  deadline := ctx.getRawTime("deadline")
-  departments := ctx.getRawArray("departments")
-  description := ctx.getRaw("description")
-  weight := ctx.getRawInt("weight")
+  name, _ := ctx.getRaw("name")
+  deadline, _ := ctx.getRawTime("deadline")
+  departments, _ := ctx.getRawArray("departments")
+  description, _ := ctx.getRaw("description")
+  weight, _ := ctx.getRawInt("weight")
 
   // create
   data := model.Project{
@@ -110,28 +111,30 @@ func C_UpdateProject(c *gin.Context) {
   ctx := CreateCtx(c)
 
   // get
-  id := ctx.getParam("id")
+  id, _ := ctx.getParam("id")
 
   // update
   data := bson.M{}
 
-  if name := ctx.getRaw("name"); name != "" {
+  fmt.Println(string(ctx.RawData), "< 123123333")
+
+  if name, ok := ctx.getRaw("name"); ok {
     data["name"] = name
   }
 
-  if deadline := ctx.getRawTime("deadline"); !deadline.IsZero() {
+  if deadline, ok := ctx.getRawTime("deadline"); ok {
     data["deadline"] = deadline
   }
 
-  if departments := ctx.getRawArray("departments"); len(departments) != 0 {
+  if departments, ok := ctx.getRawArray("departments"); ok {
     data["departments"] = departments
   }
 
-  if description := ctx.getRaw("description"); description != "" {
+  if description, ok := ctx.getRaw("description"); ok {
     data["description"] = description
   }
 
-  if weight := ctx.getRawInt("weight"); weight != 0 {
+  if weight, ok := ctx.getRawInt("weight"); ok {
     data["weight"] = weight
   }
 

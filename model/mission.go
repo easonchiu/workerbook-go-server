@@ -21,8 +21,8 @@ type Mission struct {
   // 进度，这个值的算法为：于次日10点结算前一天的所有日报，该天如果有用户针对该任务写日报，则每人针该进度写的值取平均
   Progress int `bson:"progress"`
 
-  // 描述
-  Description string `bson:"description"`
+  // 执行人
+  User mgo.DBRef `bson:"user"`
 
   // 截至时间
   Deadline time.Time `bson:"deadline"`
@@ -40,14 +40,28 @@ type Mission struct {
   Exist bool `bson:"exist"`
 }
 
-func (m Mission) GetMap(db *mgo.Database) gin.H {
-  return gin.H{
-    "id":          m.Id,
-    "name":        m.Name,
-    "description": m.Description,
-    "createTime":  m.CreateTime,
-    "deadline":    m.Deadline,
-    "status":      m.Status,
-    "progress":    m.Progress,
+func (m Mission) GetMap(db *mgo.Database, refs ... string) gin.H {
+  data := gin.H{
+    "id":   m.Id,
+    "name": m.Name,
+    "createTime": m.CreateTime,
+    "deadline":   m.Deadline,
+    "projectId":  m.ProjectId,
+    "status":     m.Status,
+    "progress":   m.Progress,
   }
+
+  for _, i := range refs {
+    if i == "user" {
+      user := new(User)
+      db.FindRef(&m.User).One(user)
+      data["user"] = gin.H{
+        "nickname": user.NickName,
+        "title":    user.Title,
+        "id":       user.Id,
+      }
+    }
+  }
+
+  return data
 }

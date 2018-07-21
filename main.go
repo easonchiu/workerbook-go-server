@@ -11,14 +11,17 @@ func init() {
   mongo.ConnectDB()
 }
 
+
 func main() {
 
-  // close db before unmount
+  // close db before un-mount
   defer mongo.CloseDB()
 
   // initialization
   // Default With the Logger and Recovery middleware already attached
   g := gin.Default() // gin.New()
+
+  // gin.SetMode(gin.ReleaseMode)
 
   // register middleware
   // middleware.Register(g)

@@ -13,12 +13,12 @@ func C_CreateUser(c *gin.Context) {
   ctx := CreateCtx(c)
 
   // get
-  nickname := ctx.getRaw("nickname")
-  username := ctx.getRaw("username")
-  departmentId := ctx.getRaw("departmentId")
-  title := ctx.getRaw("title")
-  role := ctx.getRawInt("role")
-  password := ctx.getRaw("password")
+  nickname, _ := ctx.getRaw("nickname")
+  username, _ := ctx.getRaw("username")
+  departmentId, _ := ctx.getRaw("departmentId")
+  title, _ := ctx.getRaw("title")
+  role, _ := ctx.getRawInt("role")
+  password, _ := ctx.getRaw("password")
 
   // create
   data := model.User{
@@ -49,28 +49,28 @@ func C_UpdateUser(c *gin.Context) {
   ctx := CreateCtx(c)
 
   // get
-  id := ctx.getParam("id")
+  id, _ := ctx.getParam("id")
 
   // update
   data := bson.M{}
 
-  if nickname := ctx.getRaw("nickname"); nickname != "" {
+  if nickname, ok := ctx.getRaw("nickname"); ok {
     data["nickname"] = nickname
   }
 
-  if departmentId := ctx.getRaw("departmentId"); departmentId != "" {
+  if departmentId, ok := ctx.getRaw("departmentId"); ok {
     data["department.$id"] = departmentId
   }
 
-  if title := ctx.getRaw("title"); title != "" {
+  if title, ok := ctx.getRaw("title"); ok {
     data["title"] = title
   }
 
-  if role := ctx.getRawInt("role"); role != 0 {
+  if role, ok := ctx.getRawInt("role"); ok {
     data["role"] = role
   }
 
-  if status := ctx.getRawInt("status"); status != 0 {
+  if status, ok := ctx.getRawInt("status"); ok {
     data["status"] = status
   }
 
@@ -90,13 +90,13 @@ func C_GetUsersList(c *gin.Context) {
   ctx := CreateCtx(c)
 
   // get
-  departmentId := ctx.getQuery("departmentId")
+  departmentId, didExist := ctx.getQuery("departmentId")
   skip := ctx.getQueryIntDefault("skip", 0)
   limit := ctx.getQueryIntDefault("limit", 10)
 
   // query
   var query = bson.M{}
-  if departmentId != "" {
+  if didExist {
     // check id
     if !bson.IsObjectIdHex(departmentId) {
       ctx.Error(errgo.ErrDepartmentIdError)
@@ -124,7 +124,7 @@ func C_GetUserOne(c *gin.Context) {
   ctx := CreateCtx(c)
 
   // get
-  id := ctx.getParam("id")
+  id, _ := ctx.getParam("id")
 
   // query
   userInfo, err := service.GetUserInfoById(id)
@@ -146,7 +146,7 @@ func C_DelUserOne(c *gin.Context) {
   ctx := CreateCtx(c)
 
   // get
-  id := ctx.getParam("id")
+  id, _ := ctx.getParam("id")
 
   // query
   err := service.DelUserById(id)

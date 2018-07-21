@@ -60,7 +60,7 @@ func (p Project) GetMap(db *mgo.Database) gin.H {
     mission := new(Mission)
     err := db.FindRef(&item).One(mission)
     if err == nil {
-      missions = append(missions, mission.GetMap(db))
+      missions = append(missions, mission.GetMap(db, "user"))
     }
   }
   return gin.H{

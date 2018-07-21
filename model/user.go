@@ -33,7 +33,7 @@ type User struct {
   // 密码
   Password string `bson:"password"`
 
-  // 职位 1: 开发者， 2: 部门主管，3: 观察员, 99: 管理员
+  // 职位 1: 开发者， 2: 部门管理者，3: 观察员, 4: 项目管理者 99: 管理员
   Role int `bson:"role"`
 
   // 职称
@@ -53,17 +53,32 @@ func (u User) GetMap(db *mgo.Database) gin.H {
   department := new(Department)
   db.FindRef(&u.Department).One(department)
 
-
   return gin.H{
-    "id":             u.Id,
-    "nickname":       u.NickName,
-    "email":          u.Email,
-    "role":           u.Role,
-    "title":          u.Title,
-    "createTime":     u.CreateTime,
-    "username":       u.UserName,
-    "departmentId":   u.Department.Id,
-    "departmentName": department.Name,
-    "status":         u.Status,
+    "id":         u.Id,
+    "nickname":   u.NickName,
+    "email":      u.Email,
+    "role":       u.Role,
+    "title":      u.Title,
+    "createTime": u.CreateTime,
+    "username":   u.UserName,
+    "department": gin.H{
+      "id":   department.Id,
+      "name": department.Name,
+    },
+    "status": u.Status,
   }
 }
+
+/*
+                          1: 开发者 2: 部门管理者 3: 观察员 4: 项目管理者 99: 管理员
+创建/修改/删除用户           x        x           x        x           √
+创建/修改/删除部门           x        x           x        x           √
+创建/修改/删除项目           x        x           x        √           √
+暂停/归档项目               x        x           x        √           √
+创建/修改/删除任务           x        √ own       x        √           √
+查看任务/部门数据            √        √           √        √           √
+添加/删除日报               √        √           x        x           x
+查看项目                   √ own    √ own       √        √           √
+重置密码                   x        x           x        x           √
+
+*/

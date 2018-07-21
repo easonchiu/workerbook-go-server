@@ -60,16 +60,15 @@ const (
   ErrDeleteProjectFailed       = "102015"
 
   // 任务相关错误 103xxx
-  ErrMissionIdError            = "103001"
-  ErrMissionNotFound           = "103002"
-  ErrMissionNameEmpty          = "103003"
-  ErrMissionNameTooLong        = "103005"
-  ErrMissionDeadlineEmpty      = "103006"
-  ErrMissionDeadlineTooSoon    = "103007"
-  ErrMissionDeadlineTooLate    = "103008"
-  ErrMissionDescriptionTooLong = "103009"
-  ErrCreateMissionFailed       = "103010"
-  ErrUpdateMissionFailed       = "103011"
+  ErrMissionIdError         = "103001"
+  ErrMissionNotFound        = "103002"
+  ErrMissionNameEmpty       = "103003"
+  ErrMissionNameTooLong     = "103005"
+  ErrMissionDeadlineEmpty   = "103006"
+  ErrMissionDeadlineTooSoon = "103007"
+  ErrMissionDeadlineTooLate = "103008"
+  ErrCreateMissionFailed    = "103010"
+  ErrUpdateMissionFailed    = "103011"
 
   // 日报相关错误 105xxx
   ErrDailyIdError  = "105001"
@@ -78,6 +77,7 @@ const (
   // 系统级错误 200xxx
   ErrSkipRange  = "200001"
   ErrLimitRange = "200002"
+  ErrForbidden  = "200099"
 
   // 默认错误
   ErrServerError = "999999"
@@ -125,16 +125,15 @@ var Error = map[string]errType{
   ErrUpdateProjectFailed:       {"更新项目失败", http.StatusOK, ""},
   ErrDeleteProjectFailed:       {"删除项目失败", http.StatusOK, ""},
 
-  ErrMissionIdError:            {"任务id错误", http.StatusOK, ""},
-  ErrMissionNotFound:           {"找不到该任务", http.StatusOK, ""},
-  ErrMissionNameEmpty:          {"任务名称不能为空", http.StatusOK, ""},
-  ErrMissionNameTooLong:        {"任务名称不得多于15个字", http.StatusOK, ""},
-  ErrMissionDeadlineEmpty:      {"截至时间不能不空", http.StatusOK, ""},
-  ErrMissionDeadlineTooSoon:    {"截至时间不能早于当前时间", http.StatusOK, ""},
-  ErrMissionDeadlineTooLate:    {"截至时间不能晚于项目时间", http.StatusOK, ""},
-  ErrMissionDescriptionTooLong: {"任务说明不能多于500字", http.StatusOK, ""},
-  ErrCreateMissionFailed:       {"创建任务失败", http.StatusOK, ""},
-  ErrUpdateMissionFailed:       {"更新任务失败", http.StatusOK, ""},
+  ErrMissionIdError:         {"任务id错误", http.StatusOK, ""},
+  ErrMissionNotFound:        {"找不到该任务", http.StatusOK, ""},
+  ErrMissionNameEmpty:       {"任务名称不能为空", http.StatusOK, ""},
+  ErrMissionNameTooLong:     {"任务名称不得多于15个字", http.StatusOK, ""},
+  ErrMissionDeadlineEmpty:   {"截至时间不能不空", http.StatusOK, ""},
+  ErrMissionDeadlineTooSoon: {"截至时间不能早于当前时间", http.StatusOK, ""},
+  ErrMissionDeadlineTooLate: {"截至时间不能晚于项目时间", http.StatusOK, ""},
+  ErrCreateMissionFailed:    {"创建任务失败", http.StatusOK, ""},
+  ErrUpdateMissionFailed:    {"更新任务失败", http.StatusOK, ""},
 
   ErrDailyIdError:  {"日报id错误", http.StatusOK, ""},
   ErrDailyNotFound: {"找不到相关日报", http.StatusOK, ""},
@@ -150,4 +149,6 @@ var Error = map[string]errType{
 
   ErrSkipRange:  {"skip取值范围错误", http.StatusInternalServerError, ""},
   ErrLimitRange: {"limit取值范围错误", http.StatusInternalServerError, ""},
+
+  ErrForbidden: {"权限不足", http.StatusForbidden, ""},
 }

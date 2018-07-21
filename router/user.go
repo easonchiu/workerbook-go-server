@@ -7,33 +7,39 @@ import (
 )
 
 func registerConsoleUserRouter(g *gin.RouterGroup) {
+  // jwt
+  g.Use(middleware.Jwt)
+
   // 获取用户列表
-  g.GET("", middleware.ConsoleJwt, controller.C_GetUsersList)
+  g.GET("", controller.C_GetUsersList)
 
   // 获取单个用户
-  g.GET("/:id", middleware.ConsoleJwt, controller.C_GetUserOne)
+  g.GET("/id/:id", controller.C_GetUserOne)
 
   // 添加用户
-  g.POST("", middleware.ConsoleJwt, controller.C_CreateUser)
+  g.POST("", controller.C_CreateUser)
 
   // 修改用户
-  g.PUT("/:id", middleware.ConsoleJwt, controller.C_UpdateUser)
+  g.PUT("/id/:id", controller.C_UpdateUser)
 
   // 修改用户
-  g.DELETE("/:id", middleware.ConsoleJwt, controller.C_DelUserOne)
+  g.DELETE("/id/:id", controller.C_DelUserOne)
 }
 
 func registerUserRouter(g *gin.RouterGroup) {
+
   // 登录
-  g.POST("/login", middleware.Jwt, controller.UserLogin)
+  g.POST("/login", controller.UserLogin)
 
   // 获取个人信息
-  g.GET("/profile", middleware.Jwt, controller.GetProfile)
+  g.GET("/profile",
+    middleware.Jwt,
+    controller.GetProfile)
 
-  // g.POST("/:id/dailies/today/items", middleware.Jwt, controller.CreateMyTodayDailyItem)
-
-  // g.DELETE("/:id/dailies/today/items/:itemId", middleware.Jwt, controller.DeleteUserTodayDailyItem)
-
-  // g.GET("/:id/dailies/today", middleware.Jwt, controller.GetMyTodayDaily)
+  // 获取下级用户（包括自己）
+  g.GET("/subordinate",
+    middleware.Jwt,
+    middleware.AllowRole(middleware.RoleLeader, middleware.RolePM, middleware.RoleAdmin),
+    controller.C_GetUsersList)
 
 }

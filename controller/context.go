@@ -72,151 +72,142 @@ func (c *Context) Error(errNo interface{}) {
 }
 
 // get body by string
-func (c *Context) getRaw(key string) string {
+func (c *Context) getRaw(key string) (string, bool) {
   res := gjson.GetBytes(c.RawData, key)
-  return strings.TrimSpace(res.Str)
+  return strings.TrimSpace(res.Str), res.Exists()
 }
 
-func (c *Context) getRawArray(key string) []gjson.Result {
+func (c *Context) getRawArray(key string) ([]gjson.Result, bool) {
   res := gjson.GetBytes(c.RawData, key)
-  return res.Array()
+  return res.Array(), res.Exists()
 }
 
-func (c *Context) getRawTime(key string) time.Time {
+func (c *Context) getRawTime(key string) (time.Time, bool) {
   res := gjson.GetBytes(c.RawData, key)
-  return res.Time()
+  return res.Time(), res.Exists()
 }
 
 // get body by int
-func (c *Context) getRawInt(key string) int {
+func (c *Context) getRawInt(key string) (int, bool) {
   res := gjson.GetBytes(c.RawData, key)
-  return int(res.Int())
+  return int(res.Int()), res.Exists()
 }
 
 // get body by bool
-func (c *Context) getRawBool(key string) bool {
+func (c *Context) getRawBool(key string) (bool, bool) {
   res := gjson.GetBytes(c.RawData, key)
-  return res.Str == "true"
+  return res.Bool(), res.Exists()
 }
 
 // get body by JSON
-func (c *Context) getRawJSON(key string) gjson.Result {
+func (c *Context) getRawJSON(key string) (gjson.Result, bool) {
   res := gjson.GetBytes(c.RawData, key)
-  return res
+  return res, res.Exists()
 }
 
 // get params by string
-func (c *Context) getParam(key string) string {
-  res := c.Ctx.Param(key)
-  return res
+func (c *Context) getParam(key string) (string, bool) {
+  res, ok := c.Ctx.Params.Get(key)
+  return res, ok
 }
 
 // get params by int
-func (c *Context) getParamInt(key string) int {
-  res := c.Ctx.Param(key)
+func (c *Context) getParamInt(key string) (int, bool) {
+  res, ok := c.Ctx.Params.Get(key)
   intRes, _ := strconv.Atoi(res)
-  return intRes
+  return intRes, ok
 }
 
 // get params by bool
-func (c *Context) getParamBool(key string) bool {
-  res := c.Ctx.Param(key)
-  return res == "true"
-}
-
-// get params by JSON
-func (c *Context) getParamJSON(key string) gjson.Result {
-  res := c.Ctx.Param(key)
-  return gjson.Parse(res)
+func (c *Context) getParamBool(key string) (bool, bool) {
+  res, ok := c.Ctx.Params.Get(key)
+  return res == "true", ok
 }
 
 // get query by string
-func (c *Context) getQuery(key string) string {
-  res, _ := c.Ctx.GetQuery(key)
-  return res
+func (c *Context) getQuery(key string) (string, bool) {
+  res, ok := c.Ctx.GetQuery(key)
+  return res, ok
 }
 
 func (c *Context) getQueryDefault(key string, def string) string {
-  val := c.getQuery(key)
-  if val == "" {
+  val, ok := c.getQuery(key)
+  if !ok {
     return def
   }
   return val
 }
 
 // get query by int
-func (c *Context) getQueryInt(key string) int {
-  res, _ := c.Ctx.GetQuery(key)
-  intRes, _ := strconv.Atoi(res)
-  return intRes
+func (c *Context) getQueryInt(key string) (int, bool) {
+  res, ok := c.Ctx.GetQuery(key)
+  if !ok {
+    return 0, false
+  }
+  intRes, err := strconv.Atoi(res)
+  if err != nil {
+    return 0, false
+  }
+  return intRes, true
 }
 
 func (c *Context) getQueryIntDefault(key string, def int) int {
-  val := c.getQueryInt(key)
-  if val == 0 {
+  val, ok := c.getQueryInt(key)
+  if !ok {
     return def
   }
   return val
 }
 
 // get query by bool
-func (c *Context) getQueryBool(key string) bool {
-  res, exist := c.Ctx.GetQuery(key)
-  if !exist {
-    return false
+func (c *Context) getQueryBool(key string) (bool, bool) {
+  res, ok := c.Ctx.GetQuery(key)
+  if !ok {
+    return false, false
   }
-  return res == "true"
+  return res == "true", true
 }
 
 func (c *Context) getQueryBoolDefault(key string, def bool) bool {
-  val := c.getQueryBool(key)
-  if val == false {
+  val, ok := c.getQueryBool(key)
+  if !ok {
     return def
   }
   return val
 }
 
 // get query by JSON
-func (c *Context) getQueryJSON(key string) gjson.Result {
-  res, exist := c.Ctx.GetQuery(key)
-  if !exist {
-    return gjson.Result{}
+func (c *Context) getQueryJSON(key string) (gjson.Result, bool) {
+  res, ok := c.Ctx.GetQuery(key)
+  if !ok {
+    return gjson.Result{}, false
   }
-  return gjson.Parse(res)
+  return gjson.Parse(res), true
 }
 
 // get value by string
-func (c *Context) get(key string) string {
-  res, exist := c.Ctx.Get(key)
-  if !exist {
-    return ""
+func (c *Context) get(key string) (string, bool) {
+  res, ok := c.Ctx.Get(key)
+  if !ok {
+    return "", false
   }
-  return res.(string)
+  return res.(string), true
 }
 
 // get value by string
-func (c *Context) getInt(key string) int {
-  res, exist := c.Ctx.Get(key)
-  if !exist {
-    return 0
+func (c *Context) getInt(key string) (int, bool) {
+  res, ok := c.Ctx.Get(key)
+  if !ok {
+    return 0, false
   }
-  return res.(int)
+  return res.(int), true
 }
 
 // get value by string
-func (c *Context) getBool(key string) bool {
-  res, exist := c.Ctx.Get(key)
-  if !exist {
-    return false
+func (c *Context) getBool(key string) (bool, bool) {
+  res, ok := c.Ctx.Get(key)
+  if !ok {
+    return false, false
   }
-  return res.(bool)
-}
-
-// get value by JSON
-func (c *Context) getJSON(key string) gjson.Result {
-  res, exist := c.Ctx.Get(key)
-  if !exist {
-    return gjson.Result{}
-  }
-  return gjson.Parse(res.(string))
+  return res.(bool), true
 }

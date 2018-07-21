@@ -3,6 +3,7 @@ package controller
 import (
   "github.com/gin-gonic/gin"
   "workerbook/service"
+  "workerbook/util"
 )
 
 // 用户登录
@@ -10,8 +11,8 @@ func UserLogin(c *gin.Context) {
   ctx := CreateCtx(c)
 
   // get
-  username := ctx.getRaw("username")
-  password := ctx.getRaw("password")
+  username, _ := ctx.getRaw("username")
+  password, _ := ctx.getRaw("password")
 
   // query
   id, err := service.UserLogin(username, password)
@@ -33,7 +34,7 @@ func GetProfile(c *gin.Context) {
   ctx := CreateCtx(c)
 
   // get
-  id := ctx.get("UID")
+  id, _ := ctx.get("UID")
 
   // query
   userInfo, err := service.GetUserInfoById(id)
@@ -44,7 +45,7 @@ func GetProfile(c *gin.Context) {
     return
   }
 
-  delete(userInfo, "username")
+  util.Forget(userInfo, "username")
 
   // return
   ctx.Success(gin.H{
