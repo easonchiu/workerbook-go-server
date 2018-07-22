@@ -2,8 +2,9 @@ package middleware
 
 import (
   "github.com/gin-gonic/gin"
-  "gopkg.in/mgo.v2/bson"
+  "github.com/jwt-go"
   "regexp"
+  "workerbook/conf"
   "workerbook/controller"
   "workerbook/errgo"
 )
@@ -14,18 +15,24 @@ func Register(g *gin.Engine) {
 
 // check up json web token
 func Jwt(c *gin.Context) {
-  auth, token := c.Request.Header.Get("authorization"), ""
+  headerAuth, headerJwt := c.Request.Header.Get("authorization"), ""
 
   jwtReg := regexp.MustCompile(`^Bearer\s\S+$`)
 
-  if jwtReg.MatchString(auth) {
-    token = auth[len("Bearer "):]
+  if jwtReg.MatchString(headerAuth) {
+    headerJwt = headerAuth[len("Bearer "):]
 
-    // check up your token here...
-    if bson.IsObjectIdHex(token) {
-      c.Set("DEPARTMENT_ID", "5b424feeaea6f431c2655006")
-      c.Set("UID", token)
-      c.Set("ROLE", RoleAdmin)
+    token, _ := jwt.Parse(headerJwt, func(t *jwt.Token) (interface{}, error) {
+      return conf.JwtSecret, nil
+    })
+
+    if token.Valid {
+      tokenMap := token.Claims.(jwt.MapClaims)
+
+      c.Set("DEPARTMENT_ID", tokenMap["departmentId"])
+      c.Set("UID", tokenMap["id"])
+      c.Set("ROLE", int(tokenMap["role"].(float64)))
+
       c.Next()
     } else {
       ctx := controller.CreateCtx(c)
@@ -40,15 +47,6 @@ func Jwt(c *gin.Context) {
 }
 
 // 权限控制(匹配中的用户允许访问)
-// 1: 开发者 2: 部门管理者 3: 观察员 4: 项目管理者 99: 管理员
-const (
-  RoleAdmin  = 99 // 管理员
-  RolePM     = 4  // 项目管理者
-  RoleOB     = 3  // 观察员
-  RoleLeader = 2  // 部门管理者
-  RoleDev    = 1  // 开发者
-)
-
 func AllowRole(roles ... int) func(c *gin.Context) {
   return func(c *gin.Context) {
     role := c.GetInt("ROLE")

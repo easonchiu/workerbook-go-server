@@ -6,14 +6,14 @@ import (
   "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
   "time"
+  "workerbook/db"
   "workerbook/errgo"
   "workerbook/model"
-  "workerbook/mongo"
 )
 
 // 创建部门
 func CreateDepartment(data model.Department) error {
-  db, close, err := mongo.CloneDB()
+  db, close, err := db.CloneMgoDB()
 
   if err != nil {
     return err
@@ -56,7 +56,7 @@ func CreateDepartment(data model.Department) error {
 
 // 根据id查找部门信息
 func GetDepartmentInfoById(id string) (gin.H, error) {
-  db, close, err := mongo.CloneDB()
+  db, close, err := db.CloneMgoDB()
 
   data := new(model.Department)
 
@@ -88,7 +88,7 @@ func GetDepartmentInfoById(id string) (gin.H, error) {
 
 // 查找部门列表(当skip和limit都为0时，查找全部)
 func GetDepartmentsList(skip int, limit int, query bson.M) (gin.H, error) {
-  db, closer, err := mongo.CloneDB()
+  db, closer, err := db.CloneMgoDB()
 
   if err != nil {
     return nil, err
@@ -155,7 +155,7 @@ func GetDepartmentsList(skip int, limit int, query bson.M) (gin.H, error) {
 
 // 全量更新所有部门的人数
 func UpdateDepartmentsUserCount() error {
-  db, close, err := mongo.CloneDB()
+  db, close, err := db.CloneMgoDB()
 
   if err != nil {
     return err
@@ -190,7 +190,7 @@ func UpdateDepartmentsUserCount() error {
 
 // 更新部门信息
 func UpdateDepartment(id string, data bson.M) error {
-  db, closer, err := mongo.CloneDB()
+  db, closer, err := db.CloneMgoDB()
 
   if err != nil {
     return err
@@ -239,7 +239,7 @@ func UpdateDepartment(id string, data bson.M) error {
 
 // 根据id删除部门（前提是部门内无人）
 func DelDepartmentById(id string) error {
-  db, closer, err := mongo.CloneDB()
+  db, closer, err := db.CloneMgoDB()
 
   if err != nil {
     return err

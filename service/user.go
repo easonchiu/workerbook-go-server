@@ -3,18 +3,19 @@ package service
 import (
   "errors"
   "github.com/gin-gonic/gin"
+  "github.com/jwt-go"
   "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
   "time"
   "workerbook/conf"
+  "workerbook/db"
   "workerbook/errgo"
   "workerbook/model"
-  "workerbook/mongo"
 )
 
 // 创建用户
 func CreateUser(data model.User, departmentId string) error {
-  db, closer, err := mongo.CloneDB()
+  db, closer, err := db.CloneMgoDB()
 
   if err != nil {
     return err
@@ -107,7 +108,7 @@ func CreateUser(data model.User, departmentId string) error {
 
 // 更新用户
 func UpdateUser(id string, data bson.M) error {
-  db, closer, err := mongo.CloneDB()
+  db, closer, err := db.CloneMgoDB()
 
   if err != nil {
     return err
@@ -183,7 +184,6 @@ func UpdateUser(id string, data bson.M) error {
     data["department.$id"] = bson.ObjectIdHex(departmentId.(string))
   }
 
-
   // 更新数据
   data["exist"] = true
   err = db.C(model.UserCollection).UpdateId(bson.ObjectIdHex(id), bson.M{
@@ -202,7 +202,7 @@ func UpdateUser(id string, data bson.M) error {
 
 // 根据id删除用户
 func DelUserById(id string) error {
-  db, closer, err := mongo.CloneDB()
+  db, closer, err := db.CloneMgoDB()
 
   if err != nil {
     return err
@@ -220,8 +220,8 @@ func DelUserById(id string) error {
 
   // 删除
   err = db.C(model.UserCollection).UpdateId(bson.ObjectIdHex(id), bson.M{
-    "$set": model.User{
-      Exist: false,
+    "$set": bson.M{
+      "exist": false,
     },
   })
 
@@ -242,8 +242,8 @@ func DelUserById(id string) error {
 }
 
 // 根据id查找用户信息
-func GetUserInfoById(id string) (gin.H, error) {
-  db, closer, err := mongo.CloneDB()
+func GetUserInfoById(id string, refs ... string) (gin.H, error) {
+  db, closer, err := db.CloneMgoDB()
 
   if err != nil {
     return nil, err
@@ -273,15 +273,15 @@ func GetUserInfoById(id string) (gin.H, error) {
     return nil, err
   }
 
-  return data.GetMap(db), nil
+  return data.GetMap(db, refs...), nil
 }
 
 // 用户登录并返回用户id
-func UserLogin(username string, password string) (id string, err error) {
-  db, closer, err := mongo.CloneDB()
+func UserLogin(username string, password string) (gin.H, error) {
+  db, closer, err := db.CloneMgoDB()
 
   if err != nil {
-    return "", err
+    return nil, err
   } else {
     defer closer()
   }
@@ -292,7 +292,7 @@ func UserLogin(username string, password string) (id string, err error) {
 
   if err = errgo.PopError(); err != nil {
     errgo.ClearErrorStack()
-    return "", err
+    return nil, err
   }
 
   data := new(model.User)
@@ -305,17 +305,32 @@ func UserLogin(username string, password string) (id string, err error) {
 
   if err != nil {
     if err == mgo.ErrNotFound {
-      return "", errors.New(errgo.ErrUsernameOrPasswordError)
+      return nil, errors.New(errgo.ErrUsernameOrPasswordError)
     }
-    return "", err
+    return nil, err
   } else {
-    return data.Id.Hex(), nil
+
+    // create jwt
+    departmentId := data.Department.Id.(bson.ObjectId)
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+      "iss":          "workerbook",
+      "iat":          time.Now().Unix(),
+      "departmentId": departmentId.Hex(),
+      "id":           data.Id.Hex(),
+      "role":         data.Role,
+    })
+
+    tokenStr, _ := token.SignedString(conf.JwtSecret)
+
+    return gin.H{
+      "data": tokenStr,
+    }, nil
   }
 }
 
 // 获取用户列表
 func GetUsersList(skip int, limit int, query bson.M) (gin.H, error) {
-  db, closer, err := mongo.CloneDB()
+  db, closer, err := db.CloneMgoDB()
 
   if err != nil {
     return nil, err
@@ -324,9 +339,11 @@ func GetUsersList(skip int, limit int, query bson.M) (gin.H, error) {
   }
 
   // check
-  errgo.ErrorIfIntLessThen(skip, 0, errgo.ErrSkipRange)
-  errgo.ErrorIfIntLessThen(limit, 1, errgo.ErrLimitRange)
-  errgo.ErrorIfIntMoreThen(limit, 100, errgo.ErrLimitRange)
+  if skip != 0 {
+    errgo.ErrorIfIntLessThen(skip, 0, errgo.ErrSkipRange)
+    errgo.ErrorIfIntLessThen(limit, 1, errgo.ErrLimitRange)
+    errgo.ErrorIfIntMoreThen(limit, 100, errgo.ErrLimitRange)
+  }
 
   if err = errgo.PopError(); err != nil {
     errgo.ClearErrorStack()
@@ -337,7 +354,11 @@ func GetUsersList(skip int, limit int, query bson.M) (gin.H, error) {
   query["exist"] = true
 
   // find it
-  err = db.C(model.UserCollection).Find(query).Skip(skip).Limit(limit).Sort("-createTime").All(data)
+  if skip == 0 && limit == 0 {
+    err = db.C(model.UserCollection).Find(query).Sort("-createTime").All(data)
+  } else {
+    err = db.C(model.UserCollection).Find(query).Skip(skip).Limit(limit).Sort("-createTime").All(data)
+  }
 
   if err != nil {
     if err == mgo.ErrNotFound {
@@ -346,18 +367,24 @@ func GetUsersList(skip int, limit int, query bson.M) (gin.H, error) {
     return nil, err
   }
 
+  // result
+  var list []gin.H
+
+  for _, r := range *data {
+    list = append(list, r.GetMap(db, "department"))
+  }
+
+  if skip == 0 && limit == 0 {
+    return gin.H{
+      "list": list,
+    }, nil
+  }
+
   // get count
   count, err := db.C(model.UserCollection).Find(query).Count()
 
   if err != nil {
     return nil, errors.New(errgo.ErrUserNotFound)
-  }
-
-  // result
-  var list []gin.H
-
-  for _, r := range *data {
-    list = append(list, r.GetMap(db))
   }
 
   return gin.H{

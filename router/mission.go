@@ -2,6 +2,7 @@ package router
 
 import (
   "github.com/gin-gonic/gin"
+  "workerbook/conf"
   "workerbook/controller"
   "workerbook/middleware"
 )
@@ -26,11 +27,11 @@ func registerMissionRouter(g *gin.RouterGroup) {
 
   // 添加任务
   g.POST("",
-    middleware.AllowRole(middleware.RoleLeader, middleware.RolePM, middleware.RoleAdmin),
+    middleware.AllowRole(conf.RoleLeader, conf.RolePM, conf.RoleAdmin),
     controller.CreateMission)
 
   // 修改任务
   g.PUT("/id/:id",
-    middleware.AllowRole(middleware.RoleLeader, middleware.RolePM, middleware.RoleAdmin),
+    middleware.AllowRole(conf.RoleLeader, conf.RolePM, conf.RoleAdmin),
     controller.UpdateMission)
 }

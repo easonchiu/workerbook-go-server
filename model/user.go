@@ -49,11 +49,8 @@ type User struct {
   Exist bool `bson:"exist"`
 }
 
-func (u User) GetMap(db *mgo.Database) gin.H {
-  department := new(Department)
-  db.FindRef(&u.Department).One(department)
-
-  return gin.H{
+func (u User) GetMap(db *mgo.Database, refs ... string) gin.H {
+  data := gin.H{
     "id":         u.Id,
     "nickname":   u.NickName,
     "email":      u.Email,
@@ -61,12 +58,21 @@ func (u User) GetMap(db *mgo.Database) gin.H {
     "title":      u.Title,
     "createTime": u.CreateTime,
     "username":   u.UserName,
-    "department": gin.H{
-      "id":   department.Id,
-      "name": department.Name,
-    },
-    "status": u.Status,
+    "status":     u.Status,
   }
+
+  for _, i := range refs {
+    if i == "department" {
+      department := new(Department)
+      db.FindRef(&u.Department).One(department)
+      data["department"] = gin.H{
+        "id":   department.Id,
+        "name": department.Name,
+      }
+    }
+  }
+
+  return data
 }
 
 /*

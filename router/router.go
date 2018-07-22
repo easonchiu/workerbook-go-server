@@ -2,6 +2,7 @@ package router
 
 import (
   `github.com/gin-gonic/gin`
+  "workerbook/conf"
   "workerbook/middleware"
 )
 
@@ -10,7 +11,7 @@ func Register(g *gin.Engine) {
   // 管理后台的路由（管理后台必须jwt通过并只开放给pm与admin）
   console := g.Group("/console")
   console.Use(middleware.Jwt)
-  console.Use(middleware.AllowRole(middleware.RolePM, middleware.RoleAdmin))
+  console.Use(middleware.AllowRole(conf.RolePM, conf.RoleAdmin))
 
   // 注册用户相关的路由
   registerUserRouter(g.Group("/users"))

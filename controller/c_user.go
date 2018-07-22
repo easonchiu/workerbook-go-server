@@ -127,7 +127,7 @@ func C_GetUserOne(c *gin.Context) {
   id, _ := ctx.getParam("id")
 
   // query
-  userInfo, err := service.GetUserInfoById(id)
+  userInfo, err := service.GetUserInfoById(id, "department")
 
   // check
   if err != nil {

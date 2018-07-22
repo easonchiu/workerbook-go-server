@@ -1,4 +1,4 @@
-package mongo
+package db
 
 import (
   `errors`
@@ -14,7 +14,7 @@ var (
   Connecting = false
 )
 
-func ConnectDB() {
+func ConnectMgoDB() {
   mongo, err := mgo.ParseURL(conf.DBUrl)
 
   s, err := mgo.Dial(conf.DBUrl)
@@ -35,7 +35,7 @@ func ConnectDB() {
 // get db with clone session
 // must close the session after use !!!
 //   e.g.  defer session.close()
-func CloneDB() (*mgo.Database, func(), error) {
+func CloneMgoDB() (*mgo.Database, func(), error) {
   if Connecting {
     session := Session.Clone()
     closeFn := func() {
@@ -48,7 +48,7 @@ func CloneDB() (*mgo.Database, func(), error) {
 }
 
 // close db
-func CloseDB() {
+func CloseMgoDB() {
   if Connecting {
     Session.Close()
     Connecting = false

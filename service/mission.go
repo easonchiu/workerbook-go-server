@@ -7,14 +7,14 @@ import (
   "gopkg.in/mgo.v2/bson"
   "time"
   "workerbook/conf"
+  "workerbook/db"
   "workerbook/errgo"
   "workerbook/model"
-  "workerbook/mongo"
 )
 
 // 创建任务
 func CreateMission(data model.Mission, projectId string, userId string) error {
-  db, close, err := mongo.CloneDB()
+  db, close, err := db.CloneMgoDB()
 
   if err != nil {
     return err
@@ -83,7 +83,7 @@ func CreateMission(data model.Mission, projectId string, userId string) error {
 
 // 更新任务
 func UpdateMission(id string, data bson.M) error {
-  db, close, err := mongo.CloneDB()
+  db, close, err := db.CloneMgoDB()
 
   if err != nil {
     return err
@@ -174,7 +174,7 @@ func UpdateMission(id string, data bson.M) error {
 
 // 根据id查找任务
 func GetMissionInfoById(id string) (gin.H, error) {
-  db, close, err := mongo.CloneDB()
+  db, close, err := db.CloneMgoDB()
 
   if err != nil {
     return nil, err

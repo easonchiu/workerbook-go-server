@@ -9,8 +9,8 @@ import (
 )
 
 func TestDepartment(t *testing.T) {
-  mongo.ConnectDB()
-  defer mongo.CloseDB()
+  db.ConnectDB()
+  defer db.CloseDB()
 
   id := bson.NewObjectId()
 

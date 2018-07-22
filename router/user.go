@@ -2,6 +2,7 @@ package router
 
 import (
   `github.com/gin-gonic/gin`
+  "workerbook/conf"
   `workerbook/controller`
   `workerbook/middleware`
 )
@@ -39,7 +40,6 @@ func registerUserRouter(g *gin.RouterGroup) {
   // 获取下级用户（包括自己）
   g.GET("/subordinate",
     middleware.Jwt,
-    middleware.AllowRole(middleware.RoleLeader, middleware.RolePM, middleware.RoleAdmin),
-    controller.C_GetUsersList)
-
+    middleware.AllowRole(conf.RoleLeader, conf.RolePM, conf.RoleAdmin),
+    controller.GetSubUsersList)
 }

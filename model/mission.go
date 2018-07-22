@@ -42,8 +42,8 @@ type Mission struct {
 
 func (m Mission) GetMap(db *mgo.Database, refs ... string) gin.H {
   data := gin.H{
-    "id":   m.Id,
-    "name": m.Name,
+    "id":         m.Id,
+    "name":       m.Name,
     "createTime": m.CreateTime,
     "deadline":   m.Deadline,
     "projectId":  m.ProjectId,
@@ -59,6 +59,8 @@ func (m Mission) GetMap(db *mgo.Database, refs ... string) gin.H {
         "nickname": user.NickName,
         "title":    user.Title,
         "id":       user.Id,
+        "status":   user.Status,
+        "exist":    user.Exist,
       }
     }
   }

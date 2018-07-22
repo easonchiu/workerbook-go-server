@@ -9,14 +9,14 @@ import (
   "gopkg.in/mgo.v2/bson"
   "time"
   "workerbook/conf"
+  "workerbook/db"
   "workerbook/errgo"
   "workerbook/model"
-  "workerbook/mongo"
 )
 
 // 创建项目
 func CreateProject(data model.Project, departments []gjson.Result) error {
-  db, close, err := mongo.CloneDB()
+  db, close, err := db.CloneMgoDB()
 
   if err != nil {
     return err
@@ -71,7 +71,7 @@ func CreateProject(data model.Project, departments []gjson.Result) error {
 
 // 更新项目
 func UpdateProject(id string, data bson.M) error {
-  db, close, err := mongo.CloneDB()
+  db, close, err := db.CloneMgoDB()
 
   if err != nil {
     return err
@@ -137,7 +137,7 @@ func UpdateProject(id string, data bson.M) error {
 
 // 根据id查找项目
 func GetProjectInfoById(id string) (gin.H, error) {
-  db, close, err := mongo.CloneDB()
+  db, close, err := db.CloneMgoDB()
 
   if err != nil {
     return nil, err
@@ -172,7 +172,7 @@ func GetProjectInfoById(id string) (gin.H, error) {
 
 // 根据id删除项目
 func DelProjectById(id string) error {
-  db, closer, err := mongo.CloneDB()
+  db, closer, err := db.CloneMgoDB()
 
   if err != nil {
     return err
@@ -211,7 +211,7 @@ func DelProjectById(id string) error {
 
 // 查找项目列表(当skip和limit都为0时，查找全部)
 func GetProjectsList(skip int, limit int, query bson.M) (gin.H, error) {
-  db, closer, err := mongo.CloneDB()
+  db, closer, err := db.CloneMgoDB()
 
   if err != nil {
     return nil, err

@@ -51,6 +51,7 @@ func (c *Context) Error(errNo interface{}) {
 
   // 根据错误号获取错误内容（错误号是个string或error）
   err := errgo.Get(errNo)
+  role := c.Ctx.GetInt("ROLE")
 
   fmt.Println()
   fmt.Println(" >>> ERROR:", err.Message)
@@ -58,6 +59,7 @@ func (c *Context) Error(errNo interface{}) {
   fmt.Println(" >>> REQUEST METHOD:", c.Ctx.Request.Method)
   fmt.Println(" >>> REQUEST URL:", c.Ctx.Request.URL.String())
   fmt.Println(" >>> USER AGENT:", c.Ctx.Request.UserAgent())
+  fmt.Println(" >>> USER ROLE:", role)
   fmt.Println(" >>> USER AUTH:", c.Ctx.Request.Header.Get("authorization"))
   fmt.Println()
 
