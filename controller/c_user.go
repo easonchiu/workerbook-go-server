@@ -105,7 +105,7 @@ func C_GetUsersList(c *gin.Context) {
     query["department.$id"] = bson.ObjectIdHex(departmentId)
   }
 
-  data, err := service.GetUsersList(skip, limit, query)
+  data, err := service.GetUsersList(skip, limit, query, "department")
 
   // check
   if err != nil {

@@ -14,12 +14,12 @@ import (
 
 // 创建任务
 func CreateMission(data model.Mission, projectId string, userId string) error {
-  db, close, err := db.CloneMgoDB()
+  mg, closer, err := db.CloneMgoDB()
 
   if err != nil {
     return err
   } else {
-    defer close()
+    defer closer()
   }
 
   // 是否存在的标志
@@ -28,7 +28,7 @@ func CreateMission(data model.Mission, projectId string, userId string) error {
 
   // check
   errgo.ErrorIfStringIsEmpty(data.Name, errgo.ErrMissionNameEmpty)
-  errgo.ErrorIfLenMoreThen(data.Name, 15, errgo.ErrMissionNameTooLong)
+  errgo.ErrorIfLenMoreThen(data.Name, 30, errgo.ErrMissionNameTooLong)
   errgo.ErrorIfTimeEarlierThen(data.Deadline, time.Now(), errgo.ErrMissionDeadlineTooSoon)
   errgo.ErrorIfStringNotObjectId(projectId, errgo.ErrProjectIdError)
   errgo.ErrorIfStringNotObjectId(userId, errgo.ErrUserIdError)
@@ -51,30 +51,30 @@ func CreateMission(data model.Mission, projectId string, userId string) error {
   data.User = mgo.DBRef{
     Id:         bson.ObjectIdHex(userId),
     Collection: model.UserCollection,
-    Database:   conf.DBName,
+    Database:   conf.MgoDBName,
   }
 
   // insert it.
-  err = db.C(model.MissionCollection).Insert(data)
+  err = mg.C(model.MissionCollection).Insert(data)
 
   if err != nil {
     return errors.New(errgo.ErrCreateMissionFailed)
   }
 
   // 成功后要在项目的数据中关联这条数据
-  err = db.C(model.ProjectCollection).UpdateId(data.ProjectId, bson.M{
+  err = mg.C(model.ProjectCollection).UpdateId(data.ProjectId, bson.M{
     "$push": bson.M{
       "missions": mgo.DBRef{
         Id:         data.Id,
         Collection: model.MissionCollection,
-        Database:   conf.DBName,
+        Database:   conf.MgoDBName,
       },
     },
   })
 
   // 插入失败就删除任务
   if err != nil {
-    db.C(model.MissionCollection).RemoveId(data.Id)
+    mg.C(model.MissionCollection).RemoveId(data.Id)
     return errors.New(errgo.ErrCreateMissionFailed)
   }
 
@@ -83,12 +83,12 @@ func CreateMission(data model.Mission, projectId string, userId string) error {
 
 // 更新任务
 func UpdateMission(id string, data bson.M) error {
-  db, close, err := db.CloneMgoDB()
+  mg, closer, err := db.CloneMgoDB()
 
   if err != nil {
     return err
   } else {
-    defer close()
+    defer closer()
   }
 
   // check
@@ -120,7 +120,7 @@ func UpdateMission(id string, data bson.M) error {
   if projectId, ok := data["projectId"]; ok {
     var project = new(model.Project)
 
-    err = db.C(model.ProjectCollection).Find(bson.M{
+    err = mg.C(model.ProjectCollection).Find(bson.M{
       "_id":   bson.ObjectIdHex(projectId.(string)),
       "exist": true,
     }).One(project)
@@ -146,7 +146,7 @@ func UpdateMission(id string, data bson.M) error {
     data["user"] = mgo.DBRef{
       Id:         bson.ObjectIdHex(userId.(string)),
       Collection: model.UserCollection,
-      Database:   conf.DBName,
+      Database:   conf.MgoDBName,
     }
   }
 
@@ -161,7 +161,7 @@ func UpdateMission(id string, data bson.M) error {
     data["projectId"] = bson.ObjectIdHex(projectId.(string))
   }
 
-  err = db.C(model.MissionCollection).UpdateId(bson.ObjectIdHex(id), bson.M{
+  err = mg.C(model.MissionCollection).UpdateId(bson.ObjectIdHex(id), bson.M{
     "$set": data,
   })
 
@@ -173,13 +173,13 @@ func UpdateMission(id string, data bson.M) error {
 }
 
 // 根据id查找任务
-func GetMissionInfoById(id string) (gin.H, error) {
-  db, close, err := db.CloneMgoDB()
+func GetMissionInfoById(id string, refs ... string) (gin.H, error) {
+  mg, closer, err := db.CloneMgoDB()
 
   if err != nil {
     return nil, err
   } else {
-    defer close()
+    defer closer()
   }
 
   // check
@@ -192,7 +192,7 @@ func GetMissionInfoById(id string) (gin.H, error) {
 
   data := new(model.Mission)
 
-  err = db.C(model.MissionCollection).FindId(bson.ObjectIdHex(id)).One(data)
+  err = mg.C(model.MissionCollection).FindId(bson.ObjectIdHex(id)).One(data)
 
   if err != nil {
     if err == mgo.ErrNotFound {
@@ -201,5 +201,5 @@ func GetMissionInfoById(id string) (gin.H, error) {
     return nil, err
   }
 
-  return data.GetMap(db, "user"), nil
+  return data.GetMap(mg, refs...), nil
 }

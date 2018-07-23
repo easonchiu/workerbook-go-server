@@ -9,12 +9,15 @@ import (
 
 func init() {
   db.ConnectMgoDB()
+  db.InitRedisPool()
 }
 
 func main() {
 
   // close db before un-mount
   defer db.CloseMgoDB()
+
+  defer db.RedisPool.Close()
 
   // initialization
   // Default With the Logger and Recovery middleware already attached
@@ -36,5 +39,4 @@ func main() {
 
   // start
   g.Run(":" + port)
-
 }

@@ -128,7 +128,7 @@ var Error = map[string]errType{
   ErrMissionIdError:         {"任务id错误", http.StatusOK, ""},
   ErrMissionNotFound:        {"找不到该任务", http.StatusOK, ""},
   ErrMissionNameEmpty:       {"任务名称不能为空", http.StatusOK, ""},
-  ErrMissionNameTooLong:     {"任务名称不得多于15个字", http.StatusOK, ""},
+  ErrMissionNameTooLong:     {"任务名称不得多于30个字", http.StatusOK, ""},
   ErrMissionDeadlineEmpty:   {"截至时间不能不空", http.StatusOK, ""},
   ErrMissionDeadlineTooSoon: {"截至时间不能早于当前时间", http.StatusOK, ""},
   ErrMissionDeadlineTooLate: {"截至时间不能晚于项目时间", http.StatusOK, ""},

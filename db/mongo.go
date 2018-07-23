@@ -15,9 +15,9 @@ var (
 )
 
 func ConnectMgoDB() {
-  mongo, err := mgo.ParseURL(conf.DBUrl)
+  mongo, err := mgo.ParseURL(conf.MgoDBUrl)
 
-  s, err := mgo.Dial(conf.DBUrl)
+  s, err := mgo.Dial(conf.MgoDBUrl)
 
   if err != nil {
     panic(err)

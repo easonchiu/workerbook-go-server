@@ -1,7 +1,6 @@
 package controller
 
 import (
-  "fmt"
   "github.com/gin-gonic/gin"
   "gopkg.in/mgo.v2/bson"
   "workerbook/conf"
@@ -86,8 +85,6 @@ func GetSubUsersList(c *gin.Context) {
         projectIdList = append(projectIdList, id.(bson.ObjectId))
       }
     }
-
-    fmt.Println(projectIdList)
 
     users, err := service.GetUsersList(0,0, bson.M{
       "department.$id": bson.M{

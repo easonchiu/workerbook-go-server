@@ -1,8 +1,10 @@
 package conf
 
 const (
-  DBName = "workerbook"
-  DBUrl  = "mongodb://localhost:27017/workerbook"
+  MgoDBName = "workerbook"
+  MgoDBUrl  = "mongodb://localhost:27017/workerbook"
+
+  RedisDBUrl = "localhost:6379"
 )
 
 var JwtSecret = []byte("wb2018_qweasdzxc!@#")

@@ -16,7 +16,7 @@ func GetMissionOne(c *gin.Context) {
   id, _ := ctx.getParam("id")
 
   // query
-  missionInfo, err := service.GetMissionInfoById(id)
+  missionInfo, err := service.GetMissionInfoById(id, "user")
 
   // check
   if err != nil {

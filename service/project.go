@@ -2,12 +2,12 @@ package service
 
 import (
   "errors"
-  "fmt"
   "github.com/gin-gonic/gin"
   "github.com/tidwall/gjson"
   "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
   "time"
+  "workerbook/cache"
   "workerbook/conf"
   "workerbook/db"
   "workerbook/errgo"
@@ -16,12 +16,12 @@ import (
 
 // 创建项目
 func CreateProject(data model.Project, departments []gjson.Result) error {
-  db, close, err := db.CloneMgoDB()
+  mg, closer, err := db.CloneMgoDB()
 
   if err != nil {
     return err
   } else {
-    defer close()
+    defer closer()
   }
 
   // 是否存在的标志
@@ -44,7 +44,7 @@ func CreateProject(data model.Project, departments []gjson.Result) error {
     if bson.IsObjectIdHex(department.Str) {
       departmentsRef = append(departmentsRef, mgo.DBRef{
         Collection: model.DepartmentCollection,
-        Database:   conf.DBName,
+        Database:   conf.MgoDBName,
         Id:         bson.ObjectIdHex(department.Str),
       })
     } else {
@@ -60,7 +60,7 @@ func CreateProject(data model.Project, departments []gjson.Result) error {
   data.Departments = departmentsRef
 
   // insert it.
-  err = db.C(model.ProjectCollection).Insert(data)
+  err = mg.C(model.ProjectCollection).Insert(data)
 
   if err != nil {
     return errors.New(errgo.ErrCreateProjectFailed)
@@ -71,12 +71,12 @@ func CreateProject(data model.Project, departments []gjson.Result) error {
 
 // 更新项目
 func UpdateProject(id string, data bson.M) error {
-  db, close, err := db.CloneMgoDB()
+  mg, closer, err := db.CloneMgoDB()
 
   if err != nil {
     return err
   } else {
-    defer close()
+    defer closer()
   }
 
   // check
@@ -106,7 +106,7 @@ func UpdateProject(id string, data bson.M) error {
       if bson.IsObjectIdHex(department.Str) {
         departmentsRef = append(departmentsRef, mgo.DBRef{
           Collection: model.DepartmentCollection,
-          Database:   conf.DBName,
+          Database:   conf.MgoDBName,
           Id:         bson.ObjectIdHex(department.Str),
         })
       } else {
@@ -121,10 +121,16 @@ func UpdateProject(id string, data bson.M) error {
     return err
   }
 
-  fmt.Println("deadline", data["deadline"])
+  // 先要清缓存，清成功后才可以更新数据
+  err = cache.ProjectDel(id)
+
+  if err != nil {
+    return errors.New(errgo.ErrUpdateProjectFailed)
+  }
 
   // update
-  err = db.C(model.ProjectCollection).UpdateId(bson.ObjectIdHex(id), bson.M{
+  data["exist"] = true
+  err = mg.C(model.ProjectCollection).UpdateId(bson.ObjectIdHex(id), bson.M{
     "$set": data,
   })
 
@@ -136,13 +142,13 @@ func UpdateProject(id string, data bson.M) error {
 }
 
 // 根据id查找项目
-func GetProjectInfoById(id string) (gin.H, error) {
-  db, close, err := db.CloneMgoDB()
+func GetProjectInfoById(id string, refs ... string) (gin.H, error) {
+  mg, closer, err := db.CloneMgoDB()
 
   if err != nil {
     return nil, err
   } else {
-    defer close()
+    defer closer()
   }
 
   // check
@@ -155,10 +161,14 @@ func GetProjectInfoById(id string) (gin.H, error) {
 
   data := new(model.Project)
 
-  err = db.C(model.ProjectCollection).Find(bson.M{
-    "_id":   bson.ObjectIdHex(id),
-    "exist": true,
-  }).One(data)
+  // 先从缓存取数据，如果缓存没取到，从数据库取
+  rok := cache.ProjectGet(id, data)
+  if !rok {
+    err = mg.C(model.ProjectCollection).Find(bson.M{
+      "_id":   bson.ObjectIdHex(id),
+      "exist": true,
+    }).One(data)
+  }
 
   if err != nil {
     if err == mgo.ErrNotFound {
@@ -167,12 +177,17 @@ func GetProjectInfoById(id string) (gin.H, error) {
     return nil, err
   }
 
-  return data.GetMap(db), nil
+  // 存到缓存
+  if !rok {
+    cache.ProjectSet(id, data)
+  }
+
+  return data.GetMap(mg, refs...), nil
 }
 
 // 根据id删除项目
 func DelProjectById(id string) error {
-  db, closer, err := db.CloneMgoDB()
+  mg, closer, err := db.CloneMgoDB()
 
   if err != nil {
     return err
@@ -188,8 +203,15 @@ func DelProjectById(id string) error {
     return err
   }
 
-  // 删除
-  err = db.C(model.ProjectCollection).UpdateId(bson.ObjectIdHex(id), bson.M{
+  // 清除缓存，缓存清成功才可以清数据，不然会有脏数据
+  err = cache.ProjectDel(id)
+
+  if err != nil {
+    return errors.New(errgo.ErrDeleteProjectFailed)
+  }
+
+  // 删除数据
+  err = mg.C(model.ProjectCollection).UpdateId(bson.ObjectIdHex(id), bson.M{
     "$set": bson.M{
       "exist": false,
     },
@@ -210,8 +232,8 @@ func DelProjectById(id string) error {
 }
 
 // 查找项目列表(当skip和limit都为0时，查找全部)
-func GetProjectsList(skip int, limit int, query bson.M) (gin.H, error) {
-  db, closer, err := db.CloneMgoDB()
+func GetProjectsList(skip int, limit int, query bson.M, refs ... string) (gin.H, error) {
+  mg, closer, err := db.CloneMgoDB()
 
   if err != nil {
     return nil, err
@@ -236,9 +258,9 @@ func GetProjectsList(skip int, limit int, query bson.M) (gin.H, error) {
 
   // find it
   if skip == 0 && limit == 0 {
-    err = db.C(model.ProjectCollection).Find(query).Sort("-createTime").All(data)
+    err = mg.C(model.ProjectCollection).Find(query).Sort("-createTime").All(data)
   } else {
-    err = db.C(model.ProjectCollection).Find(query).Skip(skip).Limit(limit).Sort("-createTime").All(data)
+    err = mg.C(model.ProjectCollection).Find(query).Skip(skip).Limit(limit).Sort("-createTime").All(data)
   }
 
   if err != nil {
@@ -252,7 +274,7 @@ func GetProjectsList(skip int, limit int, query bson.M) (gin.H, error) {
   var list []gin.H
 
   for _, r := range *data {
-    list = append(list, r.GetMap(db))
+    list = append(list, r.GetMap(mg, refs...))
   }
 
   if skip == 0 && limit == 0 {
@@ -262,7 +284,7 @@ func GetProjectsList(skip int, limit int, query bson.M) (gin.H, error) {
   }
 
   // get count
-  count, err := db.C(model.ProjectCollection).Find(query).Count()
+  count, err := mg.C(model.ProjectCollection).Find(query).Count()
 
   if err != nil {
     return nil, errors.New(errgo.ErrProjectNotFound)

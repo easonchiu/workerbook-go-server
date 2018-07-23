@@ -2,6 +2,7 @@ package model
 
 import (
   "github.com/gin-gonic/gin"
+  "github.com/influxdata/influxdb/pkg/slices"
   "gopkg.in/mgo.v2"
   `gopkg.in/mgo.v2/bson`
   "time"
@@ -51,17 +52,19 @@ func (m Mission) GetMap(db *mgo.Database, refs ... string) gin.H {
     "progress":   m.Progress,
   }
 
-  for _, i := range refs {
-    if i == "user" {
-      user := new(User)
-      db.FindRef(&m.User).One(user)
-      data["user"] = gin.H{
-        "nickname": user.NickName,
-        "title":    user.Title,
-        "id":       user.Id,
-        "status":   user.Status,
-        "exist":    user.Exist,
-      }
+  if slices.Exists(refs, "user") {
+    user := new(User)
+    db.FindRef(&m.User).One(user)
+    data["user"] = gin.H{
+      "nickname": user.NickName,
+      "title":    user.Title,
+      "id":       user.Id,
+      "status":   user.Status,
+      "exist":    user.Exist,
+    }
+  } else {
+    data["user"] = gin.H{
+      "id": m.User.Id,
     }
   }
 

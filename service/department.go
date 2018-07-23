@@ -6,6 +6,7 @@ import (
   "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
   "time"
+  "workerbook/cache"
   "workerbook/db"
   "workerbook/errgo"
   "workerbook/model"
@@ -13,12 +14,12 @@ import (
 
 // 创建部门
 func CreateDepartment(data model.Department) error {
-  db, close, err := db.CloneMgoDB()
+  mg, closer, err := db.CloneMgoDB()
 
   if err != nil {
     return err
   } else {
-    defer close()
+    defer closer()
   }
 
   // 是否存在的标志
@@ -34,7 +35,7 @@ func CreateDepartment(data model.Department) error {
   }
 
   // 名称不能重复
-  count, err := db.C(model.DepartmentCollection).Find(bson.M{"name": data.Name}).Count()
+  count, err := mg.C(model.DepartmentCollection).Find(bson.M{"name": data.Name}).Count()
 
   if err != nil {
     return errors.New(errgo.ErrCreateDepartmentFailed)
@@ -45,7 +46,7 @@ func CreateDepartment(data model.Department) error {
   }
 
   // insert it.
-  err = db.C(model.DepartmentCollection).Insert(data)
+  err = mg.C(model.DepartmentCollection).Insert(data)
 
   if err != nil {
     return errors.New(errgo.ErrCreateDepartmentFailed)
@@ -56,14 +57,14 @@ func CreateDepartment(data model.Department) error {
 
 // 根据id查找部门信息
 func GetDepartmentInfoById(id string) (gin.H, error) {
-  db, close, err := db.CloneMgoDB()
+  mg, closer, err := db.CloneMgoDB()
 
   data := new(model.Department)
 
   if err != nil {
     return nil, err
   } else {
-    defer close()
+    defer closer()
   }
 
   // check
@@ -74,7 +75,11 @@ func GetDepartmentInfoById(id string) (gin.H, error) {
     return nil, err
   }
 
-  err = db.C(model.DepartmentCollection).FindId(bson.ObjectIdHex(id)).One(data)
+  // 先从缓存查数据，找不到的话再从数据库找
+  rok := cache.DepartmentGet(id, data)
+  if !rok {
+    err = mg.C(model.DepartmentCollection).FindId(bson.ObjectIdHex(id)).One(data)
+  }
 
   if err != nil {
     if err == mgo.ErrNotFound {
@@ -83,12 +88,17 @@ func GetDepartmentInfoById(id string) (gin.H, error) {
     return nil, err
   }
 
-  return data.GetMap(db), nil
+  // 存到缓存
+  if !rok {
+    cache.DepartmentSet(id, data)
+  }
+
+  return data.GetMap(mg), nil
 }
 
 // 查找部门列表(当skip和limit都为0时，查找全部)
 func GetDepartmentsList(skip int, limit int, query bson.M) (gin.H, error) {
-  db, closer, err := db.CloneMgoDB()
+  mg, closer, err := db.CloneMgoDB()
 
   if err != nil {
     return nil, err
@@ -113,9 +123,9 @@ func GetDepartmentsList(skip int, limit int, query bson.M) (gin.H, error) {
 
   // find it
   if skip == 0 && limit == 0 {
-    err = db.C(model.DepartmentCollection).Find(query).Sort("-createTime").All(data)
+    err = mg.C(model.DepartmentCollection).Find(query).Sort("-createTime").All(data)
   } else {
-    err = db.C(model.DepartmentCollection).Find(query).Skip(skip).Limit(limit).Sort("-createTime").All(data)
+    err = mg.C(model.DepartmentCollection).Find(query).Skip(skip).Limit(limit).Sort("-createTime").All(data)
   }
 
   if err != nil {
@@ -129,7 +139,7 @@ func GetDepartmentsList(skip int, limit int, query bson.M) (gin.H, error) {
   var list []gin.H
 
   for _, r := range *data {
-    list = append(list, r.GetMap(db))
+    list = append(list, r.GetMap(mg))
   }
 
   if skip == 0 && limit == 0 {
@@ -139,7 +149,7 @@ func GetDepartmentsList(skip int, limit int, query bson.M) (gin.H, error) {
   }
 
   // get count
-  count, err := db.C(model.DepartmentCollection).Find(query).Count()
+  count, err := mg.C(model.DepartmentCollection).Find(query).Count()
 
   if err != nil {
     return nil, errors.New(errgo.ErrDepartmentNotFound)
@@ -155,34 +165,39 @@ func GetDepartmentsList(skip int, limit int, query bson.M) (gin.H, error) {
 
 // 全量更新所有部门的人数
 func UpdateDepartmentsUserCount() error {
-  db, close, err := db.CloneMgoDB()
+  mg, closer, err := db.CloneMgoDB()
 
   if err != nil {
     return err
   } else {
-    defer close()
+    defer closer()
   }
 
   departments := new([]model.Department)
-  err = db.C(model.DepartmentCollection).Find(bson.M{"exist": true}).All(departments)
+  err = mg.C(model.DepartmentCollection).Find(bson.M{"exist": true}).All(departments)
 
   if err != nil {
     return errors.New(errgo.ErrUpdateDepartmentFailed)
   }
 
   for _, department := range *departments {
-    count, err := db.C(model.UserCollection).Find(bson.M{
+    count, err := mg.C(model.UserCollection).Find(bson.M{
       "exist":          true,
       "department.$id": department.Id,
     }).Count()
+
     if err != nil {
       return err
     }
-    db.C(model.DepartmentCollection).UpdateId(department.Id, bson.M{
-      "$set": bson.M{
-        "userCount": count,
-      },
-    })
+
+    // 清空缓存并更新数据
+    if err := cache.DepartmentDel(department.Id.Hex()); err != nil {
+      mg.C(model.DepartmentCollection).UpdateId(department.Id, bson.M{
+        "$set": bson.M{
+          "userCount": count,
+        },
+      })
+    }
   }
 
   return nil
@@ -190,7 +205,7 @@ func UpdateDepartmentsUserCount() error {
 
 // 更新部门信息
 func UpdateDepartment(id string, data bson.M) error {
-  db, closer, err := db.CloneMgoDB()
+  mg, closer, err := db.CloneMgoDB()
 
   if err != nil {
     return err
@@ -208,7 +223,7 @@ func UpdateDepartment(id string, data bson.M) error {
 
   // 名称唯一
   if name, ok := data["name"]; ok {
-    count, err := db.C(model.DepartmentCollection).Find(bson.M{
+    count, err := mg.C(model.DepartmentCollection).Find(bson.M{
       "name":  name,
       "exist": true,
       "_id": bson.M{
@@ -225,8 +240,15 @@ func UpdateDepartment(id string, data bson.M) error {
     }
   }
 
+  // 更新前必须成功清空缓存
+  err = cache.DepartmentDel(id)
+
+  if err != nil {
+    return errors.New(errgo.ErrUpdateDepartmentFailed)
+  }
+
   // 更新数据
-  err = db.C(model.DepartmentCollection).UpdateId(bson.ObjectIdHex(id), bson.M{
+  err = mg.C(model.DepartmentCollection).UpdateId(bson.ObjectIdHex(id), bson.M{
     "$set": data,
   })
 
@@ -239,7 +261,7 @@ func UpdateDepartment(id string, data bson.M) error {
 
 // 根据id删除部门（前提是部门内无人）
 func DelDepartmentById(id string) error {
-  db, closer, err := db.CloneMgoDB()
+  mg, closer, err := db.CloneMgoDB()
 
   if err != nil {
     return err
@@ -256,7 +278,7 @@ func DelDepartmentById(id string) error {
   }
 
   // 查找该部门内是否有用户
-  count, err := db.C(model.UserCollection).Find(bson.M{
+  count, err := mg.C(model.UserCollection).Find(bson.M{
     "exist":          true,
     "department.$id": bson.ObjectIdHex(id),
   }).Count()
@@ -265,8 +287,11 @@ func DelDepartmentById(id string) error {
     return errors.New(errgo.ErrDeleteDepartmentHasUser)
   }
 
+  // 清除缓存，缓存清成功才可以清数据，不然会有脏数据
+  err = cache.DepartmentDel(id)
+
   // 删除
-  err = db.C(model.DepartmentCollection).UpdateId(bson.ObjectIdHex(id), bson.M{
+  err = mg.C(model.DepartmentCollection).UpdateId(bson.ObjectIdHex(id), bson.M{
     "$set": bson.M{
       "exist": false,
     },

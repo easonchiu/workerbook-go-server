@@ -28,7 +28,7 @@ type Department struct {
   Exist bool `bson:"exist"`
 }
 
-func (d Department) GetMap(db *mgo.Database) gin.H {
+func (d Department) GetMap(db *mgo.Database, refs ... string) gin.H {
   return gin.H{
     "id":         d.Id,
     "name":       d.Name,

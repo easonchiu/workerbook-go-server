@@ -11,11 +11,6 @@ func registerConsoleMissionRouter(g *gin.RouterGroup) {
   // jwt
   g.Use(middleware.Jwt)
 
-  // 任务列表
-  g.GET("", controller.C_GetMissionsList)
-
-  // 获取单个任务
-  g.GET("/id/:id", controller.C_GetMissionOne)
 }
 
 func registerMissionRouter(g *gin.RouterGroup) {

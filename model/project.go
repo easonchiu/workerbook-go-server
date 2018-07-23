@@ -2,6 +2,7 @@ package model
 
 import (
   "github.com/gin-gonic/gin"
+  "github.com/influxdata/influxdb/pkg/slices"
   "gopkg.in/mgo.v2"
   `gopkg.in/mgo.v2/bson`
   `time`
@@ -46,32 +47,62 @@ type Project struct {
   Exist bool `bson:"exist"`
 }
 
-func (p Project) GetMap(db *mgo.Database) gin.H {
-  var departments []gin.H
-  for _, item := range p.Departments {
-    department := new(Department)
-    err := db.FindRef(&item).One(department)
-    if err == nil {
-      departments = append(departments, department.GetMap(db))
-    }
-  }
-  var missions []gin.H
-  for _, item := range p.Missions {
-    mission := new(Mission)
-    err := db.FindRef(&item).One(mission)
-    if err == nil {
-      missions = append(missions, mission.GetMap(db, "user"))
-    }
-  }
-  return gin.H{
+func (p Project) GetMap(db *mgo.Database, refs ... string) gin.H {
+  data := gin.H{
     "id":          p.Id,
     "name":        p.Name,
     "deadline":    p.Deadline,
     "description": p.Description,
     "createTime":  p.CreateTime,
     "progress":    p.Progress,
-    "departments": departments,
-    "missions":    missions,
     "weight":      p.Weight,
   }
+
+  // departments refs
+  var departments []gin.H
+
+  if slices.Exists(refs, "departments") {
+    for _, item := range p.Departments {
+      department := new(Department)
+      err := db.FindRef(&item).One(department)
+      if err == nil {
+        departments = append(departments, department.GetMap(db))
+      }
+    }
+  } else {
+    for _, item := range p.Departments {
+      if item.Id != "" {
+        departments = append(departments, gin.H{
+          "id": item.Id.(bson.ObjectId),
+        })
+      }
+    }
+  }
+
+  data["departments"] = departments
+
+  // missions refs
+  var missions []gin.H
+
+  if slices.Exists(refs, "missions") {
+    for _, item := range p.Missions {
+      mission := new(Mission)
+      err := db.FindRef(&item).One(mission)
+      if err == nil {
+        missions = append(missions, mission.GetMap(db, "user"))
+      }
+    }
+  } else {
+    for _, item := range p.Missions {
+      if item.Id != "" {
+        missions = append(missions, gin.H{
+          "id": item.Id.(bson.ObjectId),
+        })
+      }
+    }
+  }
+
+  data["missions"] = missions
+
+  return data
 }

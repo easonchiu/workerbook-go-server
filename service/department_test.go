@@ -3,14 +3,14 @@ package service
 import (
   "gopkg.in/mgo.v2/bson"
   "testing"
+  "workerbook/db"
   "workerbook/errgo"
   "workerbook/model"
-  "workerbook/mongo"
 )
 
 func TestDepartment(t *testing.T) {
-  db.ConnectDB()
-  defer db.CloseDB()
+  db.ConnectMgoDB()
+  defer db.CloseMgoDB()
 
   id := bson.NewObjectId()
 
