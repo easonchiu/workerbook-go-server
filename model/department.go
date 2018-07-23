@@ -4,7 +4,7 @@ import (
   "github.com/gin-gonic/gin"
   "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
-  `time`
+  "time"
 )
 
 // collection name
@@ -28,11 +28,12 @@ type Department struct {
   Exist bool `bson:"exist"`
 }
 
-func (d Department) GetMap(db *mgo.Database, refs ... string) gin.H {
-  return gin.H{
+func (d Department) GetMap(refFunc func(mgo.DBRef) (gin.H, bool), refs ... string) gin.H {
+  data := gin.H{
     "id":         d.Id,
     "name":       d.Name,
     "userCount":  d.UserCount,
     "createTime": d.CreateTime,
   }
+  return data
 }

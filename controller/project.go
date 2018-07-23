@@ -16,7 +16,7 @@ func GetProjectsList(c *gin.Context) {
   // query
   data, err := service.GetProjectsList(0, 0, bson.M{
     "departments.$id": bson.ObjectIdHex(departmentId.(string)),
-  }, "missions", "departments")
+  }, "missions", "departments", "user")
 
   // check
   if err != nil {

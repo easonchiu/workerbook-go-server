@@ -93,7 +93,7 @@ func GetDepartmentInfoById(id string) (gin.H, error) {
     cache.DepartmentSet(id, data)
   }
 
-  return data.GetMap(mg), nil
+  return data.GetMap(FindRef(mg)), nil
 }
 
 // 查找部门列表(当skip和limit都为0时，查找全部)
@@ -139,7 +139,7 @@ func GetDepartmentsList(skip int, limit int, query bson.M) (gin.H, error) {
   var list []gin.H
 
   for _, r := range *data {
-    list = append(list, r.GetMap(mg))
+    list = append(list, r.GetMap(FindRef(mg)))
   }
 
   if skip == 0 && limit == 0 {

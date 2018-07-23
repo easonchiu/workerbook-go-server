@@ -2,10 +2,10 @@ package model
 
 import (
   "github.com/gin-gonic/gin"
-  "github.com/influxdata/influxdb/pkg/slices"
   "gopkg.in/mgo.v2"
-  `gopkg.in/mgo.v2/bson`
-  `time`
+  "gopkg.in/mgo.v2/bson"
+  "time"
+  "workerbook/util"
 )
 
 // collection name
@@ -50,7 +50,7 @@ type User struct {
   Exist bool `bson:"exist"`
 }
 
-func (u User) GetMap(db *mgo.Database, refs ... string) gin.H {
+func (u User) GetMap(refFunc func(mgo.DBRef) (gin.H, bool), refs ... string) gin.H {
   data := gin.H{
     "id":         u.Id,
     "nickname":   u.NickName,
@@ -62,12 +62,9 @@ func (u User) GetMap(db *mgo.Database, refs ... string) gin.H {
     "status":     u.Status,
   }
 
-  if slices.Exists(refs, "department") {
-    department := new(Department)
-    db.FindRef(&u.Department).One(department)
-    data["department"] = gin.H{
-      "id":   department.Id,
-      "name": department.Name,
+  if util.Exists(refs, "department") {
+    if d, ok := refFunc(u.Department); ok {
+      data["department"] = d
     }
   } else {
     data["department"] = gin.H{

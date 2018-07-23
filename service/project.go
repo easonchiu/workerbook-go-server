@@ -182,7 +182,7 @@ func GetProjectInfoById(id string, refs ... string) (gin.H, error) {
     cache.ProjectSet(id, data)
   }
 
-  return data.GetMap(mg, refs...), nil
+  return data.GetMap(FindRef(mg), refs...), nil
 }
 
 // 根据id删除项目
@@ -274,7 +274,7 @@ func GetProjectsList(skip int, limit int, query bson.M, refs ... string) (gin.H,
   var list []gin.H
 
   for _, r := range *data {
-    list = append(list, r.GetMap(mg, refs...))
+    list = append(list, r.GetMap(FindRef(mg), refs...))
   }
 
   if skip == 0 && limit == 0 {

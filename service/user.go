@@ -298,7 +298,7 @@ func GetUserInfoById(id string, refs ... string) (gin.H, error) {
     cache.UserSet(id, data)
   }
 
-  return data.GetMap(mg, refs...), nil
+  return data.GetMap(FindRef(mg), refs...), nil
 }
 
 // 用户登录并返回用户id
@@ -396,7 +396,7 @@ func GetUsersList(skip int, limit int, query bson.M, refs ... string) (gin.H, er
   var list []gin.H
 
   for _, r := range *data {
-    list = append(list, r.GetMap(mg, refs...))
+    list = append(list, r.GetMap(FindRef(mg), refs...))
   }
 
   if skip == 0 && limit == 0 {

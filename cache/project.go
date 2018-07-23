@@ -11,7 +11,7 @@ import (
   "workerbook/model"
 )
 
-// redis清用户信息
+// redis清项目信息
 func ProjectDel(id string) error {
   rd := db.RedisPool.Get()
   defer rd.Close()
@@ -22,7 +22,7 @@ func ProjectDel(id string) error {
   return err
 }
 
-// redis存用户信息
+// redis存项目信息
 func ProjectSet(id string, project *model.Project) {
   rd := db.RedisPool.Get()
   defer rd.Close()
@@ -35,7 +35,7 @@ func ProjectSet(id string, project *model.Project) {
   rd.Do("SET", n, bytes)
 }
 
-// redis获取用户信息
+// redis获取项目信息
 func ProjectGet(id string, project *model.Project) bool {
   rd := db.RedisPool.Get()
   defer rd.Close()

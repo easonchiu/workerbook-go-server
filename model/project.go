@@ -2,10 +2,11 @@ package model
 
 import (
   "github.com/gin-gonic/gin"
-  "github.com/influxdata/influxdb/pkg/slices"
   "gopkg.in/mgo.v2"
-  `gopkg.in/mgo.v2/bson`
-  `time`
+  "gopkg.in/mgo.v2/bson"
+  "time"
+  "workerbook/conf"
+  "workerbook/util"
 )
 
 // collection name
@@ -47,7 +48,7 @@ type Project struct {
   Exist bool `bson:"exist"`
 }
 
-func (p Project) GetMap(db *mgo.Database, refs ... string) gin.H {
+func (p Project) GetMap(refFunc func(mgo.DBRef) (gin.H, bool), refs ... string) gin.H {
   data := gin.H{
     "id":          p.Id,
     "name":        p.Name,
@@ -61,12 +62,10 @@ func (p Project) GetMap(db *mgo.Database, refs ... string) gin.H {
   // departments refs
   var departments []gin.H
 
-  if slices.Exists(refs, "departments") {
+  if util.Exists(refs, "departments") {
     for _, item := range p.Departments {
-      department := new(Department)
-      err := db.FindRef(&item).One(department)
-      if err == nil {
-        departments = append(departments, department.GetMap(db))
+      if d, ok := refFunc(item); ok {
+        departments = append(departments, d)
       }
     }
   } else {
@@ -84,12 +83,23 @@ func (p Project) GetMap(db *mgo.Database, refs ... string) gin.H {
   // missions refs
   var missions []gin.H
 
-  if slices.Exists(refs, "missions") {
+  if util.Exists(refs, "missions") {
     for _, item := range p.Missions {
-      mission := new(Mission)
-      err := db.FindRef(&item).One(mission)
-      if err == nil {
-        missions = append(missions, mission.GetMap(db, "user"))
+      if d, ok := refFunc(item); ok {
+        if util.Exists(refs, "user") {
+          if u, ok := d["user"]; ok {
+            uid := u.(gin.H)["id"]
+            ref := mgo.DBRef{
+              Id:         uid.(bson.ObjectId),
+              Database:   conf.MgoDBName,
+              Collection: UserCollection,
+            }
+            if u, ok := refFunc(ref); ok {
+              d["user"] = u
+            }
+          }
+        }
+        missions = append(missions, d)
       }
     }
   } else {

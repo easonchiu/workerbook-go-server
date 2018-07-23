@@ -6,6 +6,7 @@ import (
   "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
   "time"
+  "workerbook/cache"
   "workerbook/conf"
   "workerbook/db"
   "workerbook/errgo"
@@ -37,6 +38,22 @@ func CreateMission(data model.Mission, projectId string, userId string) error {
     errgo.ClearErrorStack()
     return err
   }
+
+  // 查找项目
+  project, err := GetProjectInfoById(projectId)
+
+  if err != nil {
+    return err
+  }
+
+  // 任务结束时间不能晚于项目结束时间
+  errgo.ErrorIfTimeLaterThen(data.Deadline, project["deadline"].(time.Time), errgo.ErrMissionDeadlineTooLate)
+
+  if err = errgo.PopError(); err != nil {
+    errgo.ClearErrorStack()
+    return err
+  }
+
 
   data.Id = bson.NewObjectId()
   data.ProjectId = bson.ObjectIdHex(projectId)
@@ -118,8 +135,10 @@ func UpdateMission(id string, data bson.M) error {
 
   // 查找项目
   if projectId, ok := data["projectId"]; ok {
+    if !bson.IsObjectIdHex(projectId.(string)) {
+      return errors.New(errgo.ErrProjectIdError)
+    }
     var project = new(model.Project)
-
     err = mg.C(model.ProjectCollection).Find(bson.M{
       "_id":   bson.ObjectIdHex(projectId.(string)),
       "exist": true,
@@ -156,11 +175,20 @@ func UpdateMission(id string, data bson.M) error {
     return err
   }
 
-  // update
+  // set project id
   if projectId, ok := data["projectId"]; ok {
     data["projectId"] = bson.ObjectIdHex(projectId.(string))
   }
 
+  // 先要清缓存，清成功后才可以更新数据
+  err = cache.MissionDel(id)
+
+  if err != nil {
+    return errors.New(errgo.ErrUpdateMissionFailed)
+  }
+
+  // update
+  data["exist"] = true
   err = mg.C(model.MissionCollection).UpdateId(bson.ObjectIdHex(id), bson.M{
     "$set": data,
   })
@@ -192,7 +220,11 @@ func GetMissionInfoById(id string, refs ... string) (gin.H, error) {
 
   data := new(model.Mission)
 
-  err = mg.C(model.MissionCollection).FindId(bson.ObjectIdHex(id)).One(data)
+  // 先从缓存取数据，如果缓存没取到，从数据库取
+  rok := cache.MissionGet(id, data)
+  if !rok {
+    err = mg.C(model.MissionCollection).FindId(bson.ObjectIdHex(id)).One(data)
+  }
 
   if err != nil {
     if err == mgo.ErrNotFound {
@@ -201,5 +233,5 @@ func GetMissionInfoById(id string, refs ... string) (gin.H, error) {
     return nil, err
   }
 
-  return data.GetMap(mg, refs...), nil
+  return data.GetMap(FindRef(mg), refs...), nil
 }
