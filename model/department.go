@@ -2,9 +2,9 @@ package model
 
 import (
   "github.com/gin-gonic/gin"
-  "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
   "time"
+  "workerbook/util"
 )
 
 // collection name
@@ -28,12 +28,45 @@ type Department struct {
   Exist bool `bson:"exist"`
 }
 
-func (d Department) GetMap(refFunc func(mgo.DBRef) (gin.H, bool), refs ... string) gin.H {
+func (d Department) GetMap(forgets ... string) gin.H {
   data := gin.H{
     "id":         d.Id,
     "name":       d.Name,
     "userCount":  d.UserCount,
     "createTime": d.CreateTime,
   }
+
+  util.Forget(data, forgets...)
+
+  return data
+}
+
+// 部门列表结构
+type DepartmentList struct {
+  List  *[]Department
+  Count int
+  Limit int
+  Skip  int
+}
+
+// 列表的迭代器
+func (d DepartmentList) Each(fn func(Department) gin.H) gin.H {
+  data := gin.H{}
+
+  if d.Limit != 0 {
+    data = gin.H{
+      "count": d.Count,
+      "limit": d.Limit,
+      "skip":  d.Skip,
+    }
+  }
+
+  var list []gin.H
+  for _, item := range *d.List {
+    list = append(list, fn(item))
+  }
+
+  data["list"] = list
+
   return data
 }

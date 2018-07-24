@@ -90,7 +90,9 @@ func C_GetDepartmentsList(c *gin.Context) {
 
   // return
   ctx.Success(gin.H{
-    "data": data,
+    "data": data.Each(func(item model.Department) gin.H {
+      return item.GetMap()
+    }),
   })
 }
 
@@ -108,7 +110,7 @@ func C_GetDepartmentOne(c *gin.Context) {
   id, _ := ctx.GetParam("id")
 
   // query
-  departmentInfo, err := service.GetDepartmentInfoById(ctx, id)
+  department, err := service.GetDepartmentInfoById(ctx, id)
 
   // check
   if err != nil {
@@ -118,7 +120,7 @@ func C_GetDepartmentOne(c *gin.Context) {
 
   // return
   ctx.Success(gin.H{
-    "data": departmentInfo,
+    "data": department.GetMap(),
   })
 }
 

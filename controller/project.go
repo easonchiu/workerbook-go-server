@@ -4,6 +4,7 @@ import (
   "github.com/gin-gonic/gin"
   "gopkg.in/mgo.v2/bson"
   "workerbook/context"
+  "workerbook/model"
   "workerbook/service"
 )
 
@@ -23,7 +24,7 @@ func GetProjectsList(c *gin.Context) {
   // query
   data, err := service.GetProjectsList(ctx, 0, 0, bson.M{
     "departments.$id": bson.ObjectIdHex(departmentId.(string)),
-  }, "missions", "departments", "user")
+  })
 
   // check
   if err != nil {
@@ -33,6 +34,39 @@ func GetProjectsList(c *gin.Context) {
 
   // return
   ctx.Success(gin.H{
-    "data": data,
+    "data": data.Each(func(item model.Project) gin.H {
+      each := item.GetMap()
+
+      // departments
+      var departments []gin.H
+
+      for _, ref := range item.Departments {
+        department, err := service.FindDepartmentRef(ctx, &ref)
+        if err == nil {
+          departments = append(departments, department.GetMap())
+        }
+      }
+
+      each["departments"] = departments
+
+      // missions
+      var missions []gin.H
+
+      for _, ref := range item.Missions {
+        mission, err := service.FindMissionRef(ctx, &ref)
+        if err == nil {
+          m := mission.GetMap()
+          user, err := service.FindUserRef(ctx, &mission.User)
+          if err == nil {
+            m["user"] = user.GetMap("username", "department")
+            missions = append(missions, m)
+          }
+        }
+      }
+
+      each["missions"] = missions
+
+      return each
+    }),
   })
 }

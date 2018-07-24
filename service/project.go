@@ -2,7 +2,6 @@ package service
 
 import (
   "errors"
-  "github.com/gin-gonic/gin"
   "github.com/tidwall/gjson"
   "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
@@ -108,7 +107,7 @@ func UpdateProject(ctx *context.Context, id string, data bson.M) error {
   }
 
   // 先要清缓存，清成功后才可以更新数据
-  err := cache.ProjectDel(id)
+  err := cache.ProjectDel(ctx.Redis, id)
 
   if err != nil {
     return errors.New(errgo.ErrUpdateProjectFailed)
@@ -128,7 +127,7 @@ func UpdateProject(ctx *context.Context, id string, data bson.M) error {
 }
 
 // 根据id查找项目
-func GetProjectInfoById(ctx *context.Context, id string, refs ... string) (gin.H, error) {
+func GetProjectInfoById(ctx *context.Context, id string) (*model.Project, error) {
 
   // check
   errgo.ErrorIfStringNotObjectId(id, errgo.ErrProjectIdError)
@@ -141,7 +140,7 @@ func GetProjectInfoById(ctx *context.Context, id string, refs ... string) (gin.H
   data := new(model.Project)
 
   // 先从缓存取数据，如果缓存没取到，从数据库取
-  rok := cache.ProjectGet(id, data)
+  rok := cache.ProjectGet(ctx.Redis, id, data)
 
   if !rok {
     err := ctx.MgoDB.C(model.ProjectCollection).Find(bson.M{
@@ -157,10 +156,10 @@ func GetProjectInfoById(ctx *context.Context, id string, refs ... string) (gin.H
     }
 
     // 存到缓存
-    cache.ProjectSet(id, data)
+    cache.ProjectSet(ctx.Redis, data)
   }
 
-  return data.GetMap(FindRef(ctx.MgoDB), refs...), nil
+  return data, nil
 }
 
 // 根据id删除项目
@@ -175,7 +174,7 @@ func DelProjectById(ctx *context.Context, id string) error {
   }
 
   // 清除缓存，缓存清成功才可以清数据，不然会有脏数据
-  err := cache.ProjectDel(id)
+  err := cache.ProjectDel(ctx.Redis, id)
 
   if err != nil {
     return errors.New(errgo.ErrDeleteProjectFailed)
@@ -198,8 +197,8 @@ func DelProjectById(ctx *context.Context, id string) error {
   return nil
 }
 
-// 查找项目列表(当skip和limit都为0时，查找全部)
-func GetProjectsList(ctx *context.Context, skip int, limit int, query bson.M, refs ... string) (gin.H, error) {
+// 查找项目列表(当limit都为0时，查找全部)
+func GetProjectsList(ctx *context.Context, skip int, limit int, query bson.M) (*model.ProjectList, error) {
 
   // check
   if skip != 0 {
@@ -232,15 +231,9 @@ func GetProjectsList(ctx *context.Context, skip int, limit int, query bson.M, re
   }
 
   // result
-  var list []gin.H
-
-  for _, r := range *data {
-    list = append(list, r.GetMap(FindRef(ctx.MgoDB), refs...))
-  }
-
   if skip == 0 && limit == 0 {
-    return gin.H{
-      "list": list,
+    return &model.ProjectList{
+      List: data,
     }, nil
   }
 
@@ -251,10 +244,10 @@ func GetProjectsList(ctx *context.Context, skip int, limit int, query bson.M, re
     return nil, errors.New(errgo.ErrProjectNotFound)
   }
 
-  return gin.H{
-    "list":  list,
-    "count": count,
-    "skip":  skip,
-    "limit": limit,
+  return &model.ProjectList{
+    List:  data,
+    Count: count,
+    Skip:  skip,
+    Limit: limit,
   }, nil
 }

@@ -2,7 +2,6 @@ package service
 
 import (
   "errors"
-  "github.com/gin-gonic/gin"
   "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
   "time"
@@ -40,7 +39,7 @@ func CreateMission(ctx *context.Context, data model.Mission, projectId string, u
   }
 
   // 任务结束时间不能晚于项目结束时间
-  errgo.ErrorIfTimeLaterThen(data.Deadline, project["deadline"].(time.Time), errgo.ErrMissionDeadlineTooLate)
+  errgo.ErrorIfTimeLaterThen(data.Deadline, project.Deadline, errgo.ErrMissionDeadlineTooLate)
 
   if err = errgo.PopError(); err != nil {
     errgo.ClearErrorStack()
@@ -167,7 +166,7 @@ func UpdateMission(ctx *context.Context, id string, data bson.M) error {
   }
 
   // 先要清缓存，清成功后才可以更新数据
-  err := cache.MissionDel(id)
+  err := cache.MissionDel(ctx.Redis, id)
 
   if err != nil {
     return errors.New(errgo.ErrUpdateMissionFailed)
@@ -187,7 +186,7 @@ func UpdateMission(ctx *context.Context, id string, data bson.M) error {
 }
 
 // 根据id查找任务
-func GetMissionInfoById(ctx *context.Context, id string, refs ... string) (gin.H, error) {
+func GetMissionInfoById(ctx *context.Context, id string) (*model.Mission, error) {
 
   // check
   errgo.ErrorIfStringNotObjectId(id, errgo.ErrMissionIdError)
@@ -200,7 +199,7 @@ func GetMissionInfoById(ctx *context.Context, id string, refs ... string) (gin.H
   data := new(model.Mission)
 
   // 先从缓存取数据，如果缓存没取到，从数据库取
-  rok := cache.MissionGet(id, data)
+  rok := cache.MissionGet(ctx.Redis, id, data)
   if !rok {
     err := ctx.MgoDB.C(model.MissionCollection).FindId(bson.ObjectIdHex(id)).One(data)
 
@@ -212,8 +211,8 @@ func GetMissionInfoById(ctx *context.Context, id string, refs ... string) (gin.H
     }
 
     // 存到缓存
-    cache.MissionSet(id, data)
+    cache.MissionSet(ctx.Redis, data)
   }
 
-  return data.GetMap(FindRef(ctx.MgoDB), refs...), nil
+  return data, nil
 }

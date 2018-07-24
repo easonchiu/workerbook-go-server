@@ -41,7 +41,7 @@ type Mission struct {
   Exist bool `bson:"exist"`
 }
 
-func (m Mission) GetMap(refFunc func(mgo.DBRef) (gin.H, bool), refs ... string) gin.H {
+func (m Mission) GetMap(forgets ... string) gin.H {
   data := gin.H{
     "id":         m.Id,
     "name":       m.Name,
@@ -50,17 +50,42 @@ func (m Mission) GetMap(refFunc func(mgo.DBRef) (gin.H, bool), refs ... string) 
     "projectId":  m.ProjectId,
     "status":     m.Status,
     "progress":   m.Progress,
+    "user": gin.H{
+      "id": m.User.Id,
+    },
   }
 
-  if util.Exists(refs, "user") {
-    if d, ok := refFunc(m.User); ok {
-      data["user"] = d
-    }
-  } else {
-    data["user"] = gin.H{
-      "id": m.User.Id,
+  util.Forget(data, forgets...)
+
+  return data
+}
+
+// 任务列表结构
+type MissionList struct {
+  List  *[]Mission
+  Count int
+  Limit int
+  Skip  int
+}
+
+// 列表的迭代器
+func (d MissionList) Each(fn func(Mission) gin.H) gin.H {
+  data := gin.H{}
+
+  if d.Limit != 0 {
+    data = gin.H{
+      "count": d.Count,
+      "limit": d.Limit,
+      "skip":  d.Skip,
     }
   }
+
+  var list []gin.H
+  for _, item := range *d.List {
+    list = append(list, fn(item))
+  }
+
+  data["list"] = list
 
   return data
 }

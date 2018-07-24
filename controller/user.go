@@ -1,13 +1,13 @@
 package controller
 
 import (
+  "fmt"
   "github.com/gin-gonic/gin"
   "gopkg.in/mgo.v2/bson"
-  "workerbook/conf"
   "workerbook/context"
   "workerbook/errgo"
+  "workerbook/model"
   "workerbook/service"
-  "workerbook/util"
 )
 
 // 用户登录
@@ -25,7 +25,7 @@ func UserLogin(c *gin.Context) {
   password, _ := ctx.GetRaw("password")
 
   // query
-  data, err := service.UserLogin(ctx, username, password)
+  token, err := service.UserLogin(ctx, username, password)
 
   // check
   if err != nil {
@@ -34,7 +34,9 @@ func UserLogin(c *gin.Context) {
   }
 
   // return
-  ctx.Success(data)
+  ctx.Success(gin.H{
+    "data": token,
+  })
 }
 
 // 获取我的信息
@@ -51,7 +53,7 @@ func GetProfile(c *gin.Context) {
   id, _ := ctx.Get("UID")
 
   // query
-  userInfo, err := service.GetUserInfoById(ctx, id, "department")
+  user, err := service.GetUserInfoById(ctx, id)
 
   // check
   if err != nil {
@@ -59,11 +61,9 @@ func GetProfile(c *gin.Context) {
     return
   }
 
-  util.Forget(userInfo, "username")
-
   // return
   ctx.Success(gin.H{
-    "data": userInfo,
+    "data": user.GetMap("department", "username"),
   })
 }
 
@@ -78,7 +78,7 @@ func GetSubUsersList(c *gin.Context) {
   }
 
   // get
-  role, _ := ctx.GetInt("ROLE")
+  // role, _ := ctx.GetInt("ROLE")
   departmentId, _ := ctx.Get("DEPARTMENT_ID")
   projectId, _ := ctx.GetQuery("projectId")
 
@@ -88,7 +88,8 @@ func GetSubUsersList(c *gin.Context) {
     return
   }
 
-  if role == conf.RoleAdmin || role == conf.RolePM {
+  if false {
+  // if role == conf.RoleAdmin || role == conf.RolePM {
     project, err := service.GetProjectInfoById(ctx, projectId)
 
     if err != nil {
@@ -96,29 +97,32 @@ func GetSubUsersList(c *gin.Context) {
       return
     }
 
-    var projectIdList []bson.ObjectId
+    fmt.Println(project)
 
-    for _, item := range project["departments"].([]gin.H) {
-      if id, ok := item["id"]; ok {
-        projectIdList = append(projectIdList, id.(bson.ObjectId))
-      }
-    }
-
-    users, err := service.GetUsersList(ctx, 0, 0, bson.M{
-      "department.$id": bson.M{
-        "$in": projectIdList,
-      },
-    })
+    // var projectIdList []bson.ObjectId
+    //
+    // for _, item := range project.Departments {
+    //   if id, ok := item["id"]; ok {
+    //     projectIdList = append(projectIdList, id.(bson.ObjectId))
+    //   }
+    // }
+    //
+    // users, err := service.GetUsersList(ctx, 0, 0, bson.M{
+    //   "department.$id": bson.M{
+    //     "$in": projectIdList,
+    //   },
+    // })
 
     if err != nil {
       ctx.Error(err)
     } else {
       ctx.Success(gin.H{
-        "data": users,
+        "data": nil,
       })
     }
     return
-  } else if role == conf.RoleLeader {
+  // } else if role == conf.RoleLeader {
+  } else if true {
     users, err := service.GetUsersList(ctx, 0, 0, bson.M{
       "department.$id": bson.ObjectIdHex(departmentId),
     })
@@ -127,7 +131,9 @@ func GetSubUsersList(c *gin.Context) {
       ctx.Error(err)
     } else {
       ctx.Success(gin.H{
-        "data": users,
+        "data": users.Each(func(item model.User) gin.H {
+          return item.GetMap("username")
+        }),
       })
     }
     return

@@ -2,25 +2,18 @@ package util
 
 import (
   "github.com/gin-gonic/gin"
-  "strings"
 )
 
-func Forget(m gin.H, key string) {
-  key = strings.TrimSpace(key)
-  keys := strings.Split(key, " ")
+func Forget(m gin.H, keys ... string) {
   for _, v := range keys {
-    if v != "" {
+    if _, ok := m[v]; ok {
       delete(m, v)
     }
   }
 }
 
-func ForgetArr(arr interface{}, key string) {
-  switch arr.(type) {
-  case []gin.H:
-    for _, item := range arr.([]gin.H) {
-      Forget(item, key)
-    }
-  default:
+func ForgetArr(arr []gin.H, keys ... string) {
+  for _, item := range arr {
+    Forget(item, keys...)
   }
 }

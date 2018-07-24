@@ -124,7 +124,7 @@ func C_GetUsersList(c *gin.Context) {
     query["department.$id"] = bson.ObjectIdHex(departmentId)
   }
 
-  data, err := service.GetUsersList(ctx, skip, limit, query, "department")
+  data, err := service.GetUsersList(ctx, skip, limit, query)
 
   // check
   if err != nil {
@@ -134,7 +134,9 @@ func C_GetUsersList(c *gin.Context) {
 
   // return
   ctx.Success(gin.H{
-    "data": data,
+    "data": data.Each(func(item model.User) gin.H {
+      return item.GetMap("department", "username")
+    }),
   })
 }
 
@@ -152,7 +154,7 @@ func C_GetUserOne(c *gin.Context) {
   id, _ := ctx.GetParam("id")
 
   // query
-  userInfo, err := service.GetUserInfoById(ctx, id, "department")
+  user, err := service.GetUserInfoById(ctx, id)
 
   // check
   if err != nil {
@@ -162,7 +164,7 @@ func C_GetUserOne(c *gin.Context) {
 
   // return
   ctx.Success(gin.H{
-    "data": userInfo,
+    "data": user.GetMap("department", "username"),
   })
 }
 

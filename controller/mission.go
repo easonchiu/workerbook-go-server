@@ -6,7 +6,6 @@ import (
   "workerbook/context"
   "workerbook/model"
   "workerbook/service"
-  "workerbook/util"
 )
 
 // 获取单个任务
@@ -23,7 +22,7 @@ func GetMissionOne(c *gin.Context) {
   id, _ := ctx.GetParam("id")
 
   // query
-  missionInfo, err := service.GetMissionInfoById(ctx, id, "user")
+  mission, err := service.GetMissionInfoById(ctx, id)
 
   // check
   if err != nil {
@@ -32,25 +31,24 @@ func GetMissionOne(c *gin.Context) {
   }
 
   // query project
-  if missionInfo["projectId"] != "" {
-    projectId := missionInfo["projectId"].(bson.ObjectId)
-    projectInfo, err := service.GetProjectInfoById(ctx, projectId.Hex())
+  project, err := service.GetProjectInfoById(ctx, mission.ProjectId.Hex())
 
-    if err != nil {
-      ctx.Error(err)
-      return
-    }
-
-    util.Forget(projectInfo, "departments missions description")
-
-    missionInfo["project"] = projectInfo
+  // check
+  if err != nil {
+    ctx.Error(err)
+    return
   }
 
-  util.Forget(missionInfo, "projectId")
+  // query user
+  user, err := service.FindUserRef(ctx, &mission.User)
 
   // return
+  data := mission.GetMap()
+  data["project"] = project.GetMap("departments", "missions")
+  data["user"] = user.GetMap("username", "department")
+
   ctx.Success(gin.H{
-    "data": missionInfo,
+    "data": data,
   })
 }
 

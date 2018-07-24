@@ -22,7 +22,7 @@ func C_GetProjectOne(c *gin.Context) {
   id, _ := ctx.GetParam("id")
 
   // query
-  projectInfo, err := service.GetProjectInfoById(ctx, id)
+  project, err := service.GetProjectInfoById(ctx, id)
 
   // check
   if err != nil {
@@ -32,7 +32,7 @@ func C_GetProjectOne(c *gin.Context) {
 
   // return
   ctx.Success(gin.H{
-    "data": projectInfo,
+    "data": project.GetMap(),
   })
 }
 
@@ -87,7 +87,9 @@ func C_GetProjectsList(c *gin.Context) {
 
   // return
   ctx.Success(gin.H{
-    "data": data,
+    "data": data.Each(func(item model.Project) gin.H {
+      return item.GetMap()
+    }),
   })
 }
 

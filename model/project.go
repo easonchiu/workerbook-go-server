@@ -5,7 +5,6 @@ import (
   "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
   "time"
-  "workerbook/conf"
   "workerbook/util"
 )
 
@@ -48,7 +47,7 @@ type Project struct {
   Exist bool `bson:"exist"`
 }
 
-func (p Project) GetMap(refFunc func(mgo.DBRef) (gin.H, bool), refs ... string) gin.H {
+func (p Project) GetMap(forgets ... string) gin.H {
   data := gin.H{
     "id":          p.Id,
     "name":        p.Name,
@@ -59,60 +58,63 @@ func (p Project) GetMap(refFunc func(mgo.DBRef) (gin.H, bool), refs ... string) 
     "weight":      p.Weight,
   }
 
-  // departments refs
+  // departments
   var departments []gin.H
 
-  if util.Exists(refs, "departments") {
-    for _, item := range p.Departments {
-      if d, ok := refFunc(item); ok {
-        departments = append(departments, d)
-      }
-    }
-  } else {
-    for _, item := range p.Departments {
-      if item.Id != "" {
-        departments = append(departments, gin.H{
-          "id": item.Id.(bson.ObjectId),
-        })
-      }
+  for _, item := range p.Departments {
+    if item.Id != "" {
+      departments = append(departments, gin.H{
+        "id": item.Id.(bson.ObjectId),
+      })
     }
   }
 
   data["departments"] = departments
 
-  // missions refs
+  // missions
   var missions []gin.H
 
-  if util.Exists(refs, "missions") {
-    for _, item := range p.Missions {
-      if d, ok := refFunc(item); ok {
-        if util.Exists(refs, "user") {
-          if u, ok := d["user"]; ok {
-            uid := u.(gin.H)["id"]
-            ref := mgo.DBRef{
-              Id:         uid.(bson.ObjectId),
-              Database:   conf.MgoDBName,
-              Collection: UserCollection,
-            }
-            if u, ok := refFunc(ref); ok {
-              d["user"] = u
-            }
-          }
-        }
-        missions = append(missions, d)
-      }
-    }
-  } else {
-    for _, item := range p.Missions {
-      if item.Id != "" {
-        missions = append(missions, gin.H{
-          "id": item.Id.(bson.ObjectId),
-        })
-      }
+  for _, item := range p.Missions {
+    if item.Id != "" {
+      missions = append(missions, gin.H{
+        "id": item.Id.(bson.ObjectId),
+      })
     }
   }
 
   data["missions"] = missions
+
+  util.Forget(data, forgets...)
+
+  return data
+}
+
+// 项目列表结构
+type ProjectList struct {
+  List  *[]Project
+  Count int
+  Limit int
+  Skip  int
+}
+
+// 列表的迭代器
+func (d ProjectList) Each(fn func(Project) gin.H) gin.H {
+  data := gin.H{}
+
+  if d.Limit != 0 {
+    data = gin.H{
+      "count": d.Count,
+      "limit": d.Limit,
+      "skip":  d.Skip,
+    }
+  }
+
+  var list []gin.H
+  for _, item := range *d.List {
+    list = append(list, fn(item))
+  }
+
+  data["list"] = list
 
   return data
 }

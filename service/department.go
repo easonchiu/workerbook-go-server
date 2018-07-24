@@ -2,7 +2,6 @@ package service
 
 import (
   "errors"
-  "github.com/gin-gonic/gin"
   "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
   "time"
@@ -49,7 +48,7 @@ func CreateDepartment(ctx *context.Context, data model.Department) error {
 }
 
 // 根据id查找部门信息
-func GetDepartmentInfoById(ctx *context.Context, id string) (gin.H, error) {
+func GetDepartmentInfoById(ctx *context.Context, id string) (*model.Department, error) {
 
   // check
   errgo.ErrorIfStringNotObjectId(id, errgo.ErrDepartmentIdError)
@@ -62,7 +61,7 @@ func GetDepartmentInfoById(ctx *context.Context, id string) (gin.H, error) {
   data := new(model.Department)
 
   // 先从缓存查数据，找不到的话再从数据库找
-  rok := cache.DepartmentGet(id, data)
+  rok := cache.DepartmentGet(ctx.Redis, id, data)
   if !rok {
     err := ctx.MgoDB.C(model.DepartmentCollection).FindId(bson.ObjectIdHex(id)).One(data)
 
@@ -74,14 +73,14 @@ func GetDepartmentInfoById(ctx *context.Context, id string) (gin.H, error) {
     }
 
     // 存到缓存
-    cache.DepartmentSet(id, data)
+    cache.DepartmentSet(ctx.Redis, data)
   }
 
-  return data.GetMap(FindRef(ctx.MgoDB)), nil
+  return data, nil
 }
 
-// 查找部门列表(当skip和limit都为0时，查找全部)
-func GetDepartmentsList(ctx *context.Context, skip int, limit int, query bson.M) (gin.H, error) {
+// 查找部门列表(当limit都为0时，查找全部)
+func GetDepartmentsList(ctx *context.Context, skip int, limit int, query bson.M) (*model.DepartmentList, error) {
 
   // check
   if limit != 0 {
@@ -114,15 +113,10 @@ func GetDepartmentsList(ctx *context.Context, skip int, limit int, query bson.M)
   }
 
   // result
-  var list []gin.H
-
-  for _, r := range *data {
-    list = append(list, r.GetMap(FindRef(ctx.MgoDB)))
-  }
 
   if skip == 0 && limit == 0 {
-    return gin.H{
-      "list": list,
+    return &model.DepartmentList{
+      List: data,
     }, nil
   }
 
@@ -133,11 +127,11 @@ func GetDepartmentsList(ctx *context.Context, skip int, limit int, query bson.M)
     return nil, errors.New(errgo.ErrDepartmentNotFound)
   }
 
-  return gin.H{
-    "list":  list,
-    "count": count,
-    "skip":  skip,
-    "limit": limit,
+  return &model.DepartmentList{
+    List:  data,
+    Count: count,
+    Skip:  skip,
+    Limit: limit,
   }, nil
 }
 
@@ -162,7 +156,7 @@ func UpdateDepartmentsUserCount(ctx *context.Context) error {
     }
 
     // 清空缓存并更新数据
-    if err := cache.DepartmentDel(department.Id.Hex()); err != nil {
+    if err := cache.DepartmentDel(ctx.Redis, department.Id.Hex()); err != nil {
       ctx.MgoDB.C(model.DepartmentCollection).UpdateId(department.Id, bson.M{
         "$set": bson.M{
           "userCount": count,
@@ -205,7 +199,7 @@ func UpdateDepartment(ctx *context.Context, id string, data bson.M) error {
   }
 
   // 更新前必须成功清空缓存
-  err := cache.DepartmentDel(id)
+  err := cache.DepartmentDel(ctx.Redis, id)
 
   if err != nil {
     return errors.New(errgo.ErrUpdateDepartmentFailed)
@@ -245,7 +239,7 @@ func DelDepartmentById(ctx *context.Context, id string) error {
   }
 
   // 清除缓存，缓存清成功才可以清数据，不然会有脏数据
-  err = cache.DepartmentDel(id)
+  err = cache.DepartmentDel(ctx.Redis, id)
 
   if err != nil {
     return errors.New(errgo.ErrDeleteDepartmentFailed)

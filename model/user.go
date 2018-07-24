@@ -50,27 +50,23 @@ type User struct {
   Exist bool `bson:"exist"`
 }
 
-func (u User) GetMap(refFunc func(mgo.DBRef) (gin.H, bool), refs ... string) gin.H {
+func (u User) GetMap(forgets ... string) gin.H {
   data := gin.H{
-    "id":         u.Id,
-    "nickname":   u.NickName,
-    "email":      u.Email,
-    "role":       u.Role,
-    "title":      u.Title,
+    "id":       u.Id,
+    "nickname": u.NickName,
+    "email":    u.Email,
+    "mobile":   u.Mobile,
+    "role":     u.Role,
+    "title":    u.Title,
+    "department": gin.H{
+      "id": u.Department.Id,
+    },
     "createTime": u.CreateTime,
     "username":   u.UserName,
     "status":     u.Status,
   }
 
-  if util.Exists(refs, "department") {
-    if d, ok := refFunc(u.Department); ok {
-      data["department"] = d
-    }
-  } else {
-    data["department"] = gin.H{
-      "id": u.Department.Id,
-    }
-  }
+  util.Forget(data, forgets...)
 
   return data
 }
@@ -88,3 +84,33 @@ func (u User) GetMap(refFunc func(mgo.DBRef) (gin.H, bool), refs ... string) gin
 重置密码                   x        x           x        x           √
 
 */
+
+// 用户列表结构
+type UserList struct {
+  List  *[]User
+  Count int
+  Limit int
+  Skip  int
+}
+
+// 列表的迭代器
+func (d UserList) Each(fn func(User) gin.H) gin.H {
+  data := gin.H{}
+
+  if d.Limit != 0 {
+    data = gin.H{
+      "count": d.Count,
+      "limit": d.Limit,
+      "skip":  d.Skip,
+    }
+  }
+
+  var list []gin.H
+  for _, item := range *d.List {
+    list = append(list, fn(item))
+  }
+
+  data["list"] = list
+
+  return data
+}

@@ -4,8 +4,8 @@ import (
   "github.com/gin-gonic/gin"
   "gopkg.in/mgo.v2/bson"
   "workerbook/context"
+  "workerbook/model"
   "workerbook/service"
-  "workerbook/util"
 )
 
 func GetDepartmentsList(c *gin.Context) {
@@ -25,7 +25,7 @@ func GetDepartmentsList(c *gin.Context) {
   data, err := service.GetDepartmentsList(ctx, skip, limit, bson.M{})
 
   // 过滤
-  util.ForgetArr(data["list"], "createTime")
+  // util.ForgetArr(data["list"], "createTime")
 
   // check
   if err != nil {
@@ -35,6 +35,8 @@ func GetDepartmentsList(c *gin.Context) {
 
   // return
   ctx.Success(gin.H{
-    "data": data,
+    "data": data.Each(func(item model.Department) gin.H {
+      return item.GetMap()
+    }),
   })
 }

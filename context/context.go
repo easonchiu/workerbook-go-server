@@ -29,7 +29,14 @@ func CreateCtx(c *gin.Context) (*Context, error) {
   if err != nil {
     return nil, err
   }
+  if gin.Mode() == gin.DebugMode {
+    fmt.Println("[MGO] √ Clone mongodb sission  |", c.Request.Method, "|" , c.Request.URL)
+  }
   rds := db.RedisPool.Get()
+  if gin.Mode() == gin.DebugMode {
+    fmt.Println("[RDS] √ Get redis connection   |", c.Request.Method, "|" , c.Request.URL)
+    fmt.Println()
+  }
   return &Context{
     c,
     bytes,
@@ -51,7 +58,14 @@ func CreateBaseCtx(c *gin.Context) *Context {
 // 关闭数据库连接
 func (c *Context) Close() {
   c.MgoDBCloser()
+  if gin.Mode() == gin.DebugMode {
+    fmt.Println("[MGO] ∆ Close mongodb sission  |", c.Ctx.Request.Method, "|" , c.Ctx.Request.URL)
+  }
   c.Redis.Close()
+  if gin.Mode() == gin.DebugMode {
+    fmt.Println("[RDS] ∆ Close redis connection |", c.Ctx.Request.Method, "|" , c.Ctx.Request.URL)
+    fmt.Println()
+  }
 }
 
 // success handle

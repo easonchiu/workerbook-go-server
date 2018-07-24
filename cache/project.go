@@ -3,45 +3,51 @@ package cache
 import (
   "encoding/json"
   "fmt"
+  "github.com/gin-gonic/gin"
+  "github.com/gomodule/redigo/redis"
   "github.com/tidwall/gjson"
   "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
   "workerbook/conf"
-  "workerbook/db"
   "workerbook/model"
 )
 
 // redis清项目信息
-func ProjectDel(id string) error {
-  rd := db.RedisPool.Get()
-  defer rd.Close()
-
+func ProjectDel(r redis.Conn, id string) error {
   n := fmt.Sprintf("%v:%v:%v", conf.MgoDBName, model.ProjectCollection, id)
-  _, err := rd.Do("DEL", n)
+  _, err := r.Do("DEL", n)
+
+  if gin.Mode() == gin.DebugMode {
+    fmt.Println("[RDS] ∆∆ Del |", n)
+  }
 
   return err
 }
 
 // redis存项目信息
-func ProjectSet(id string, project *model.Project) {
-  rd := db.RedisPool.Get()
-  defer rd.Close()
+func ProjectSet(r redis.Conn, project *model.Project) {
+  if project == nil {
+    return
+  }
 
   // 只存基本信息，不存关联表的信息
-  m := project.GetMap(nil)
+  m := project.GetMap()
   bytes, _ := json.Marshal(m)
 
-  n := fmt.Sprintf("%v:%v:%v", conf.MgoDBName, model.ProjectCollection, id)
-  rd.Do("SET", n, bytes)
+  n := fmt.Sprintf("%v:%v:%v", conf.MgoDBName, model.ProjectCollection, project.Id.Hex())
+  r.Do("SET", n, bytes)
+
+  if gin.Mode() == gin.DebugMode {
+    fmt.Println("[RDS] √√ Set |", n)
+  }
 }
 
 // redis获取项目信息
-func ProjectGet(id string, project *model.Project) bool {
-  rd := db.RedisPool.Get()
-  defer rd.Close()
+func ProjectGet(r redis.Conn, id string, project *model.Project) bool {
+  return false
 
   n := fmt.Sprintf("%v:%v:%v", conf.MgoDBName, model.ProjectCollection, id)
-  data, _ := rd.Do("GET", n)
+  data, _ := r.Do("GET", n)
 
   if data == nil {
     return false
@@ -50,12 +56,18 @@ func ProjectGet(id string, project *model.Project) bool {
   res := gjson.ParseBytes(data.([]byte))
 
   if !res.Exists() {
+    if gin.Mode() == gin.DebugMode {
+      fmt.Println("[RDS] ∆∆ Get |", n)
+    }
     return false
   }
 
   pid := res.Get("id").String()
 
   if !bson.IsObjectIdHex(pid) {
+    if gin.Mode() == gin.DebugMode {
+      fmt.Println("[RDS] ∆∆ Get |", n)
+    }
     return false
   }
 
@@ -66,7 +78,7 @@ func ProjectGet(id string, project *model.Project) bool {
   project.Weight = int(res.Get("weight").Int())
   project.Status = int(res.Get("status").Int())
   project.CreateTime = res.Get("createTime").Time()
-  project.Exist = true
+  project.Exist = res.Get("exist").Bool()
 
   departments := res.Get("departments")
   if departments.IsArray() {
@@ -98,6 +110,10 @@ func ProjectGet(id string, project *model.Project) bool {
         }
       }
     }
+  }
+
+  if gin.Mode() == gin.DebugMode {
+    fmt.Println("[RDS] √√ Get |", n)
   }
 
   return true

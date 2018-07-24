@@ -3,45 +3,51 @@ package cache
 import (
   "encoding/json"
   "fmt"
+  "github.com/gin-gonic/gin"
+  "github.com/gomodule/redigo/redis"
   "github.com/tidwall/gjson"
   "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
   "workerbook/conf"
-  "workerbook/db"
   "workerbook/model"
 )
 
 // redis清任务信息
-func MissionDel(id string) error {
-  rd := db.RedisPool.Get()
-  defer rd.Close()
-
+func MissionDel(r redis.Conn, id string) error {
   n := fmt.Sprintf("%v:%v:%v", conf.MgoDBName, model.MissionCollection, id)
-  _, err := rd.Do("DEL", n)
+  _, err := r.Do("DEL", n)
+
+  if gin.Mode() == gin.DebugMode {
+    fmt.Println("[RDS] ∆∆ Del |", n)
+  }
 
   return err
 }
 
 // redis存任务信息
-func MissionSet(id string, mission *model.Mission) {
-  rd := db.RedisPool.Get()
-  defer rd.Close()
+func MissionSet(r redis.Conn, mission *model.Mission) {
+  if mission == nil {
+    return
+  }
 
   // 只存基本信息，不存关联表的信息
-  m := mission.GetMap(nil)
+  m := mission.GetMap()
   bytes, _ := json.Marshal(m)
 
-  n := fmt.Sprintf("%v:%v:%v", conf.MgoDBName, model.MissionCollection, id)
-  rd.Do("SET", n, bytes)
+  n := fmt.Sprintf("%v:%v:%v", conf.MgoDBName, model.MissionCollection, mission.Id.Hex())
+  r.Do("SET", n, bytes)
+
+  if gin.Mode() == gin.DebugMode {
+    fmt.Println("[RDS] √√ Set |", n)
+  }
 }
 
 // redis获取任务信息
-func MissionGet(id string, mission *model.Mission) bool {
-  rd := db.RedisPool.Get()
-  defer rd.Close()
+func MissionGet(r redis.Conn, id string, mission *model.Mission) bool {
+  return false
 
   n := fmt.Sprintf("%v:%v:%v", conf.MgoDBName, model.MissionCollection, id)
-  data, _ := rd.Do("GET", n)
+  data, _ := r.Do("GET", n)
 
   if data == nil {
     return false
@@ -50,12 +56,18 @@ func MissionGet(id string, mission *model.Mission) bool {
   res := gjson.ParseBytes(data.([]byte))
 
   if !res.Exists() {
+    if gin.Mode() == gin.DebugMode {
+      fmt.Println("[RDS] ∆∆ Get |", n)
+    }
     return false
   }
 
   mid := res.Get("id").String()
 
   if !bson.IsObjectIdHex(mid) {
+    if gin.Mode() == gin.DebugMode {
+      fmt.Println("[RDS] ∆∆ Get |", n)
+    }
     return false
   }
 
@@ -75,13 +87,17 @@ func MissionGet(id string, mission *model.Mission) bool {
   if bson.IsObjectIdHex(userId) {
     mission.User = mgo.DBRef{
       Id:         bson.ObjectIdHex(userId),
-      Collection: model.MissionCollection,
+      Collection: model.UserCollection,
       Database:   conf.MgoDBName,
     }
   }
 
   mission.CreateTime = res.Get("createTime").Time()
-  mission.Exist = true
+  mission.Exist = res.Get("exist").Bool()
+
+  if gin.Mode() == gin.DebugMode {
+    fmt.Println("[RDS] √√ Get |", n)
+  }
 
   return true
 }
