@@ -4,6 +4,7 @@ import (
   "github.com/gin-gonic/gin"
   "gopkg.in/mgo.v2/bson"
   "workerbook/conf"
+  "workerbook/context"
   "workerbook/errgo"
   "workerbook/service"
   "workerbook/util"
@@ -11,14 +12,20 @@ import (
 
 // 用户登录
 func UserLogin(c *gin.Context) {
-  ctx := CreateCtx(c)
+  ctx, err := context.CreateCtx(c)
+  defer ctx.Close()
+
+  if err != nil {
+    ctx.Error(err)
+    return
+  }
 
   // get
-  username, _ := ctx.getRaw("username")
-  password, _ := ctx.getRaw("password")
+  username, _ := ctx.GetRaw("username")
+  password, _ := ctx.GetRaw("password")
 
   // query
-  data, err := service.UserLogin(username, password)
+  data, err := service.UserLogin(ctx, username, password)
 
   // check
   if err != nil {
@@ -32,13 +39,19 @@ func UserLogin(c *gin.Context) {
 
 // 获取我的信息
 func GetProfile(c *gin.Context) {
-  ctx := CreateCtx(c)
+  ctx, err := context.CreateCtx(c)
+  defer ctx.Close()
+
+  if err != nil {
+    ctx.Error(err)
+    return
+  }
 
   // get
-  id, _ := ctx.get("UID")
+  id, _ := ctx.Get("UID")
 
   // query
-  userInfo, err := service.GetUserInfoById(id, "department")
+  userInfo, err := service.GetUserInfoById(ctx, id, "department")
 
   // check
   if err != nil {
@@ -56,12 +69,18 @@ func GetProfile(c *gin.Context) {
 
 // 获取自己及部下人员信息
 func GetSubUsersList(c *gin.Context) {
-  ctx := CreateCtx(c)
+  ctx, err := context.CreateCtx(c)
+  defer ctx.Close()
+
+  if err != nil {
+    ctx.Error(err)
+    return
+  }
 
   // get
-  role, _ := ctx.getInt("ROLE")
-  departmentId, _ := ctx.get("DEPARTMENT_ID")
-  projectId, _ := ctx.getQuery("projectId")
+  role, _ := ctx.GetInt("ROLE")
+  departmentId, _ := ctx.Get("DEPARTMENT_ID")
+  projectId, _ := ctx.GetQuery("projectId")
 
   // check
   if !bson.IsObjectIdHex(departmentId) {
@@ -69,9 +88,8 @@ func GetSubUsersList(c *gin.Context) {
     return
   }
 
-
   if role == conf.RoleAdmin || role == conf.RolePM {
-    project, err := service.GetProjectInfoById(projectId)
+    project, err := service.GetProjectInfoById(ctx, projectId)
 
     if err != nil {
       ctx.Error(err)
@@ -86,7 +104,7 @@ func GetSubUsersList(c *gin.Context) {
       }
     }
 
-    users, err := service.GetUsersList(0,0, bson.M{
+    users, err := service.GetUsersList(ctx, 0, 0, bson.M{
       "department.$id": bson.M{
         "$in": projectIdList,
       },
@@ -101,7 +119,7 @@ func GetSubUsersList(c *gin.Context) {
     }
     return
   } else if role == conf.RoleLeader {
-    users, err := service.GetUsersList(0,0, bson.M{
+    users, err := service.GetUsersList(ctx, 0, 0, bson.M{
       "department.$id": bson.ObjectIdHex(departmentId),
     })
 

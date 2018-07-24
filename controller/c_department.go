@@ -3,24 +3,31 @@ package controller
 import (
   "github.com/gin-gonic/gin"
   "gopkg.in/mgo.v2/bson"
+  "workerbook/context"
   "workerbook/model"
   "workerbook/service"
 )
 
 // 创建部门
 func C_CreateDepartment(c *gin.Context) {
-  ctx := CreateCtx(c)
+  ctx, err := context.CreateCtx(c)
+  defer ctx.Close()
+
+  if err != nil {
+    ctx.Error(err)
+    return
+  }
 
   // get
-  name, _ := ctx.getRaw("name")
+  name, _ := ctx.GetRaw("name")
 
   // create
   data := model.Department{
-    Name:       name,
+    Name: name,
   }
 
   // insert
-  err := service.CreateDepartment(data)
+  err = service.CreateDepartment(ctx, data)
 
   // check
   if err != nil {
@@ -34,13 +41,19 @@ func C_CreateDepartment(c *gin.Context) {
 
 // 删除单个部门
 func C_DelDepartmentOne(c *gin.Context) {
-  ctx := CreateCtx(c)
+  ctx, err := context.CreateCtx(c)
+  defer ctx.Close()
+
+  if err != nil {
+    ctx.Error(err)
+    return
+  }
 
   // get
-  id, _ := ctx.getParam("id")
+  id, _ := ctx.GetParam("id")
 
   // query
-  err := service.DelDepartmentById(id)
+  err = service.DelDepartmentById(ctx, id)
 
   // check
   if err != nil {
@@ -54,14 +67,20 @@ func C_DelDepartmentOne(c *gin.Context) {
 
 // 获取部门列表
 func C_GetDepartmentsList(c *gin.Context) {
-  ctx := CreateCtx(c)
+  ctx, err := context.CreateCtx(c)
+  defer ctx.Close()
+
+  if err != nil {
+    ctx.Error(err)
+    return
+  }
 
   // get
-  skip, _ := ctx.getQueryInt("skip")
-  limit, _ := ctx.getQueryInt("limit")
+  skip, _ := ctx.GetQueryInt("skip")
+  limit, _ := ctx.GetQueryInt("limit")
 
   // query
-  data, err := service.GetDepartmentsList(skip, limit, bson.M{})
+  data, err := service.GetDepartmentsList(ctx, skip, limit, bson.M{})
 
   // check
   if err != nil {
@@ -77,13 +96,19 @@ func C_GetDepartmentsList(c *gin.Context) {
 
 // 获取单个部门
 func C_GetDepartmentOne(c *gin.Context) {
-  ctx := CreateCtx(c)
+  ctx, err := context.CreateCtx(c)
+  defer ctx.Close()
+
+  if err != nil {
+    ctx.Error(err)
+    return
+  }
 
   // get
-  id, _ := ctx.getParam("id")
+  id, _ := ctx.GetParam("id")
 
   // query
-  departmentInfo, err := service.GetDepartmentInfoById(id)
+  departmentInfo, err := service.GetDepartmentInfoById(ctx, id)
 
   // check
   if err != nil {
@@ -99,19 +124,25 @@ func C_GetDepartmentOne(c *gin.Context) {
 
 // 修改部门
 func C_UpdateDepartment(c *gin.Context) {
-  ctx := CreateCtx(c)
+  ctx, err := context.CreateCtx(c)
+  defer ctx.Close()
+
+  if err != nil {
+    ctx.Error(err)
+    return
+  }
 
   // get
-  id, _ := ctx.getParam("id")
+  id, _ := ctx.GetParam("id")
 
   data := bson.M{}
 
-  if name, ok := ctx.getRaw("name"); ok {
+  if name, ok := ctx.GetRaw("name"); ok {
     data["name"] = name
   }
 
   // update
-  err := service.UpdateDepartment(id, data)
+  err = service.UpdateDepartment(ctx, id, data)
 
   // check
   if err != nil {

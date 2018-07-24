@@ -1,25 +1,57 @@
-package controller
+package context
 
 import (
   "fmt"
   "github.com/gin-gonic/gin"
+  "github.com/gomodule/redigo/redis"
   "github.com/tidwall/gjson"
+  "gopkg.in/mgo.v2"
   "net/http"
   "strconv"
   "strings"
   "time"
+  "workerbook/db"
   "workerbook/errgo"
 )
 
 type Context struct {
-  Ctx     *gin.Context
-  RawData []byte
+  Ctx         *gin.Context
+  RawData     []byte
+  MgoDB       *mgo.Database
+  MgoDBCloser func()
+  Redis       redis.Conn
 }
 
-// create a new context
-func CreateCtx(c *gin.Context) *Context {
+// 创建上下文，连接mgo与redis数据库
+func CreateCtx(c *gin.Context) (*Context, error) {
   bytes, _ := c.GetRawData()
-  return &Context{c, bytes}
+  mg, closer, err := db.CloneMgoDB()
+  if err != nil {
+    return nil, err
+  }
+  rds := db.RedisPool.Get()
+  return &Context{
+    c,
+    bytes,
+    mg,
+    closer,
+    rds,
+  }, nil
+}
+
+// 创建不连接数据库的上下文
+func CreateBaseCtx(c *gin.Context) *Context {
+  bytes, _ := c.GetRawData()
+  return &Context{
+    Ctx:     c,
+    RawData: bytes,
+  }
+}
+
+// 关闭数据库连接
+func (c *Context) Close() {
+  c.MgoDBCloser()
+  c.Redis.Close()
 }
 
 // success handle
@@ -74,66 +106,66 @@ func (c *Context) Error(errNo interface{}) {
 }
 
 // get body by string
-func (c *Context) getRaw(key string) (string, bool) {
+func (c *Context) GetRaw(key string) (string, bool) {
   res := gjson.GetBytes(c.RawData, key)
   return strings.TrimSpace(res.Str), res.Exists()
 }
 
-func (c *Context) getRawArray(key string) ([]gjson.Result, bool) {
+func (c *Context) GetRawArray(key string) ([]gjson.Result, bool) {
   res := gjson.GetBytes(c.RawData, key)
   return res.Array(), res.Exists()
 }
 
-func (c *Context) getRawTime(key string) (time.Time, bool) {
+func (c *Context) GetRawTime(key string) (time.Time, bool) {
   res := gjson.GetBytes(c.RawData, key)
   return res.Time(), res.Exists()
 }
 
 // get body by int
-func (c *Context) getRawInt(key string) (int, bool) {
+func (c *Context) GetRawInt(key string) (int, bool) {
   res := gjson.GetBytes(c.RawData, key)
   return int(res.Int()), res.Exists()
 }
 
 // get body by bool
-func (c *Context) getRawBool(key string) (bool, bool) {
+func (c *Context) GetRawBool(key string) (bool, bool) {
   res := gjson.GetBytes(c.RawData, key)
   return res.Bool(), res.Exists()
 }
 
 // get body by JSON
-func (c *Context) getRawJSON(key string) (gjson.Result, bool) {
+func (c *Context) GetRawJSON(key string) (gjson.Result, bool) {
   res := gjson.GetBytes(c.RawData, key)
   return res, res.Exists()
 }
 
 // get params by string
-func (c *Context) getParam(key string) (string, bool) {
+func (c *Context) GetParam(key string) (string, bool) {
   res, ok := c.Ctx.Params.Get(key)
   return res, ok
 }
 
 // get params by int
-func (c *Context) getParamInt(key string) (int, bool) {
+func (c *Context) GetParamInt(key string) (int, bool) {
   res, ok := c.Ctx.Params.Get(key)
   intRes, _ := strconv.Atoi(res)
   return intRes, ok
 }
 
 // get params by bool
-func (c *Context) getParamBool(key string) (bool, bool) {
+func (c *Context) GetParamBool(key string) (bool, bool) {
   res, ok := c.Ctx.Params.Get(key)
   return res == "true", ok
 }
 
 // get query by string
-func (c *Context) getQuery(key string) (string, bool) {
+func (c *Context) GetQuery(key string) (string, bool) {
   res, ok := c.Ctx.GetQuery(key)
   return res, ok
 }
 
-func (c *Context) getQueryDefault(key string, def string) string {
-  val, ok := c.getQuery(key)
+func (c *Context) GetQueryDefault(key string, def string) string {
+  val, ok := c.GetQuery(key)
   if !ok {
     return def
   }
@@ -141,7 +173,7 @@ func (c *Context) getQueryDefault(key string, def string) string {
 }
 
 // get query by int
-func (c *Context) getQueryInt(key string) (int, bool) {
+func (c *Context) GetQueryInt(key string) (int, bool) {
   res, ok := c.Ctx.GetQuery(key)
   if !ok {
     return 0, false
@@ -153,8 +185,8 @@ func (c *Context) getQueryInt(key string) (int, bool) {
   return intRes, true
 }
 
-func (c *Context) getQueryIntDefault(key string, def int) int {
-  val, ok := c.getQueryInt(key)
+func (c *Context) GetQueryIntDefault(key string, def int) int {
+  val, ok := c.GetQueryInt(key)
   if !ok {
     return def
   }
@@ -162,7 +194,7 @@ func (c *Context) getQueryIntDefault(key string, def int) int {
 }
 
 // get query by bool
-func (c *Context) getQueryBool(key string) (bool, bool) {
+func (c *Context) GetQueryBool(key string) (bool, bool) {
   res, ok := c.Ctx.GetQuery(key)
   if !ok {
     return false, false
@@ -170,8 +202,8 @@ func (c *Context) getQueryBool(key string) (bool, bool) {
   return res == "true", true
 }
 
-func (c *Context) getQueryBoolDefault(key string, def bool) bool {
-  val, ok := c.getQueryBool(key)
+func (c *Context) GetQueryBoolDefault(key string, def bool) bool {
+  val, ok := c.GetQueryBool(key)
   if !ok {
     return def
   }
@@ -179,7 +211,7 @@ func (c *Context) getQueryBoolDefault(key string, def bool) bool {
 }
 
 // get query by JSON
-func (c *Context) getQueryJSON(key string) (gjson.Result, bool) {
+func (c *Context) GetQueryJSON(key string) (gjson.Result, bool) {
   res, ok := c.Ctx.GetQuery(key)
   if !ok {
     return gjson.Result{}, false
@@ -188,7 +220,7 @@ func (c *Context) getQueryJSON(key string) (gjson.Result, bool) {
 }
 
 // get value by string
-func (c *Context) get(key string) (string, bool) {
+func (c *Context) Get(key string) (string, bool) {
   res, ok := c.Ctx.Get(key)
   if !ok {
     return "", false
@@ -197,7 +229,7 @@ func (c *Context) get(key string) (string, bool) {
 }
 
 // get value by string
-func (c *Context) getInt(key string) (int, bool) {
+func (c *Context) GetInt(key string) (int, bool) {
   res, ok := c.Ctx.Get(key)
   if !ok {
     return 0, false
@@ -206,7 +238,7 @@ func (c *Context) getInt(key string) (int, bool) {
 }
 
 // get value by string
-func (c *Context) getBool(key string) (bool, bool) {
+func (c *Context) GetBool(key string) (bool, bool) {
   res, ok := c.Ctx.Get(key)
   if !ok {
     return false, false

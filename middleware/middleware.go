@@ -5,7 +5,7 @@ import (
   "github.com/jwt-go"
   "regexp"
   "workerbook/conf"
-  "workerbook/controller"
+  "workerbook/context"
   "workerbook/errgo"
 )
 
@@ -35,12 +35,12 @@ func Jwt(c *gin.Context) {
 
       c.Next()
     } else {
-      ctx := controller.CreateCtx(c)
+      ctx := context.CreateBaseCtx(c)
       ctx.Error(errgo.ErrUserReLogin)
       c.Abort()
     }
   } else {
-    ctx := controller.CreateCtx(c)
+    ctx := context.CreateBaseCtx(c)
     ctx.Error(errgo.ErrUserReLogin)
     c.Abort()
   }
@@ -64,7 +64,7 @@ func AllowRole(roles ... int) func(c *gin.Context) {
       return
     }
 
-    ctx := controller.CreateCtx(c)
+    ctx := context.CreateBaseCtx(c)
     ctx.Error(errgo.ErrForbidden)
     c.Abort()
   }

@@ -9,20 +9,13 @@ import (
   "time"
   "workerbook/cache"
   "workerbook/conf"
-  "workerbook/db"
+  "workerbook/context"
   "workerbook/errgo"
   "workerbook/model"
 )
 
 // 创建用户
-func CreateUser(data model.User, departmentId string) error {
-  mg, closer, err := db.CloneMgoDB()
-
-  if err != nil {
-    return err
-  } else {
-    defer closer()
-  }
+func CreateUser(ctx *context.Context, data model.User, departmentId string) error {
 
   // 是否存在的标志
   data.Exist = true
@@ -46,7 +39,7 @@ func CreateUser(data model.User, departmentId string) error {
   errgo.ErrorIfLenMoreThen(data.UserName, 14, errgo.ErrUsernameTooLong)
   errgo.ErrorIfStringIsEmpty(data.Password, errgo.ErrPasswordEmpty)
 
-  if err = errgo.PopError(); err != nil {
+  if err := errgo.PopError(); err != nil {
     errgo.ClearErrorStack()
     return err
   }
@@ -59,7 +52,7 @@ func CreateUser(data model.User, departmentId string) error {
   }
 
   // username must be the only.
-  count, err := mg.C(model.UserCollection).Find(model.User{
+  count, err := ctx.MgoDB.C(model.UserCollection).Find(model.User{
     UserName: data.UserName,
     Exist:    true,
   }).Count()
@@ -73,7 +66,7 @@ func CreateUser(data model.User, departmentId string) error {
   }
 
   // nickname must be the only.
-  count, err = mg.C(model.UserCollection).Find(model.User{
+  count, err = ctx.MgoDB.C(model.UserCollection).Find(model.User{
     NickName: data.NickName,
     Exist:    true,
   }).Count()
@@ -88,34 +81,27 @@ func CreateUser(data model.User, departmentId string) error {
 
   // department must be exist.
   department := new(model.Department)
-  mg.FindRef(&data.Department).One(department)
+  ctx.MgoDB.FindRef(&data.Department).One(department)
 
   if department.Name == "" {
     return errors.New(errgo.ErrDepartmentNotFound)
   }
 
   // insert it.
-  err = mg.C(model.UserCollection).Insert(data)
+  err = ctx.MgoDB.C(model.UserCollection).Insert(data)
 
   if err != nil {
     return errors.New(errgo.ErrCreateUserFailed)
   }
 
   // update count in department
-  UpdateDepartmentsUserCount()
+  UpdateDepartmentsUserCount(ctx)
 
   return nil
 }
 
 // 更新用户
-func UpdateUser(id string, data bson.M) error {
-  mg, closer, err := db.CloneMgoDB()
-
-  if err != nil {
-    return err
-  } else {
-    defer closer()
-  }
+func UpdateUser(ctx *context.Context, id string, data bson.M) error {
 
   // check
   errgo.ErrorIfStringNotObjectId(id, errgo.ErrUserIdError)
@@ -140,14 +126,14 @@ func UpdateUser(id string, data bson.M) error {
     }
   }
 
-  if err = errgo.PopError(); err != nil {
+  if err := errgo.PopError(); err != nil {
     errgo.ClearErrorStack()
     return err
   }
 
   // 姓名唯一
   if nickname, ok := data["nickname"]; ok {
-    count, err := mg.C(model.UserCollection).Find(bson.M{
+    count, err := ctx.MgoDB.C(model.UserCollection).Find(bson.M{
       "nickname": nickname,
       "exist":    true,
       "_id": bson.M{
@@ -172,7 +158,7 @@ func UpdateUser(id string, data bson.M) error {
       Database:   conf.MgoDBName,
     }
 
-    count, err := mg.FindRef(&ref).Select(bson.M{"exist": true}).Count()
+    count, err := ctx.MgoDB.FindRef(&ref).Select(bson.M{"exist": true}).Count()
 
     if err != nil {
       return errors.New(errgo.ErrUpdateUserFailed)
@@ -186,7 +172,7 @@ func UpdateUser(id string, data bson.M) error {
   }
 
   // 先要清缓存，清成功后才可以更新数据
-  err = cache.UserDel(id)
+  err := cache.UserDel(id)
 
   if err != nil {
     return errors.New(errgo.ErrUpdateUserFailed)
@@ -194,7 +180,7 @@ func UpdateUser(id string, data bson.M) error {
 
   // 更新数据
   data["exist"] = true
-  err = mg.C(model.UserCollection).UpdateId(bson.ObjectIdHex(id), bson.M{
+  err = ctx.MgoDB.C(model.UserCollection).UpdateId(bson.ObjectIdHex(id), bson.M{
     "$set": data,
   })
 
@@ -203,38 +189,31 @@ func UpdateUser(id string, data bson.M) error {
   }
 
   // update count in department
-  UpdateDepartmentsUserCount()
+  UpdateDepartmentsUserCount(ctx)
 
   return nil
 }
 
 // 根据id删除用户
-func DelUserById(id string) error {
-  mg, closer, err := db.CloneMgoDB()
-
-  if err != nil {
-    return err
-  } else {
-    defer closer()
-  }
+func DelUserById(ctx *context.Context, id string) error {
 
   // check
   errgo.ErrorIfStringNotObjectId(id, errgo.ErrUserIdError)
 
-  if err = errgo.PopError(); err != nil {
+  if err := errgo.PopError(); err != nil {
     errgo.ClearErrorStack()
     return err
   }
 
   // 清除缓存，缓存清成功才可以清数据，不然会有脏数据
-  err = cache.UserDel(id)
+  err := cache.UserDel(id)
 
   if err != nil {
     return errors.New(errgo.ErrDeleteUserFailed)
   }
 
   // 删除数据
-  err = mg.C(model.UserCollection).UpdateId(bson.ObjectIdHex(id), bson.M{
+  err = ctx.MgoDB.C(model.UserCollection).UpdateId(bson.ObjectIdHex(id), bson.M{
     "$set": bson.M{
       "exist": false,
     },
@@ -248,7 +227,7 @@ func DelUserById(id string) error {
   }
 
   // 更新部门人数
-  err = UpdateDepartmentsUserCount()
+  err = UpdateDepartmentsUserCount(ctx)
 
   if err != nil {
     return errors.New(errgo.ErrDeleteUserFailed)
@@ -258,19 +237,12 @@ func DelUserById(id string) error {
 }
 
 // 根据id查找用户信息
-func GetUserInfoById(id string, refs ... string) (gin.H, error) {
-  mg, closer, err := db.CloneMgoDB()
-
-  if err != nil {
-    return nil, err
-  } else {
-    defer closer()
-  }
+func GetUserInfoById(ctx *context.Context, id string, refs ... string) (gin.H, error) {
 
   // check
   errgo.ErrorIfStringNotObjectId(id, errgo.ErrUserIdError)
 
-  if err = errgo.PopError(); err != nil {
+  if err := errgo.PopError(); err != nil {
     errgo.ClearErrorStack()
     return nil, err
   }
@@ -280,49 +252,40 @@ func GetUserInfoById(id string, refs ... string) (gin.H, error) {
   // 先从缓存取数据，如果缓存没取到，从数据库取
   rok := cache.UserGet(id, data)
   if !rok {
-    err = mg.C(model.UserCollection).Find(bson.M{
+    err := ctx.MgoDB.C(model.UserCollection).Find(bson.M{
       "_id":   bson.ObjectIdHex(id),
       "exist": true,
     }).One(data)
-  }
 
-  if err != nil {
-    if err == mgo.ErrNotFound {
-      return nil, errors.New(errgo.ErrUserNotFound)
+    if err != nil {
+      if err == mgo.ErrNotFound {
+        return nil, errors.New(errgo.ErrUserNotFound)
+      }
+      return nil, err
     }
-    return nil, err
-  }
 
-  // 存到缓存
-  if !rok {
+    // 存到缓存
     cache.UserSet(id, data)
   }
 
-  return data.GetMap(FindRef(mg), refs...), nil
+  return data.GetMap(FindRef(ctx.MgoDB), refs...), nil
 }
 
 // 用户登录并返回用户id
-func UserLogin(username string, password string) (gin.H, error) {
-  mg, closer, err := db.CloneMgoDB()
-
-  if err != nil {
-    return nil, err
-  } else {
-    defer closer()
-  }
+func UserLogin(ctx *context.Context, username string, password string) (gin.H, error) {
 
   // check
   errgo.ErrorIfStringIsEmpty(username, errgo.ErrUsernameEmpty)
   errgo.ErrorIfStringIsEmpty(password, errgo.ErrPasswordEmpty)
 
-  if err = errgo.PopError(); err != nil {
+  if err := errgo.PopError(); err != nil {
     errgo.ClearErrorStack()
     return nil, err
   }
 
   data := new(model.User)
 
-  err = mg.C(model.UserCollection).Find(bson.M{
+  err := ctx.MgoDB.C(model.UserCollection).Find(bson.M{
     "username": username,
     "password": password,
     "exist":    true,
@@ -354,14 +317,7 @@ func UserLogin(username string, password string) (gin.H, error) {
 }
 
 // 获取用户列表
-func GetUsersList(skip int, limit int, query bson.M, refs ... string) (gin.H, error) {
-  mg, closer, err := db.CloneMgoDB()
-
-  if err != nil {
-    return nil, err
-  } else {
-    defer closer()
-  }
+func GetUsersList(ctx *context.Context, skip int, limit int, query bson.M, refs ... string) (gin.H, error) {
 
   // check
   if skip != 0 {
@@ -370,7 +326,7 @@ func GetUsersList(skip int, limit int, query bson.M, refs ... string) (gin.H, er
     errgo.ErrorIfIntMoreThen(limit, 100, errgo.ErrLimitRange)
   }
 
-  if err = errgo.PopError(); err != nil {
+  if err := errgo.PopError(); err != nil {
     errgo.ClearErrorStack()
     return nil, err
   }
@@ -379,10 +335,11 @@ func GetUsersList(skip int, limit int, query bson.M, refs ... string) (gin.H, er
   query["exist"] = true
 
   // find it
+  var err error
   if skip == 0 && limit == 0 {
-    err = mg.C(model.UserCollection).Find(query).Sort("-createTime").All(data)
+    err = ctx.MgoDB.C(model.UserCollection).Find(query).Sort("-createTime").All(data)
   } else {
-    err = mg.C(model.UserCollection).Find(query).Skip(skip).Limit(limit).Sort("-createTime").All(data)
+    err = ctx.MgoDB.C(model.UserCollection).Find(query).Skip(skip).Limit(limit).Sort("-createTime").All(data)
   }
 
   if err != nil {
@@ -396,7 +353,7 @@ func GetUsersList(skip int, limit int, query bson.M, refs ... string) (gin.H, er
   var list []gin.H
 
   for _, r := range *data {
-    list = append(list, r.GetMap(FindRef(mg), refs...))
+    list = append(list, r.GetMap(FindRef(ctx.MgoDB), refs...))
   }
 
   if skip == 0 && limit == 0 {
@@ -406,7 +363,7 @@ func GetUsersList(skip int, limit int, query bson.M, refs ... string) (gin.H, er
   }
 
   // get count
-  count, err := mg.C(model.UserCollection).Find(query).Count()
+  count, err := ctx.MgoDB.C(model.UserCollection).Find(query).Count()
 
   if err != nil {
     return nil, errors.New(errgo.ErrUserNotFound)

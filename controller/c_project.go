@@ -1,22 +1,28 @@
 package controller
 
 import (
-  "fmt"
   "github.com/gin-gonic/gin"
   "gopkg.in/mgo.v2/bson"
+  "workerbook/context"
   "workerbook/model"
   "workerbook/service"
 )
 
 // 获取单个项目
 func C_GetProjectOne(c *gin.Context) {
-  ctx := CreateCtx(c)
+  ctx, err := context.CreateCtx(c)
+  defer ctx.Close()
+
+  if err != nil {
+    ctx.Error(err)
+    return
+  }
 
   // get
-  id, _ := ctx.getParam("id")
+  id, _ := ctx.GetParam("id")
 
   // query
-  projectInfo, err := service.GetProjectInfoById(id)
+  projectInfo, err := service.GetProjectInfoById(ctx, id)
 
   // check
   if err != nil {
@@ -32,13 +38,19 @@ func C_GetProjectOne(c *gin.Context) {
 
 // 删除单个项目
 func C_DelProjectOne(c *gin.Context) {
-  ctx := CreateCtx(c)
+  ctx, err := context.CreateCtx(c)
+  defer ctx.Close()
+
+  if err != nil {
+    ctx.Error(err)
+    return
+  }
 
   // get
-  id, _ := ctx.getParam("id")
+  id, _ := ctx.GetParam("id")
 
   // query
-  err := service.DelProjectById(id)
+  err = service.DelProjectById(ctx, id)
 
   // check
   if err != nil {
@@ -52,14 +64,20 @@ func C_DelProjectOne(c *gin.Context) {
 
 // 获取项目列表
 func C_GetProjectsList(c *gin.Context) {
-  ctx := CreateCtx(c)
+  ctx, err := context.CreateCtx(c)
+  defer ctx.Close()
+
+  if err != nil {
+    ctx.Error(err)
+    return
+  }
 
   // get
-  skip, _ := ctx.getQueryInt("skip")
-  limit, _ := ctx.getQueryInt("limit")
+  skip, _ := ctx.GetQueryInt("skip")
+  limit, _ := ctx.GetQueryInt("limit")
 
   // query
-  data, err := service.GetProjectsList(skip, limit, bson.M{})
+  data, err := service.GetProjectsList(ctx, skip, limit, bson.M{})
 
   // check
   if err != nil {
@@ -75,14 +93,20 @@ func C_GetProjectsList(c *gin.Context) {
 
 // 创建项目
 func C_CreateProject(c *gin.Context) {
-  ctx := CreateCtx(c)
+  ctx, err := context.CreateCtx(c)
+  defer ctx.Close()
+
+  if err != nil {
+    ctx.Error(err)
+    return
+  }
 
   // get
-  name, _ := ctx.getRaw("name")
-  deadline, _ := ctx.getRawTime("deadline")
-  departments, _ := ctx.getRawArray("departments")
-  description, _ := ctx.getRaw("description")
-  weight, _ := ctx.getRawInt("weight")
+  name, _ := ctx.GetRaw("name")
+  deadline, _ := ctx.GetRawTime("deadline")
+  departments, _ := ctx.GetRawArray("departments")
+  description, _ := ctx.GetRaw("description")
+  weight, _ := ctx.GetRawInt("weight")
 
   // create
   data := model.Project{
@@ -94,7 +118,7 @@ func C_CreateProject(c *gin.Context) {
   }
 
   // insert
-  err := service.CreateProject(data, departments)
+  err = service.CreateProject(ctx, data, departments)
 
   // check
   if err != nil {
@@ -108,37 +132,41 @@ func C_CreateProject(c *gin.Context) {
 
 // 修改项目
 func C_UpdateProject(c *gin.Context) {
-  ctx := CreateCtx(c)
+  ctx, err := context.CreateCtx(c)
+  defer ctx.Close()
+
+  if err != nil {
+    ctx.Error(err)
+    return
+  }
 
   // get
-  id, _ := ctx.getParam("id")
+  id, _ := ctx.GetParam("id")
 
   // update
   data := bson.M{}
 
-  fmt.Println(string(ctx.RawData), "< 123123333")
-
-  if name, ok := ctx.getRaw("name"); ok {
+  if name, ok := ctx.GetRaw("name"); ok {
     data["name"] = name
   }
 
-  if deadline, ok := ctx.getRawTime("deadline"); ok {
+  if deadline, ok := ctx.GetRawTime("deadline"); ok {
     data["deadline"] = deadline
   }
 
-  if departments, ok := ctx.getRawArray("departments"); ok {
+  if departments, ok := ctx.GetRawArray("departments"); ok {
     data["departments"] = departments
   }
 
-  if description, ok := ctx.getRaw("description"); ok {
+  if description, ok := ctx.GetRaw("description"); ok {
     data["description"] = description
   }
 
-  if weight, ok := ctx.getRawInt("weight"); ok {
+  if weight, ok := ctx.GetRawInt("weight"); ok {
     data["weight"] = weight
   }
 
-  err := service.UpdateProject(id, data)
+  err = service.UpdateProject(ctx, id, data)
 
   // check
   if err != nil {
