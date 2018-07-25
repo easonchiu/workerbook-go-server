@@ -64,6 +64,7 @@ func (u User) GetMap(forgets ... string) gin.H {
     "createTime": u.CreateTime,
     "username":   u.UserName,
     "status":     u.Status,
+    "exist":      u.Exist,
   }
 
   util.Forget(data, forgets...)

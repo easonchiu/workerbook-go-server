@@ -30,7 +30,6 @@ func MissionSet(r redis.Conn, mission *model.Mission) {
     return
   }
 
-  // 只存基本信息，不存关联表的信息
   m := mission.GetMap()
   bytes, _ := json.Marshal(m)
 
@@ -44,8 +43,6 @@ func MissionSet(r redis.Conn, mission *model.Mission) {
 
 // redis获取任务信息
 func MissionGet(r redis.Conn, id string, mission *model.Mission) bool {
-  return false
-
   n := fmt.Sprintf("%v:%v:%v", conf.MgoDBName, model.MissionCollection, id)
   data, _ := r.Do("GET", n)
 

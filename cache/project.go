@@ -30,7 +30,6 @@ func ProjectSet(r redis.Conn, project *model.Project) {
     return
   }
 
-  // 只存基本信息，不存关联表的信息
   m := project.GetMap()
   bytes, _ := json.Marshal(m)
 
@@ -44,8 +43,6 @@ func ProjectSet(r redis.Conn, project *model.Project) {
 
 // redis获取项目信息
 func ProjectGet(r redis.Conn, id string, project *model.Project) bool {
-  return false
-
   n := fmt.Sprintf("%v:%v:%v", conf.MgoDBName, model.ProjectCollection, id)
   data, _ := r.Do("GET", n)
 

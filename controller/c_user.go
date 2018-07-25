@@ -135,7 +135,12 @@ func C_GetUsersList(c *gin.Context) {
   // return
   ctx.Success(gin.H{
     "data": data.Each(func(item model.User) gin.H {
-      return item.GetMap("department", "username")
+      each := item.GetMap()
+      department, err := service.FindDepartmentRef(ctx, &item.Department)
+      if err == nil {
+        each["department"] = department.GetMap("userCount", "createTime")
+      }
+      return each
     }),
   })
 }
@@ -164,7 +169,7 @@ func C_GetUserOne(c *gin.Context) {
 
   // return
   ctx.Success(gin.H{
-    "data": user.GetMap("department", "username"),
+    "data": user.GetMap("username"),
   })
 }
 

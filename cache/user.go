@@ -30,7 +30,6 @@ func UserSet(r redis.Conn, user *model.User) {
     return
   }
 
-  // 只存基本信息，不存关联表的信息
   m := user.GetMap()
   bytes, _ := json.Marshal(m)
 
@@ -44,8 +43,6 @@ func UserSet(r redis.Conn, user *model.User) {
 
 // redis获取用户信息
 func UserGet(r redis.Conn, id string, user *model.User) bool {
-  return false
-
   n := fmt.Sprintf("%v:%v:%v", conf.MgoDBName, model.UserCollection, id)
   data, _ := r.Do("GET", n)
 

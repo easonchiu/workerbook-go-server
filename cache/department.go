@@ -29,7 +29,6 @@ func DepartmentSet(r redis.Conn, department *model.Department) {
     return
   }
 
-  // 只存基本信息，不存关联表的信息
   m := department.GetMap()
   bytes, _ := json.Marshal(m)
 
@@ -43,8 +42,6 @@ func DepartmentSet(r redis.Conn, department *model.Department) {
 
 // redis获取部门信息
 func DepartmentGet(r redis.Conn, id string, department *model.Department) bool {
-  return false
-
   n := fmt.Sprintf("%v:%v:%v", conf.MgoDBName, model.DepartmentCollection, id)
   data, _ := r.Do("GET", n)
 
