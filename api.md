@@ -21,3 +21,8 @@ post /departments                    添加部门
 get  /profile               获取我的信息
 post /login                 登录
 
+
+
+-----------------修改
+
+修改任务时不传 projectId， 服务端查

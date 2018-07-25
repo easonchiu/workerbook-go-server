@@ -63,7 +63,14 @@ func GetProfile(c *gin.Context) {
 
   // return
   ctx.Success(gin.H{
-    "data": user.GetMap("department", "username"),
+    "data": func() gin.H {
+      data := user.GetMap("username", "exist")
+      department, err := service.FindDepartmentRef(ctx, &user.Department)
+      if err == nil {
+        data["department"] = department.GetMap("userCount", "createTime")
+      }
+      return data
+    }(),
   })
 }
 

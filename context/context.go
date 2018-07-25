@@ -30,12 +30,11 @@ func CreateCtx(c *gin.Context) (*Context, error) {
     return nil, err
   }
   if gin.Mode() == gin.DebugMode {
-    fmt.Println("[MGO] √ Clone mongodb sission  |", c.Request.Method, "|" , c.Request.URL)
+    fmt.Println("[MGO] 😄 Clone mongodb sission  |", c.Request.Method, "|" , c.Request.URL)
   }
   rds := db.RedisPool.Get()
   if gin.Mode() == gin.DebugMode {
-    fmt.Println("[RDS] √ Get redis connection   |", c.Request.Method, "|" , c.Request.URL)
-    fmt.Println()
+    fmt.Println("[RDS] 😄 Get redis connection   |", c.Request.Method, "|" , c.Request.URL)
   }
   return &Context{
     c,
@@ -59,12 +58,11 @@ func CreateBaseCtx(c *gin.Context) *Context {
 func (c *Context) Close() {
   c.MgoDBCloser()
   if gin.Mode() == gin.DebugMode {
-    fmt.Println("[MGO] ∆ Close mongodb sission  |", c.Ctx.Request.Method, "|" , c.Ctx.Request.URL)
+    fmt.Println("[MGO] 👋 Close mongodb sission  |", c.Ctx.Request.Method, "|" , c.Ctx.Request.URL)
   }
   c.Redis.Close()
   if gin.Mode() == gin.DebugMode {
-    fmt.Println("[RDS] ∆ Close redis connection |", c.Ctx.Request.Method, "|" , c.Ctx.Request.URL)
-    fmt.Println()
+    fmt.Println("[RDS] 👋 Close redis connection |", c.Ctx.Request.Method, "|" , c.Ctx.Request.URL)
   }
 }
 

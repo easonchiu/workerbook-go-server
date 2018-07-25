@@ -54,7 +54,7 @@ func MissionGet(r redis.Conn, id string, mission *model.Mission) bool {
 
   if !res.Exists() {
     if gin.Mode() == gin.DebugMode {
-      fmt.Println("[RDS] ∆∆ Get |", n)
+      fmt.Println("[RDS] x️ Get |", n)
     }
     return false
   }
@@ -63,7 +63,7 @@ func MissionGet(r redis.Conn, id string, mission *model.Mission) bool {
 
   if !bson.IsObjectIdHex(mid) {
     if gin.Mode() == gin.DebugMode {
-      fmt.Println("[RDS] ∆∆ Get |", n)
+      fmt.Println("[RDS] x Get |", n)
     }
     return false
   }
