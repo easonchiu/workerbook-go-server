@@ -3,20 +3,46 @@ package controller
 import (
   "github.com/gin-gonic/gin"
   "gopkg.in/mgo.v2/bson"
+  "workerbook/conf"
   "workerbook/context"
   "workerbook/model"
   "workerbook/service"
 )
 
-// 获取单个任务
-func GetMissionOne(c *gin.Context) {
-  ctx, err := context.CreateCtx(c)
-  defer ctx.Close()
+// 获取分配到自己的任务列表
+func GetOwnsMissionsList(ctx *context.New) {
 
+  // get
+  skip, _ := ctx.GetQueryInt("skip")
+  limit, _ := ctx.GetQueryInt("limit")
+  ownUserId, _ := ctx.Get(conf.OWN_USER_ID)
+
+  // query
+  data, err := service.GetMissionsList(ctx, skip, limit, bson.M{
+    "user.$id": bson.ObjectIdHex(ownUserId),
+  })
+
+  // check
   if err != nil {
     ctx.Error(err)
     return
   }
+
+  // return
+  ctx.Success(gin.H{
+    "data": data.Each(func(item model.Mission) gin.H {
+      each := item.GetMap("createTime", "user", "preProgress", "chartTime")
+      project, err := service.FindProjectRef(ctx, &item.Project)
+      if err == nil {
+        each["project"] = project.GetMap("departments", "missions")
+      }
+      return each
+    }),
+  })
+}
+
+// 获取单个任务
+func GetMissionOne(ctx *context.New) {
 
   // get
   id, _ := ctx.GetParam("id")
@@ -31,7 +57,7 @@ func GetMissionOne(c *gin.Context) {
   }
 
   // query project
-  project, err := service.GetProjectInfoById(ctx, mission.ProjectId.Hex())
+  project, err := service.GetProjectInfoById(ctx, mission.Project.Id.(bson.ObjectId).Hex())
 
   // check
   if err != nil {
@@ -43,7 +69,7 @@ func GetMissionOne(c *gin.Context) {
   user, err := service.FindUserRef(ctx, &mission.User)
 
   // return
-  data := mission.GetMap()
+  data := mission.GetMap("preProgress", "chartTime")
   data["project"] = project.GetMap("departments", "missions")
   data["user"] = user.GetMap("username", "department")
 
@@ -53,14 +79,7 @@ func GetMissionOne(c *gin.Context) {
 }
 
 // 创建任务
-func CreateMission(c *gin.Context) {
-  ctx, err := context.CreateCtx(c)
-  defer ctx.Close()
-
-  if err != nil {
-    ctx.Error(err)
-    return
-  }
+func CreateMission(ctx *context.New) {
 
   // get
   name, _ := ctx.GetRaw("name")
@@ -72,12 +91,10 @@ func CreateMission(c *gin.Context) {
   data := model.Mission{
     Name:     name,
     Deadline: deadline,
-    Progress: 0,
-    Status:   1,
   }
 
   // insert
-  err = service.CreateMission(ctx, data, projectId, userId)
+  err := service.CreateMission(ctx, data, projectId, userId)
 
   // check
   if err != nil {
@@ -89,14 +106,7 @@ func CreateMission(c *gin.Context) {
 }
 
 // 更新任务
-func UpdateMission(c *gin.Context) {
-  ctx, err := context.CreateCtx(c)
-  defer ctx.Close()
-
-  if err != nil {
-    ctx.Error(err)
-    return
-  }
+func UpdateMission(ctx *context.New) {
 
   // get
   id, _ := ctx.GetParam("id")
@@ -124,7 +134,7 @@ func UpdateMission(c *gin.Context) {
     data["projectId"] = projectId
   }
 
-  err = service.UpdateMission(ctx, id, data)
+  err := service.UpdateMission(ctx, id, data)
 
   // check
   if err != nil {

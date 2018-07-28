@@ -45,6 +45,12 @@ type Project struct {
 
   // 是否存在
   Exist bool `bson:"exist"`
+
+  // 操作人
+  Editor mgo.DBRef `bson:"editor,omitempty"`
+
+  // 操作时间
+  EditTime time.Time `bson:"editTime,omitempty"`
 }
 
 func (p Project) GetMap(forgets ... string) gin.H {

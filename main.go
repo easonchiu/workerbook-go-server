@@ -25,9 +25,6 @@ func main() {
 
   // gin.SetMode(gin.ReleaseMode)
 
-  // register middleware
-  // middleware.Register(g)
-
   // register router
   router.Register(g)
 

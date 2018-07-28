@@ -17,8 +17,8 @@ func MissionDel(r redis.Conn, id string) error {
   n := fmt.Sprintf("%v:%v:%v", conf.MgoDBName, model.MissionCollection, id)
   _, err := r.Do("DEL", n)
 
-  if gin.Mode() == gin.DebugMode {
-    fmt.Println("[RDS] ∆∆ Del |", n)
+  if gin.IsDebugging() {
+    fmt.Println("[RDS] 🗑 Del |", n)
   }
 
   return err
@@ -36,8 +36,8 @@ func MissionSet(r redis.Conn, mission *model.Mission) {
   n := fmt.Sprintf("%v:%v:%v", conf.MgoDBName, model.MissionCollection, mission.Id.Hex())
   r.Do("SET", n, bytes)
 
-  if gin.Mode() == gin.DebugMode {
-    fmt.Println("[RDS] √√ Set |", n)
+  if gin.IsDebugging() {
+    fmt.Println("[RDS] ✨ Set |", n)
   }
 }
 
@@ -53,8 +53,8 @@ func MissionGet(r redis.Conn, id string, mission *model.Mission) bool {
   res := gjson.ParseBytes(data.([]byte))
 
   if !res.Exists() {
-    if gin.Mode() == gin.DebugMode {
-      fmt.Println("[RDS] x️ Get |", n)
+    if gin.IsDebugging() {
+      fmt.Println("[RDS] ⚠️️ Get |", n)
     }
     return false
   }
@@ -62,38 +62,43 @@ func MissionGet(r redis.Conn, id string, mission *model.Mission) bool {
   mid := res.Get("id").String()
 
   if !bson.IsObjectIdHex(mid) {
-    if gin.Mode() == gin.DebugMode {
-      fmt.Println("[RDS] x Get |", n)
+    if gin.IsDebugging() {
+      fmt.Println("[RDS] ⚠️ Get |", n)
     }
     return false
   }
 
   mission.Id = bson.ObjectIdHex(mid)
   mission.Name = res.Get("name").String()
-
+  mission.PreProgress = int(res.Get("preProgress").Int())
   mission.Progress = int(res.Get("progress").Int())
   mission.Deadline = res.Get("deadline").Time()
   mission.Status = int(res.Get("status").Int())
+  mission.ChartTime = res.Get("chartTime").String()
 
-  projectId := res.Get("projectId").String()
+  projectId := res.Get("project.id").String()
   if bson.IsObjectIdHex(projectId) {
-    mission.ProjectId = bson.ObjectIdHex(projectId)
+    mission.Project = mgo.DBRef{
+      Database:   conf.MgoDBName,
+      Collection: model.ProjectCollection,
+      Id:         bson.ObjectIdHex(projectId),
+    }
   }
 
   userId := res.Get("user.id").String()
   if bson.IsObjectIdHex(userId) {
     mission.User = mgo.DBRef{
-      Id:         bson.ObjectIdHex(userId),
-      Collection: model.UserCollection,
       Database:   conf.MgoDBName,
+      Collection: model.UserCollection,
+      Id:         bson.ObjectIdHex(userId),
     }
   }
 
   mission.CreateTime = res.Get("createTime").Time()
   mission.Exist = res.Get("exist").Bool()
 
-  if gin.Mode() == gin.DebugMode {
-    fmt.Println("[RDS] √√ Get |", n)
+  if gin.IsDebugging() {
+    fmt.Println("[RDS] ⚡️ Get |", n)
   }
 
   return true

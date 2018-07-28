@@ -69,10 +69,18 @@ const (
   ErrMissionDeadlineTooLate = "103008"
   ErrCreateMissionFailed    = "103010"
   ErrUpdateMissionFailed    = "103011"
+  ErrDeleteMissionFailed    = "103012"
+  ErrMissionProgressRange   = "103013"
 
   // 日报相关错误 105xxx
-  ErrDailyIdError  = "105001"
-  ErrDailyNotFound = "105002"
+  ErrDailyIdError       = "105001"
+  ErrDailyNotFound      = "105002"
+  ErrDailyContentEmpty  = "105003"
+  ErrDailyProgressRange = "105004"
+  ErrCreateDailyFailed  = "105006"
+  ErrUpdateDailyFailed  = "105007"
+  ErrDeleteDailyFailed  = "105008"
+  ErrDayError           = "105009"
 
   // 系统级错误 200xxx
   ErrSkipRange  = "200001"
@@ -134,9 +142,17 @@ var Error = map[string]errType{
   ErrMissionDeadlineTooLate: {"截至时间不能晚于项目时间", http.StatusOK, ""},
   ErrCreateMissionFailed:    {"创建任务失败", http.StatusOK, ""},
   ErrUpdateMissionFailed:    {"更新任务失败", http.StatusOK, ""},
+  ErrDeleteMissionFailed:    {"删除任务失败", http.StatusOK, ""},
+  ErrMissionProgressRange:   {"任务进度范围错误", http.StatusOK, ""},
 
-  ErrDailyIdError:  {"日报id错误", http.StatusOK, ""},
-  ErrDailyNotFound: {"找不到相关日报", http.StatusOK, ""},
+  ErrDailyIdError:       {"日报id错误", http.StatusOK, ""},
+  ErrDailyNotFound:      {"找不到相关日报", http.StatusOK, ""},
+  ErrDailyContentEmpty:  {"日报内容不能为空", http.StatusOK, ""},
+  ErrDailyProgressRange: {"日报进度选择错误", http.StatusOK, ""},
+  ErrCreateDailyFailed:  {"创建日报失败", http.StatusOK, ""},
+  ErrUpdateDailyFailed:  {"更新日报失败", http.StatusOK, ""},
+  ErrDeleteDailyFailed:  {"删除日报失败", http.StatusOK, ""},
+  ErrDayError:           {"日期错误", http.StatusOK, ""},
 
   ErrDepartmentIdError:       {"部门id错误", http.StatusOK, ""},
   ErrDepartmentNotFound:      {"找不到相关部门", http.StatusOK, ""},

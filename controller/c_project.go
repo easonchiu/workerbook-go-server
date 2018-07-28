@@ -9,14 +9,7 @@ import (
 )
 
 // 获取单个项目
-func C_GetProjectOne(c *gin.Context) {
-  ctx, err := context.CreateCtx(c)
-  defer ctx.Close()
-
-  if err != nil {
-    ctx.Error(err)
-    return
-  }
+func C_GetProjectOne(ctx *context.New) {
 
   // get
   id, _ := ctx.GetParam("id")
@@ -37,20 +30,15 @@ func C_GetProjectOne(c *gin.Context) {
 }
 
 // 删除单个项目
-func C_DelProjectOne(c *gin.Context) {
-  ctx, err := context.CreateCtx(c)
-  defer ctx.Close()
-
-  if err != nil {
-    ctx.Error(err)
-    return
-  }
+func C_DelProjectOne(ctx *context.New) {
 
   // get
   id, _ := ctx.GetParam("id")
 
   // query
-  err = service.DelProjectById(ctx, id)
+  err := service.UpdateProject(ctx, id, bson.M{
+    "exist": false,
+  })
 
   // check
   if err != nil {
@@ -63,14 +51,7 @@ func C_DelProjectOne(c *gin.Context) {
 }
 
 // 获取项目列表
-func C_GetProjectsList(c *gin.Context) {
-  ctx, err := context.CreateCtx(c)
-  defer ctx.Close()
-
-  if err != nil {
-    ctx.Error(err)
-    return
-  }
+func C_GetProjectsList(ctx *context.New) {
 
   // get
   skip, _ := ctx.GetQueryInt("skip")
@@ -94,14 +75,7 @@ func C_GetProjectsList(c *gin.Context) {
 }
 
 // 创建项目
-func C_CreateProject(c *gin.Context) {
-  ctx, err := context.CreateCtx(c)
-  defer ctx.Close()
-
-  if err != nil {
-    ctx.Error(err)
-    return
-  }
+func C_CreateProject(ctx *context.New) {
 
   // get
   name, _ := ctx.GetRaw("name")
@@ -120,7 +94,7 @@ func C_CreateProject(c *gin.Context) {
   }
 
   // insert
-  err = service.CreateProject(ctx, data, departments)
+  err := service.CreateProject(ctx, data, departments)
 
   // check
   if err != nil {
@@ -133,14 +107,7 @@ func C_CreateProject(c *gin.Context) {
 }
 
 // 修改项目
-func C_UpdateProject(c *gin.Context) {
-  ctx, err := context.CreateCtx(c)
-  defer ctx.Close()
-
-  if err != nil {
-    ctx.Error(err)
-    return
-  }
+func C_UpdateProject(ctx *context.New) {
 
   // get
   id, _ := ctx.GetParam("id")
@@ -168,7 +135,7 @@ func C_UpdateProject(c *gin.Context) {
     data["weight"] = weight
   }
 
-  err = service.UpdateProject(ctx, id, data)
+  err := service.UpdateProject(ctx, id, data)
 
   // check
   if err != nil {

@@ -25,6 +25,9 @@ type User struct {
   // 用户名
   UserName string `bson:"username"`
 
+  // 工号
+  JobNumber string `bson:"jobNumber"`
+
   // 部门
   Department mgo.DBRef `bson:"department"`
 
@@ -48,6 +51,12 @@ type User struct {
 
   // 是否存在
   Exist bool `bson:"exist"`
+
+  // 操作人
+  Editor mgo.DBRef `bson:"editor,omitempty"`
+
+  // 操作时间
+  EditTime time.Time `bson:"editTime,omitempty"`
 }
 
 func (u User) GetMap(forgets ... string) gin.H {

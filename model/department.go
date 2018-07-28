@@ -2,6 +2,7 @@ package model
 
 import (
   "github.com/gin-gonic/gin"
+  "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
   "time"
   "workerbook/util"
@@ -26,6 +27,12 @@ type Department struct {
 
   // 是否存在
   Exist bool `bson:"exist"`
+
+  // 操作人
+  Editor mgo.DBRef `bson:"editor,omitempty"`
+
+  // 操作时间
+  EditTime time.Time `bson:"editTime,omitempty"`
 }
 
 func (d Department) GetMap(forgets ... string) gin.H {

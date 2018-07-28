@@ -17,8 +17,8 @@ func ProjectDel(r redis.Conn, id string) error {
   n := fmt.Sprintf("%v:%v:%v", conf.MgoDBName, model.ProjectCollection, id)
   _, err := r.Do("DEL", n)
 
-  if gin.Mode() == gin.DebugMode {
-    fmt.Println("[RDS] ∆∆ Del |", n)
+  if gin.IsDebugging() {
+    fmt.Println("[RDS] 🗑 Del |", n)
   }
 
   return err
@@ -36,8 +36,8 @@ func ProjectSet(r redis.Conn, project *model.Project) {
   n := fmt.Sprintf("%v:%v:%v", conf.MgoDBName, model.ProjectCollection, project.Id.Hex())
   r.Do("SET", n, bytes)
 
-  if gin.Mode() == gin.DebugMode {
-    fmt.Println("[RDS] √√ Set |", n)
+  if gin.IsDebugging() {
+    fmt.Println("[RDS] ✨ Set |", n)
   }
 }
 
@@ -53,8 +53,8 @@ func ProjectGet(r redis.Conn, id string, project *model.Project) bool {
   res := gjson.ParseBytes(data.([]byte))
 
   if !res.Exists() {
-    if gin.Mode() == gin.DebugMode {
-      fmt.Println("[RDS] ∆∆ Get |", n)
+    if gin.IsDebugging() {
+      fmt.Println("[RDS] ⚠️ Get |", n)
     }
     return false
   }
@@ -62,8 +62,8 @@ func ProjectGet(r redis.Conn, id string, project *model.Project) bool {
   pid := res.Get("id").String()
 
   if !bson.IsObjectIdHex(pid) {
-    if gin.Mode() == gin.DebugMode {
-      fmt.Println("[RDS] ∆∆ Get |", n)
+    if gin.IsDebugging() {
+      fmt.Println("[RDS] ⚠️ Get |", n)
     }
     return false
   }
@@ -84,8 +84,8 @@ func ProjectGet(r redis.Conn, id string, project *model.Project) bool {
         id := item.Get("id")
         if bson.IsObjectIdHex(id.String()) {
           project.Departments = append(project.Departments, mgo.DBRef{
-            Collection: model.DepartmentCollection,
             Database:   conf.MgoDBName,
+            Collection: model.DepartmentCollection,
             Id:         bson.ObjectIdHex(id.String()),
           })
         }
@@ -100,8 +100,8 @@ func ProjectGet(r redis.Conn, id string, project *model.Project) bool {
         id := item.Get("id")
         if bson.IsObjectIdHex(id.String()) {
           project.Missions = append(project.Missions, mgo.DBRef{
-            Collection: model.MissionCollection,
             Database:   conf.MgoDBName,
+            Collection: model.MissionCollection,
             Id:         bson.ObjectIdHex(id.String()),
           })
         }
@@ -109,8 +109,8 @@ func ProjectGet(r redis.Conn, id string, project *model.Project) bool {
     }
   }
 
-  if gin.Mode() == gin.DebugMode {
-    fmt.Println("[RDS] √√ Get |", n)
+  if gin.IsDebugging() {
+    fmt.Println("[RDS] ⚡️ Get |", n)
   }
 
   return true

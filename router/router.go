@@ -1,7 +1,7 @@
 package router
 
 import (
-  `github.com/gin-gonic/gin`
+  "github.com/gin-gonic/gin"
   "workerbook/conf"
   "workerbook/middleware"
 )
@@ -22,7 +22,7 @@ func Register(g *gin.Engine) {
   registerConsoleDepartmentRouter(console.Group("/departments"))
 
   // 注册日报相关的路由
-  // registerDailyRouter(g.Group("/dailies"))
+  registerDailyRouter(g.Group("/dailies"))
 
   // 注册项目相关的路由
   registerProjectRouter(g.Group("/projects"))

@@ -8,14 +8,8 @@ import (
   "workerbook/service"
 )
 
-func GetDepartmentsList(c *gin.Context) {
-  ctx, err := context.CreateCtx(c)
-  defer ctx.Close()
-
-  if err != nil {
-    ctx.Error(err)
-    return
-  }
+// 获取部门列表
+func GetDepartmentsList(ctx *context.New) {
 
   // get
   skip, _ := ctx.GetQueryInt("skip")
@@ -23,9 +17,6 @@ func GetDepartmentsList(c *gin.Context) {
 
   // query
   data, err := service.GetDepartmentsList(ctx, skip, limit, bson.M{})
-
-  // 过滤
-  // util.ForgetArr(data["list"], "createTime")
 
   // check
   if err != nil {
@@ -36,7 +27,7 @@ func GetDepartmentsList(c *gin.Context) {
   // return
   ctx.Success(gin.H{
     "data": data.Each(func(item model.Department) gin.H {
-      return item.GetMap()
+      return item.GetMap("createTime")
     }),
   })
 }

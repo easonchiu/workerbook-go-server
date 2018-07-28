@@ -16,8 +16,8 @@ func DepartmentDel(r redis.Conn, id string) error {
   n := fmt.Sprintf("%v:%v:%v", conf.MgoDBName, model.DepartmentCollection, id)
   _, err := r.Do("DEL", n)
 
-  if gin.Mode() == gin.DebugMode {
-    fmt.Println("[RDS] ∆∆ Del |", n)
+  if gin.IsDebugging() {
+    fmt.Println("[RDS] 🗑 Del |", n)
   }
 
   return err
@@ -35,8 +35,8 @@ func DepartmentSet(r redis.Conn, department *model.Department) {
   n := fmt.Sprintf("%v:%v:%v", conf.MgoDBName, model.DepartmentCollection, department.Id.Hex())
   r.Do("SET", n, bytes)
 
-  if gin.Mode() == gin.DebugMode {
-    fmt.Println("[RDS] √√ Set |", n)
+  if gin.IsDebugging() {
+    fmt.Println("[RDS] ✨ Set |", n)
   }
 }
 
@@ -52,8 +52,8 @@ func DepartmentGet(r redis.Conn, id string, department *model.Department) bool {
   res := gjson.ParseBytes(data.([]byte))
 
   if !res.Exists() {
-    if gin.Mode() == gin.DebugMode {
-      fmt.Println("[RDS] ∆∆ Get |", n)
+    if gin.IsDebugging() {
+      fmt.Println("[RDS] ⚠️ Get |", n)
     }
     return false
   }
@@ -61,8 +61,8 @@ func DepartmentGet(r redis.Conn, id string, department *model.Department) bool {
   did := res.Get("id").String()
 
   if !bson.IsObjectIdHex(did) {
-    if gin.Mode() == gin.DebugMode {
-      fmt.Println("[RDS] ∆∆ Get |", n)
+    if gin.IsDebugging() {
+      fmt.Println("[RDS] ⚠️ Get |", n)
     }
     return false
   }
@@ -73,8 +73,8 @@ func DepartmentGet(r redis.Conn, id string, department *model.Department) bool {
   department.UserCount = int(res.Get("userCount").Int())
   department.Exist = res.Get("exist").Bool()
 
-  if gin.Mode() == gin.DebugMode {
-    fmt.Println("[RDS] √√ Get |", n)
+  if gin.IsDebugging() {
+    fmt.Println("[RDS] ⚡️ Get |", n)
   }
 
   return true

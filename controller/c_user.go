@@ -10,14 +10,7 @@ import (
 )
 
 // 创建用户
-func C_CreateUser(c *gin.Context) {
-  ctx, err := context.CreateCtx(c)
-  defer ctx.Close()
-
-  if err != nil {
-    ctx.Error(err)
-    return
-  }
+func C_CreateUser(ctx *context.New) {
 
   // get
   nickname, _ := ctx.GetRaw("nickname")
@@ -39,7 +32,7 @@ func C_CreateUser(c *gin.Context) {
   }
 
   // insert
-  err = service.CreateUser(ctx, data, departmentId)
+  err := service.CreateUser(ctx, data, departmentId)
 
   // check
   if err != nil {
@@ -52,14 +45,7 @@ func C_CreateUser(c *gin.Context) {
 }
 
 // 修改用户
-func C_UpdateUser(c *gin.Context) {
-  ctx, err := context.CreateCtx(c)
-  defer ctx.Close()
-
-  if err != nil {
-    ctx.Error(err)
-    return
-  }
+func C_UpdateUser(ctx *context.New) {
 
   // get
   id, _ := ctx.GetParam("id")
@@ -87,7 +73,7 @@ func C_UpdateUser(c *gin.Context) {
     data["status"] = status
   }
 
-  err = service.UpdateUser(ctx, id, data)
+  err := service.UpdateUser(ctx, id, data)
 
   // check
   if err != nil {
@@ -99,14 +85,7 @@ func C_UpdateUser(c *gin.Context) {
 }
 
 // 获取用户列表
-func C_GetUsersList(c *gin.Context) {
-  ctx, err := context.CreateCtx(c)
-  defer ctx.Close()
-
-  if err != nil {
-    ctx.Error(err)
-    return
-  }
+func C_GetUsersList(ctx *context.New) {
 
   // get
   departmentId, didExist := ctx.GetQuery("departmentId")
@@ -146,14 +125,7 @@ func C_GetUsersList(c *gin.Context) {
 }
 
 // 获取用户信息
-func C_GetUserOne(c *gin.Context) {
-  ctx, err := context.CreateCtx(c)
-  defer ctx.Close()
-
-  if err != nil {
-    ctx.Error(err)
-    return
-  }
+func C_GetUserOne(ctx *context.New) {
 
   // get
   id, _ := ctx.GetParam("id")
@@ -174,20 +146,15 @@ func C_GetUserOne(c *gin.Context) {
 }
 
 // 删除用户
-func C_DelUserOne(c *gin.Context) {
-  ctx, err := context.CreateCtx(c)
-  defer ctx.Close()
-
-  if err != nil {
-    ctx.Error(err)
-    return
-  }
+func C_DelUserOne(ctx *context.New) {
 
   // get
   id, _ := ctx.GetParam("id")
 
   // query
-  err = service.DelUserById(ctx, id)
+  err := service.UpdateUser(ctx, id, bson.M{
+    "exist": false,
+  })
 
   // check
   if err != nil {

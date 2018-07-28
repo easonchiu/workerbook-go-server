@@ -9,14 +9,7 @@ import (
 )
 
 // 创建部门
-func C_CreateDepartment(c *gin.Context) {
-  ctx, err := context.CreateCtx(c)
-  defer ctx.Close()
-
-  if err != nil {
-    ctx.Error(err)
-    return
-  }
+func C_CreateDepartment(ctx *context.New) {
 
   // get
   name, _ := ctx.GetRaw("name")
@@ -27,7 +20,7 @@ func C_CreateDepartment(c *gin.Context) {
   }
 
   // insert
-  err = service.CreateDepartment(ctx, data)
+  err := service.CreateDepartment(ctx, data)
 
   // check
   if err != nil {
@@ -40,20 +33,13 @@ func C_CreateDepartment(c *gin.Context) {
 }
 
 // 删除单个部门
-func C_DelDepartmentOne(c *gin.Context) {
-  ctx, err := context.CreateCtx(c)
-  defer ctx.Close()
-
-  if err != nil {
-    ctx.Error(err)
-    return
-  }
+func C_DelDepartmentOne(ctx *context.New) {
 
   // get
   id, _ := ctx.GetParam("id")
 
   // query
-  err = service.DelDepartmentById(ctx, id)
+  err := service.DelDepartmentById(ctx, id)
 
   // check
   if err != nil {
@@ -66,14 +52,7 @@ func C_DelDepartmentOne(c *gin.Context) {
 }
 
 // 获取部门列表
-func C_GetDepartmentsList(c *gin.Context) {
-  ctx, err := context.CreateCtx(c)
-  defer ctx.Close()
-
-  if err != nil {
-    ctx.Error(err)
-    return
-  }
+func C_GetDepartmentsList(ctx *context.New) {
 
   // get
   skip, _ := ctx.GetQueryInt("skip")
@@ -97,14 +76,7 @@ func C_GetDepartmentsList(c *gin.Context) {
 }
 
 // 获取单个部门
-func C_GetDepartmentOne(c *gin.Context) {
-  ctx, err := context.CreateCtx(c)
-  defer ctx.Close()
-
-  if err != nil {
-    ctx.Error(err)
-    return
-  }
+func C_GetDepartmentOne(ctx *context.New) {
 
   // get
   id, _ := ctx.GetParam("id")
@@ -125,14 +97,7 @@ func C_GetDepartmentOne(c *gin.Context) {
 }
 
 // 修改部门
-func C_UpdateDepartment(c *gin.Context) {
-  ctx, err := context.CreateCtx(c)
-  defer ctx.Close()
-
-  if err != nil {
-    ctx.Error(err)
-    return
-  }
+func C_UpdateDepartment(ctx *context.New) {
 
   // get
   id, _ := ctx.GetParam("id")
@@ -144,7 +109,7 @@ func C_UpdateDepartment(c *gin.Context) {
   }
 
   // update
-  err = service.UpdateDepartment(ctx, id, data)
+  err := service.UpdateDepartment(ctx, id, data)
 
   // check
   if err != nil {

@@ -14,11 +14,18 @@ import (
 )
 
 // 创建用户
-func CreateUser(ctx *context.Context, data model.User, departmentId string) error {
+func CreateUser(ctx *context.New, data model.User, departmentId string) error {
 
   // 是否存在的标志
   data.Exist = true
   data.CreateTime = time.Now()
+  ownUserId, _ := ctx.Get(conf.OWN_USER_ID)
+  data.Editor = mgo.DBRef{
+    Database:   conf.MgoDBName,
+    Collection: model.UserCollection,
+    Id:         bson.ObjectIdHex(ownUserId),
+  }
+  data.EditTime = time.Now()
 
   // 用户状态
   data.Status = 1
@@ -78,9 +85,9 @@ func CreateUser(ctx *context.Context, data model.User, departmentId string) erro
 
   // save department id
   data.Department = mgo.DBRef{
-    Id:         bson.ObjectIdHex(departmentId),
-    Collection: model.DepartmentCollection,
     Database:   conf.MgoDBName,
+    Collection: model.DepartmentCollection,
+    Id:         bson.ObjectIdHex(departmentId),
   }
 
   // insert it.
@@ -97,7 +104,11 @@ func CreateUser(ctx *context.Context, data model.User, departmentId string) erro
 }
 
 // 更新用户
-func UpdateUser(ctx *context.Context, id string, data bson.M) error {
+func UpdateUser(ctx *context.New, id string, data bson.M) error {
+
+  if data == nil {
+    return nil
+  }
 
   // check
   errgo.ErrorIfStringNotObjectId(id, errgo.ErrUserIdError)
@@ -161,16 +172,28 @@ func UpdateUser(ctx *context.Context, id string, data bson.M) error {
   err := cache.UserDel(ctx.Redis, id)
 
   if err != nil {
+    if exist, ok := data["exist"]; ok && exist.(bool) == false {
+      return errors.New(errgo.ErrDeleteUserFailed)
+    }
     return errors.New(errgo.ErrUpdateUserFailed)
   }
 
   // 更新数据
-  data["exist"] = true
+  ownUserId, _ := ctx.Get(conf.OWN_USER_ID)
+  data["editor.$id"] = bson.ObjectIdHex(ownUserId)
+  data["editTime"] = time.Now()
+
   err = ctx.MgoDB.C(model.UserCollection).UpdateId(bson.ObjectIdHex(id), bson.M{
     "$set": data,
   })
 
   if err != nil {
+    if err == mgo.ErrNotFound {
+      return errors.New(errgo.ErrUserNotFound)
+    }
+    if exist, ok := data["exist"]; ok && exist.(bool) == false {
+      return errors.New(errgo.ErrDeleteUserFailed)
+    }
     return errors.New(errgo.ErrUpdateUserFailed)
   }
 
@@ -180,50 +203,8 @@ func UpdateUser(ctx *context.Context, id string, data bson.M) error {
   return nil
 }
 
-// 根据id删除用户
-func DelUserById(ctx *context.Context, id string) error {
-
-  // check
-  errgo.ErrorIfStringNotObjectId(id, errgo.ErrUserIdError)
-
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
-    return err
-  }
-
-  // 清除缓存，缓存清成功才可以清数据，不然会有脏数据
-  err := cache.UserDel(ctx.Redis, id)
-
-  if err != nil {
-    return errors.New(errgo.ErrDeleteUserFailed)
-  }
-
-  // 删除数据
-  err = ctx.MgoDB.C(model.UserCollection).UpdateId(bson.ObjectIdHex(id), bson.M{
-    "$set": bson.M{
-      "exist": false,
-    },
-  })
-
-  if err != nil {
-    if err == mgo.ErrNotFound {
-      return errors.New(errgo.ErrUserNotFound)
-    }
-    return err
-  }
-
-  // 更新部门人数
-  err = UpdateDepartmentsUserCount(ctx)
-
-  if err != nil {
-    return errors.New(errgo.ErrDeleteUserFailed)
-  }
-
-  return nil
-}
-
 // 根据id查找用户信息
-func GetUserInfoById(ctx *context.Context, id string) (*model.User, error) {
+func GetUserInfoById(ctx *context.New, id string) (*model.User, error) {
 
   // check
   errgo.ErrorIfStringNotObjectId(id, errgo.ErrUserIdError)
@@ -258,7 +239,7 @@ func GetUserInfoById(ctx *context.Context, id string) (*model.User, error) {
 }
 
 // 用户登录并返回用户token
-func UserLogin(ctx *context.Context, username string, password string) (string, error) {
+func UserLogin(ctx *context.New, username string, password string) (string, error) {
 
   // check
   errgo.ErrorIfStringIsEmpty(username, errgo.ErrUsernameEmpty)
@@ -287,11 +268,11 @@ func UserLogin(ctx *context.Context, username string, password string) (string, 
     // create jwt
     departmentId := data.Department.Id.(bson.ObjectId)
     token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-      "iss":          "workerbook",
-      "iat":          time.Now().Unix(),
-      "departmentId": departmentId.Hex(),
-      "id":           data.Id.Hex(),
-      "role":         data.Role,
+      "iss":                  "WorkerBook",
+      "iat":                  time.Now().Unix(),
+      conf.OWN_DEPARTMENT_ID: departmentId.Hex(),
+      conf.OWN_USER_ID:       data.Id.Hex(),
+      conf.OWN_ROLE:          data.Role,
     })
 
     tokenStr, _ := token.SignedString(conf.JwtSecret)
@@ -301,7 +282,7 @@ func UserLogin(ctx *context.Context, username string, password string) (string, 
 }
 
 // 获取用户列表(当limit都为0时，查找全部)
-func GetUsersList(ctx *context.Context, skip int, limit int, query bson.M) (*model.UserList, error) {
+func GetUsersList(ctx *context.New, skip int, limit int, query bson.M) (*model.UserList, error) {
 
   // check
   if skip != 0 {

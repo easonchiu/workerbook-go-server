@@ -14,11 +14,18 @@ import (
 )
 
 // 创建项目
-func CreateProject(ctx *context.Context, data model.Project, departments []gjson.Result) error {
+func CreateProject(ctx *context.New, data model.Project, departments []gjson.Result) error {
 
   // 是否存在的标志
   data.Exist = true
   data.CreateTime = time.Now()
+  ownUserId, _ := ctx.Get(conf.OWN_USER_ID)
+  data.Editor = mgo.DBRef{
+    Database:   conf.MgoDBName,
+    Collection: model.UserCollection,
+    Id:         bson.ObjectIdHex(ownUserId),
+  }
+  data.EditTime = time.Now()
 
   // check
   errgo.ErrorIfStringIsEmpty(data.Name, errgo.ErrProjectNameEmpty)
@@ -35,8 +42,8 @@ func CreateProject(ctx *context.Context, data model.Project, departments []gjson
   for _, department := range departments {
     if bson.IsObjectIdHex(department.Str) {
       departmentsRef = append(departmentsRef, mgo.DBRef{
-        Collection: model.DepartmentCollection,
         Database:   conf.MgoDBName,
+        Collection: model.DepartmentCollection,
         Id:         bson.ObjectIdHex(department.Str),
       })
     } else {
@@ -62,7 +69,11 @@ func CreateProject(ctx *context.Context, data model.Project, departments []gjson
 }
 
 // 更新项目
-func UpdateProject(ctx *context.Context, id string, data bson.M) error {
+func UpdateProject(ctx *context.New, id string, data bson.M) error {
+
+  if data == nil {
+    return nil
+  }
 
   // check
   errgo.ErrorIfStringNotObjectId(id, errgo.ErrProjectIdError)
@@ -90,8 +101,8 @@ func UpdateProject(ctx *context.Context, id string, data bson.M) error {
     for _, department := range departments {
       if bson.IsObjectIdHex(department.Str) {
         departmentsRef = append(departmentsRef, mgo.DBRef{
-          Collection: model.DepartmentCollection,
           Database:   conf.MgoDBName,
+          Collection: model.DepartmentCollection,
           Id:         bson.ObjectIdHex(department.Str),
         })
       } else {
@@ -110,16 +121,28 @@ func UpdateProject(ctx *context.Context, id string, data bson.M) error {
   err := cache.ProjectDel(ctx.Redis, id)
 
   if err != nil {
+    if exist, ok := data["exist"]; ok && exist.(bool) == false {
+      return errors.New(errgo.ErrDeleteProjectFailed)
+    }
     return errors.New(errgo.ErrUpdateProjectFailed)
   }
 
   // update
-  data["exist"] = true
+  ownUserId, _ := ctx.Get(conf.OWN_USER_ID)
+  data["editor.$id"] = bson.ObjectIdHex(ownUserId)
+  data["editTime"] = time.Now()
+
   err = ctx.MgoDB.C(model.ProjectCollection).UpdateId(bson.ObjectIdHex(id), bson.M{
     "$set": data,
   })
 
   if err != nil {
+    if err == mgo.ErrNotFound {
+      return errors.New(errgo.ErrProjectNotFound)
+    }
+    if exist, ok := data["exist"]; ok && exist.(bool) == false {
+      return errors.New(errgo.ErrDeleteProjectFailed)
+    }
     return errors.New(errgo.ErrUpdateProjectFailed)
   }
 
@@ -127,7 +150,7 @@ func UpdateProject(ctx *context.Context, id string, data bson.M) error {
 }
 
 // 根据id查找项目
-func GetProjectInfoById(ctx *context.Context, id string) (*model.Project, error) {
+func GetProjectInfoById(ctx *context.New, id string) (*model.Project, error) {
 
   // check
   errgo.ErrorIfStringNotObjectId(id, errgo.ErrProjectIdError)
@@ -162,43 +185,8 @@ func GetProjectInfoById(ctx *context.Context, id string) (*model.Project, error)
   return data, nil
 }
 
-// 根据id删除项目
-func DelProjectById(ctx *context.Context, id string) error {
-
-  // check
-  errgo.ErrorIfStringNotObjectId(id, errgo.ErrProjectIdError)
-
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
-    return err
-  }
-
-  // 清除缓存，缓存清成功才可以清数据，不然会有脏数据
-  err := cache.ProjectDel(ctx.Redis, id)
-
-  if err != nil {
-    return errors.New(errgo.ErrDeleteProjectFailed)
-  }
-
-  // 删除数据
-  err = ctx.MgoDB.C(model.ProjectCollection).UpdateId(bson.ObjectIdHex(id), bson.M{
-    "$set": bson.M{
-      "exist": false,
-    },
-  })
-
-  if err != nil {
-    if err == mgo.ErrNotFound {
-      return errors.New(errgo.ErrProjectNotFound)
-    }
-    return errors.New(errgo.ErrDeleteProjectFailed)
-  }
-
-  return nil
-}
-
 // 查找项目列表(当limit都为0时，查找全部)
-func GetProjectsList(ctx *context.Context, skip int, limit int, query bson.M) (*model.ProjectList, error) {
+func GetProjectsList(ctx *context.New, skip int, limit int, query bson.M) (*model.ProjectList, error) {
 
   // check
   if skip != 0 {

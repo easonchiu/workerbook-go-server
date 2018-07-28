@@ -17,8 +17,8 @@ func UserDel(r redis.Conn, id string) error {
   n := fmt.Sprintf("%v:%v:%v", conf.MgoDBName, model.UserCollection, id)
   _, err := r.Do("DEL", n)
 
-  if gin.Mode() == gin.DebugMode {
-    fmt.Println("[RDS] ∆∆ Del |", n)
+  if gin.IsDebugging() {
+    fmt.Println("[RDS] 🗑 Del |", n)
   }
 
   return err
@@ -36,8 +36,8 @@ func UserSet(r redis.Conn, user *model.User) {
   n := fmt.Sprintf("%v:%v:%v", conf.MgoDBName, model.UserCollection, user.Id.Hex())
   r.Do("SET", n, bytes)
 
-  if gin.Mode() == gin.DebugMode {
-    fmt.Println("[RDS] √√ Set |", n)
+  if gin.IsDebugging() {
+    fmt.Println("[RDS] ✨ Set |", n)
   }
 }
 
@@ -53,8 +53,8 @@ func UserGet(r redis.Conn, id string, user *model.User) bool {
   res := gjson.ParseBytes(data.([]byte))
 
   if !res.Exists() {
-    if gin.Mode() == gin.DebugMode {
-      fmt.Println("[RDS] ∆∆ Get |", n)
+    if gin.IsDebugging() {
+      fmt.Println("[RDS] ⚠️ Get |", n)
     }
     return false
   }
@@ -62,8 +62,8 @@ func UserGet(r redis.Conn, id string, user *model.User) bool {
   uid := res.Get("id").String()
 
   if !bson.IsObjectIdHex(uid) {
-    if gin.Mode() == gin.DebugMode {
-      fmt.Println("[RDS] ∆∆ Get |", n)
+    if gin.IsDebugging() {
+      fmt.Println("[RDS] ⚠️ Get |", n)
     }
     return false
   }
@@ -81,14 +81,14 @@ func UserGet(r redis.Conn, id string, user *model.User) bool {
   departmentId := res.Get("department.id").String()
   if bson.IsObjectIdHex(departmentId) {
     user.Department = mgo.DBRef{
-      Collection: model.DepartmentCollection,
       Database:   conf.MgoDBName,
+      Collection: model.DepartmentCollection,
       Id:         bson.ObjectIdHex(departmentId),
     }
   }
 
-  if gin.Mode() == gin.DebugMode {
-    fmt.Println("[RDS] √√ Get |", n)
+  if gin.IsDebugging() {
+    fmt.Println("[RDS] ⚡️ Get |", n)
   }
 
   return true

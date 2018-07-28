@@ -19,7 +19,13 @@ type Mission struct {
   // 任务名
   Name string `bson:"name"`
 
-  // 进度，这个值的算法为：于次日10点结算前一天的所有日报，该天如果有用户针对该任务写日报，则每人针该进度写的值取平均
+  // 之前的进度
+  PreProgress int `bson:"preProgress"`
+
+  // 统计时间(20060102格式)
+  ChartTime string `bson:"chartTime"`
+
+  // 进度
   Progress int `bson:"progress"`
 
   // 执行人
@@ -34,11 +40,17 @@ type Mission struct {
   // 创建时间
   CreateTime time.Time `bson:"createTime"`
 
-  // 所属任务的id
-  ProjectId bson.ObjectId `bson:"projectId"`
+  // 所属任务
+  Project mgo.DBRef `bson:"project"`
 
   // 是否存在
   Exist bool `bson:"exist"`
+
+  // 操作人
+  Editor mgo.DBRef `bson:"editor,omitempty"`
+
+  // 操作时间
+  EditTime time.Time `bson:"editTime,omitempty"`
 }
 
 func (m Mission) GetMap(forgets ... string) gin.H {
@@ -46,10 +58,14 @@ func (m Mission) GetMap(forgets ... string) gin.H {
     "id":         m.Id,
     "name":       m.Name,
     "createTime": m.CreateTime,
+    "chartTime": m.ChartTime,
     "deadline":   m.Deadline,
-    "projectId":  m.ProjectId,
-    "status":     m.Status,
-    "progress":   m.Progress,
+    "project": gin.H{
+      "id": m.Project.Id,
+    },
+    "status":      m.Status,
+    "preProgress": m.PreProgress,
+    "progress":    m.Progress,
     "user": gin.H{
       "id": m.User.Id,
     },

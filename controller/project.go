@@ -9,21 +9,14 @@ import (
 )
 
 // 获取用户相关的项目列表
-func GetProjectsList(c *gin.Context) {
-  ctx, err := context.CreateCtx(c)
-  defer ctx.Close()
-
-  if err != nil {
-    ctx.Error(err)
-    return
-  }
+func GetProjectsList(ctx *context.New) {
 
   // get
-  departmentId, _ := c.Get("DEPARTMENT_ID")
+  departmentId, _ := ctx.Get("DEPARTMENT_ID")
 
   // query
   data, err := service.GetProjectsList(ctx, 0, 0, bson.M{
-    "departments.$id": bson.ObjectIdHex(departmentId.(string)),
+    "departments.$id": bson.ObjectIdHex(departmentId),
   })
 
   // check

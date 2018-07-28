@@ -13,11 +13,23 @@ import (
 )
 
 // 创建任务
-func CreateMission(ctx *context.Context, data model.Mission, projectId string, userId string) error {
+func CreateMission(ctx *context.New, data model.Mission, projectId string, userId string) error {
 
   // 是否存在的标志
   data.Exist = true
+
+  data.Progress = 0
+  data.PreProgress = 0
+  data.Status = 1
   data.CreateTime = time.Now()
+  ownUserId, _ := ctx.Get(conf.OWN_USER_ID)
+  data.Editor = mgo.DBRef{
+    Database:   conf.MgoDBName,
+    Collection: model.UserCollection,
+    Id:         bson.ObjectIdHex(ownUserId),
+  }
+  data.ChartTime = "19900101"
+  data.EditTime = time.Now()
 
   // check
   errgo.ErrorIfStringIsEmpty(data.Name, errgo.ErrMissionNameEmpty)
@@ -47,7 +59,11 @@ func CreateMission(ctx *context.Context, data model.Mission, projectId string, u
   }
 
   data.Id = bson.NewObjectId()
-  data.ProjectId = bson.ObjectIdHex(projectId)
+  data.Project = mgo.DBRef{
+    Database:   conf.MgoDBName,
+    Collection: model.ProjectCollection,
+    Id:         bson.ObjectIdHex(projectId),
+  }
 
   // find user
   _, err = GetUserInfoById(ctx, userId)
@@ -57,9 +73,9 @@ func CreateMission(ctx *context.Context, data model.Mission, projectId string, u
   }
 
   data.User = mgo.DBRef{
-    Id:         bson.ObjectIdHex(userId),
-    Collection: model.UserCollection,
     Database:   conf.MgoDBName,
+    Collection: model.UserCollection,
+    Id:         bson.ObjectIdHex(userId),
   }
 
   // insert it.
@@ -70,12 +86,12 @@ func CreateMission(ctx *context.Context, data model.Mission, projectId string, u
   }
 
   // 成功后要在项目的数据中关联这条数据
-  err = ctx.MgoDB.C(model.ProjectCollection).UpdateId(data.ProjectId, bson.M{
+  err = ctx.MgoDB.C(model.ProjectCollection).UpdateId(bson.ObjectIdHex(projectId), bson.M{
     "$push": bson.M{
       "missions": mgo.DBRef{
-        Id:         data.Id,
-        Collection: model.MissionCollection,
         Database:   conf.MgoDBName,
+        Collection: model.MissionCollection,
+        Id:         data.Id,
       },
     },
   })
@@ -90,7 +106,11 @@ func CreateMission(ctx *context.Context, data model.Mission, projectId string, u
 }
 
 // 更新任务
-func UpdateMission(ctx *context.Context, id string, data bson.M) error {
+func UpdateMission(ctx *context.New, id string, data bson.M) error {
+
+  if data == nil {
+    return nil
+  }
 
   // check
   errgo.ErrorIfStringNotObjectId(id, errgo.ErrMissionIdError)
@@ -109,6 +129,11 @@ func UpdateMission(ctx *context.Context, id string, data bson.M) error {
 
   if projectId, ok := data["projectId"]; ok {
     errgo.ErrorIfStringNotObjectId(projectId.(string), errgo.ErrProjectIdError)
+  }
+
+  if progress, ok := data["progress"]; ok {
+    errgo.ErrorIfIntLessThen(progress.(int), 0, errgo.ErrMissionProgressRange)
+    errgo.ErrorIfIntMoreThen(progress.(int), 100, errgo.ErrMissionProgressRange)
   }
 
   // check
@@ -148,9 +173,9 @@ func UpdateMission(ctx *context.Context, id string, data bson.M) error {
     }
 
     data["user"] = mgo.DBRef{
-      Id:         bson.ObjectIdHex(userId.(string)),
-      Collection: model.UserCollection,
       Database:   conf.MgoDBName,
+      Collection: model.UserCollection,
+      Id:         bson.ObjectIdHex(userId.(string)),
     }
   }
 
@@ -160,33 +185,96 @@ func UpdateMission(ctx *context.Context, id string, data bson.M) error {
     return err
   }
 
-  // set project id
-  if projectId, ok := data["projectId"]; ok {
-    data["projectId"] = bson.ObjectIdHex(projectId.(string))
-  }
-
   // 先要清缓存，清成功后才可以更新数据
   err := cache.MissionDel(ctx.Redis, id)
 
   if err != nil {
+    if exist, ok := data["exist"]; ok && exist.(bool) == false {
+      return errors.New(errgo.ErrDeleteMissionFailed)
+    }
     return errors.New(errgo.ErrUpdateMissionFailed)
   }
 
   // update
-  data["exist"] = true
+  ownUserId, _ := ctx.Get(conf.OWN_USER_ID)
+  data["editor.$id"] = bson.ObjectIdHex(ownUserId)
+  data["editTime"] = time.Now()
+
   err = ctx.MgoDB.C(model.MissionCollection).UpdateId(bson.ObjectIdHex(id), bson.M{
     "$set": data,
   })
 
   if err != nil {
+    if err == mgo.ErrNotFound {
+      return errors.New(errgo.ErrMissionNotFound)
+    }
+    if exist, ok := data["exist"]; ok && exist.(bool) == false {
+      return errors.New(errgo.ErrDeleteMissionFailed)
+    }
     return errors.New(errgo.ErrUpdateMissionFailed)
   }
 
   return nil
 }
 
+// 查找任务列表(当limit都为0时，查找全部)
+func GetMissionsList(ctx *context.New, skip int, limit int, query bson.M) (*model.MissionList, error) {
+
+  // check
+  if limit != 0 {
+    errgo.ErrorIfIntLessThen(skip, 0, errgo.ErrSkipRange)
+    errgo.ErrorIfIntLessThen(limit, 1, errgo.ErrLimitRange)
+    errgo.ErrorIfIntMoreThen(limit, 100, errgo.ErrLimitRange)
+  }
+
+  if err := errgo.PopError(); err != nil {
+    errgo.ClearErrorStack()
+    return nil, err
+  }
+
+  data := new([]model.Mission)
+  query["exist"] = true
+
+  // find it
+  var err error
+  if skip == 0 && limit == 0 {
+    err = ctx.MgoDB.C(model.MissionCollection).Find(query).Sort("-createTime").All(data)
+  } else {
+    err = ctx.MgoDB.C(model.MissionCollection).Find(query).Skip(skip).Limit(limit).Sort("-createTime").All(data)
+  }
+
+  if err != nil {
+    if err == mgo.ErrNotFound {
+      return nil, errors.New(errgo.ErrMissionNotFound)
+    }
+    return nil, err
+  }
+
+  // result
+
+  if skip == 0 && limit == 0 {
+    return &model.MissionList{
+      List: data,
+    }, nil
+  }
+
+  // get count
+  count, err := ctx.MgoDB.C(model.MissionCollection).Find(query).Count()
+
+  if err != nil {
+    return nil, errors.New(errgo.ErrMissionNotFound)
+  }
+
+  return &model.MissionList{
+    List:  data,
+    Count: count,
+    Skip:  skip,
+    Limit: limit,
+  }, nil
+}
+
 // 根据id查找任务
-func GetMissionInfoById(ctx *context.Context, id string) (*model.Mission, error) {
+func GetMissionInfoById(ctx *context.New, id string) (*model.Mission, error) {
 
   // check
   errgo.ErrorIfStringNotObjectId(id, errgo.ErrMissionIdError)

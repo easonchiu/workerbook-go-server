@@ -1,73 +1,125 @@
 package model
 
 import (
+  "github.com/gin-gonic/gin"
+  "gopkg.in/mgo.v2"
   `gopkg.in/mgo.v2/bson`
   `time`
+  "workerbook/util"
 )
 
 // collection name
 const DailyCollection = "dailies"
 
-type DailyMission struct {
-  // 项目归属id
-  ProjectId string `json:"projectId"`
-
-  // 任务归属id
-  MissionId string `json:"missionId"`
-
-  // 项目名
-  ProjectName string `json:"projectName"`
-
-  // 任务名
-  MissionName string `json:"missionName"`
-
-  // 任务类型 1. 评估 2. 开发 3. 测试 4. 上线
-  MissionType int `json:"missionType"`
-
-  // 任务类型中文字
-  MissionTypeText string `json:"missionTypeText"`
-
-  // 我对该任务的进度，这里的进度和任务进度不是同一个进度
-  MyProgress int `json:"myProgress"`
-}
-
 // daily schema
 type DailyItem struct {
   // id
-  Id bson.ObjectId `json:"id" bson:"_id"`
+  Id bson.ObjectId `bson:"_id"`
 
   // 内容
-  Content string `json:"record" bson:"record"`
+  Content string `bson:"content"`
 
   // 进度
-  Progress int `json:"progress"`
+  Progress int `bson:"progress"`
 
-  // 任务(如果是任务日报，进度使用的是任务的进度)
-  Mission DailyMission `json:"mission"`
+  // 任务名称
+  MissionName string `bson:"missionName"`
+
+  // 任务id
+  MissionId bson.ObjectId `bson:"missionId"`
+
+  // 项目名称
+  ProjectName string `bson:"projectName"`
+
+  // 项目id
+  ProjectId bson.ObjectId `bson:"projectId"`
 }
 
 // collection schema
 type Daily struct {
   // id
-  Id bson.ObjectId `json:"id" bson:"_id"`
+  Id bson.ObjectId `bson:"_id,omitempty"`
 
-  // 用户id
-  Uid string `json:"uid"`
+  // 用户信息
+  User mgo.DBRef `bson:"user"`
 
-  // 用户的分组id
-  GroupId string `json:"groupId"`
+  // 部门名称(因为部门有可能删除，且这里只需要名称，所以直接存下来)
+  DepartmentName string `bson:"departmentName"`
 
-  // 日期
-  Day string `json:"day"`
+  // 日期(20180201这样的格式)
+  Day string `bson:"day"`
 
   // 日报数据
-  DailyList []DailyItem `json:"dailyList" bson:"dailyList"`
+  Dailies []DailyItem `bson:"dailies"`
 
   // 发布时间
-  CreateTime time.Time `json:"createTime"`
+  CreateTime time.Time `bson:"createTime"`
 
   // 更新时间
-  UpdateTime time.Time `json:"updateTime"`
+  UpdateTime time.Time `bson:"updateTime"`
 }
 
+func (d Daily) GetMap(forgets ... string) gin.H {
+  data := gin.H{
+    "id": d.Id,
+    "user": gin.H{
+      "id": d.User.Id,
+    },
+    "departmentName": d.DepartmentName,
+    "createTime":     d.CreateTime,
+    "updateTime":     d.UpdateTime,
+  }
 
+  var dailies []gin.H
+  for _, item := range d.Dailies {
+    dailies = append(dailies, gin.H{
+      "id":       item.Id,
+      "content":  item.Content,
+      "progress": item.Progress,
+      "mission": gin.H{
+        "name": item.MissionName,
+        "id":   item.MissionId,
+      },
+      "project": gin.H{
+        "name": item.ProjectName,
+        "id":   item.ProjectId,
+      },
+    })
+  }
+
+  data["dailies"] = dailies
+
+  util.Forget(data, forgets...)
+
+  return data
+}
+
+// 日报列表结构
+type DailyList struct {
+  List  *[]Daily
+  Count int
+  Limit int
+  Skip  int
+}
+
+// 列表的迭代器
+func (d DailyList) Each(fn func(Daily) gin.H) gin.H {
+  data := gin.H{}
+
+  if d.Limit != 0 {
+    data = gin.H{
+      "count": d.Count,
+      "limit": d.Limit,
+      "skip":  d.Skip,
+    }
+  }
+
+  var list []gin.H
+  for _, item := range *d.List {
+    list = append(list, fn(item))
+  }
+
+  data["list"] = list
+
+  return data
+}

@@ -14,7 +14,7 @@ import (
 // 如果缓存有，则从缓存获取
 // 如果缓存没有，从数据库获取，且正常获取后存到缓存
 
-func FindDepartmentRef(ctx *context.Context, ref *mgo.DBRef) (*model.Department, error) {
+func FindDepartmentRef(ctx *context.New, ref *mgo.DBRef) (*model.Department, error) {
   if ref.Id == nil {
     return nil, errors.New(errgo.ErrDepartmentIdError)
   }
@@ -37,7 +37,7 @@ func FindDepartmentRef(ctx *context.Context, ref *mgo.DBRef) (*model.Department,
   return department, nil
 }
 
-func FindUserRef(ctx *context.Context, ref *mgo.DBRef) (*model.User, error) {
+func FindUserRef(ctx *context.New, ref *mgo.DBRef) (*model.User, error) {
   if ref.Id == nil {
     return nil, errors.New(errgo.ErrUserIdError)
   }
@@ -60,7 +60,7 @@ func FindUserRef(ctx *context.Context, ref *mgo.DBRef) (*model.User, error) {
   return user, nil
 }
 
-func FindProjectRef(ctx *context.Context, ref *mgo.DBRef) (*model.Project, error) {
+func FindProjectRef(ctx *context.New, ref *mgo.DBRef) (*model.Project, error) {
   if ref.Id == nil {
     return nil, errors.New(errgo.ErrProjectIdError)
   }
@@ -83,7 +83,7 @@ func FindProjectRef(ctx *context.Context, ref *mgo.DBRef) (*model.Project, error
   return project, nil
 }
 
-func FindMissionRef(ctx *context.Context, ref *mgo.DBRef) (*model.Mission, error) {
+func FindMissionRef(ctx *context.New, ref *mgo.DBRef) (*model.Mission, error) {
   if ref.Id == nil {
     return nil, errors.New(errgo.ErrMissionIdError)
   }
