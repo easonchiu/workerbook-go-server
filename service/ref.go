@@ -23,15 +23,16 @@ func FindDepartmentRef(ctx *context.New, ref *mgo.DBRef) (*model.Department, err
 
   if ok := cache.DepartmentGet(ctx.Redis, ref.Id.(bson.ObjectId).Hex(), department); !ok {
     err := ctx.MgoDB.C(ref.Collection).Find(bson.M{
-      "_id": ref.Id.(bson.ObjectId),
+      "_id":   ref.Id.(bson.ObjectId),
       "exist": true,
     }).One(department)
 
     if err == nil {
       cache.DepartmentSet(ctx.Redis, department)
+      return department, nil
     }
 
-    return department, err
+    return department, errors.New(errgo.ErrDepartmentNotFound)
   }
 
   return department, nil
@@ -52,9 +53,10 @@ func FindUserRef(ctx *context.New, ref *mgo.DBRef) (*model.User, error) {
 
     if err == nil {
       cache.UserSet(ctx.Redis, user)
+      return user, nil
     }
 
-    return user, err
+    return user, errors.New(errgo.ErrUserNotFound)
   }
 
   return user, nil
@@ -69,15 +71,16 @@ func FindProjectRef(ctx *context.New, ref *mgo.DBRef) (*model.Project, error) {
 
   if ok := cache.ProjectGet(ctx.Redis, ref.Id.(bson.ObjectId).Hex(), project); !ok {
     err := ctx.MgoDB.C(ref.Collection).Find(bson.M{
-      "_id": ref.Id.(bson.ObjectId),
+      "_id":   ref.Id.(bson.ObjectId),
       "exist": true,
     }).One(project)
 
     if err == nil {
       cache.ProjectSet(ctx.Redis, project)
+      return project, nil
     }
 
-    return project, err
+    return project, errors.New(errgo.ErrProjectNotFound)
   }
 
   return project, nil
@@ -92,15 +95,16 @@ func FindMissionRef(ctx *context.New, ref *mgo.DBRef) (*model.Mission, error) {
 
   if ok := cache.MissionGet(ctx.Redis, ref.Id.(bson.ObjectId).Hex(), mission); !ok {
     err := ctx.MgoDB.C(ref.Collection).Find(bson.M{
-      "_id": ref.Id.(bson.ObjectId),
+      "_id":   ref.Id.(bson.ObjectId),
       "exist": true,
     }).One(mission)
 
     if err == nil {
       cache.MissionSet(ctx.Redis, mission)
+      return mission, nil
     }
 
-    return mission, err
+    return mission, errors.New(errgo.ErrMissionNotFound)
   }
 
   return mission, nil

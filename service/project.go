@@ -11,6 +11,7 @@ import (
   "workerbook/context"
   "workerbook/errgo"
   "workerbook/model"
+  "workerbook/util"
 )
 
 // 创建项目
@@ -27,6 +28,12 @@ func CreateProject(ctx *context.New, data model.Project, departments []gjson.Res
   }
   data.EditTime = time.Now()
 
+  // 修改项目结束时间到今天的最晚时间，即23:59:59
+  {
+    y1, m1, d1 := data.Deadline.Local().Date()
+    data.Deadline = time.Date(y1, m1, d1, 23, 59, 59, 0, time.Local)
+  }
+
   // check
   errgo.ErrorIfStringIsEmpty(data.Name, errgo.ErrProjectNameEmpty)
   errgo.ErrorIfLenLessThen(data.Name, 4, errgo.ErrProjectNameTooShort)
@@ -37,23 +44,24 @@ func CreateProject(ctx *context.New, data model.Project, departments []gjson.Res
     return errors.New(errgo.ErrProjectWeightError)
   }
 
-  // handle departments and check is really an objectId
+  // 验证每个部门是否正常
   var departmentsRef []mgo.DBRef
-  for _, department := range departments {
-    if bson.IsObjectIdHex(department.Str) {
-      departmentsRef = append(departmentsRef, mgo.DBRef{
-        Database:   conf.MgoDBName,
-        Collection: model.DepartmentCollection,
-        Id:         bson.ObjectIdHex(department.Str),
-      })
+  for _, item := range departments {
+    itemId := item.String()
+    if item.Exists() && bson.IsObjectIdHex(itemId) {
+      _, err := GetDepartmentInfoById(ctx, itemId)
+      if err == nil {
+        departmentsRef = append(departmentsRef, mgo.DBRef{
+          Database:   conf.MgoDBName,
+          Collection: model.DepartmentCollection,
+          Id:         bson.ObjectIdHex(itemId),
+        })
+      } else {
+        return errors.New(errgo.ErrProjectDepartmentNotFound)
+      }
     } else {
-      errgo.ErrorIfStringNotObjectId(department.Str, errgo.ErrProjectDepartmentNotFound)
+      return errors.New(errgo.ErrProjectDepartmentNotFound)
     }
-  }
-
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
-    return err
   }
 
   data.Departments = departmentsRef
@@ -72,43 +80,71 @@ func CreateProject(ctx *context.New, data model.Project, departments []gjson.Res
 func UpdateProject(ctx *context.New, id string, data bson.M) error {
 
   if data == nil {
-    return nil
+    return errors.New(errgo.ErrServerError)
   }
+
+  // 限制更新字段
+  util.Only(
+    data,
+    util.Keys{
+      "name":        util.TypeString,
+      "status":      util.TypeInt,
+      "deadline":    util.TypeTime,
+      "departments": util.TypeAny,
+      "description": util.TypeString,
+      "progress":    util.TypeInt,
+      "weight":      util.TypeInt,
+      "missions":    util.TypeAny,
+      "exist":       util.TypeBool,
+      "editor":      util.TypeString,
+      "editTime":    util.TypeTime,
+    },
+  )
 
   // check
   errgo.ErrorIfStringNotObjectId(id, errgo.ErrProjectIdError)
 
-  if name, ok := data["name"]; ok {
-    errgo.ErrorIfLenLessThen(name.(string), 4, errgo.ErrProjectNameTooShort)
-    errgo.ErrorIfLenMoreThen(name.(string), 15, errgo.ErrProjectNameTooLong)
+  if name, ok := util.GetString(data, "name"); ok {
+    errgo.ErrorIfLenLessThen(name, 4, errgo.ErrProjectNameTooShort)
+    errgo.ErrorIfLenMoreThen(name, 15, errgo.ErrProjectNameTooLong)
   }
 
-  if deadline, ok := data["deadline"]; ok {
-    errgo.ErrorIfTimeEarlierThen(deadline.(time.Time), time.Now(), errgo.ErrProjectDeadlineTooSoon)
+  // 如果有设置结束时间，将时间改为这天的最晚时间，即23:59:59
+  if deadline, ok := util.GetTime(data, "deadline"); ok {
+    y1, m1, d1 := deadline.Local().Date()
+    t := time.Date(y1, m1, d1, 23, 59, 59, 0, time.Local)
+    data["deadline"] = t
+    errgo.ErrorIfTimeEarlierThen(t, time.Now(), errgo.ErrProjectDeadlineTooSoon)
   }
 
-  if weight, ok := data["weight"]; ok {
-    weight := weight.(int)
+  if weight, ok := util.GetInt(data, "weight"); ok {
     if weight != 1 && weight != 2 && weight != 3 {
       return errors.New(errgo.ErrProjectWeightError)
     }
   }
 
-  // handle departments and check is really an objectId
-  if departments, ok := data["departments"]; ok {
-    departments := departments.([]gjson.Result)
+  // 验证每个部门是否正常
+  if departments, ok := util.GetAny(data, "departments"); ok {
     var departmentsRef []mgo.DBRef
-    for _, department := range departments {
-      if bson.IsObjectIdHex(department.Str) {
-        departmentsRef = append(departmentsRef, mgo.DBRef{
-          Database:   conf.MgoDBName,
-          Collection: model.DepartmentCollection,
-          Id:         bson.ObjectIdHex(department.Str),
-        })
+    departments := departments.([]gjson.Result)
+    for _, item := range departments {
+      itemId := item.String()
+      if item.Exists() && bson.IsObjectIdHex(itemId) {
+        _, err := GetDepartmentInfoById(ctx, itemId)
+        if err == nil {
+          departmentsRef = append(departmentsRef, mgo.DBRef{
+            Database:   conf.MgoDBName,
+            Collection: model.DepartmentCollection,
+            Id:         bson.ObjectIdHex(itemId),
+          })
+        } else {
+          return errors.New(errgo.ErrProjectDepartmentNotFound)
+        }
       } else {
-        errgo.ErrorIfStringNotObjectId(department.Str, errgo.ErrProjectDepartmentNotFound)
+        return errors.New(errgo.ErrProjectDepartmentNotFound)
       }
     }
+
     data["departments"] = departmentsRef
   }
 
@@ -121,7 +157,7 @@ func UpdateProject(ctx *context.New, id string, data bson.M) error {
   err := cache.ProjectDel(ctx.Redis, id)
 
   if err != nil {
-    if exist, ok := data["exist"]; ok && exist.(bool) == false {
+    if exist, ok := util.GetBool(data, "exist"); ok && exist == false {
       return errors.New(errgo.ErrDeleteProjectFailed)
     }
     return errors.New(errgo.ErrUpdateProjectFailed)
@@ -140,7 +176,7 @@ func UpdateProject(ctx *context.New, id string, data bson.M) error {
     if err == mgo.ErrNotFound {
       return errors.New(errgo.ErrProjectNotFound)
     }
-    if exist, ok := data["exist"]; ok && exist.(bool) == false {
+    if exist, ok := util.GetBool(data, "exist"); ok && exist == false {
       return errors.New(errgo.ErrDeleteProjectFailed)
     }
     return errors.New(errgo.ErrUpdateProjectFailed)

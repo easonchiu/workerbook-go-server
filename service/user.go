@@ -2,6 +2,7 @@ package service
 
 import (
   "errors"
+  "fmt"
   "github.com/jwt-go"
   "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
@@ -11,6 +12,7 @@ import (
   "workerbook/context"
   "workerbook/errgo"
   "workerbook/model"
+  "workerbook/util"
 )
 
 // 创建用户
@@ -107,27 +109,46 @@ func CreateUser(ctx *context.New, data model.User, departmentId string) error {
 func UpdateUser(ctx *context.New, id string, data bson.M) error {
 
   if data == nil {
-    return nil
+    return errors.New(errgo.ErrServerError)
   }
+  fmt.Println(data)
+
+  // 限制更新字段
+  util.Only(
+    data,
+    util.Keys{
+      "nickname":       util.TypeString,
+      "email":          util.TypeString,
+      "jobNumber":      util.TypeString,
+      "department.$id": util.TypeString,
+      "mobile":         util.TypeString,
+      "role":           util.TypeInt,
+      "title":          util.TypeString,
+      "status":         util.TypeInt,
+      "exist":          util.TypeBool,
+      "editor":         util.TypeString,
+      "editTime":       util.TypeTime,
+    },
+  )
+  fmt.Println(data)
 
   // check
   errgo.ErrorIfStringNotObjectId(id, errgo.ErrUserIdError)
 
-  if nickname, ok := data["nickname"]; ok {
-    errgo.ErrorIfLenLessThen(nickname.(string), 2, errgo.ErrNicknameTooShort)
-    errgo.ErrorIfLenMoreThen(nickname.(string), 14, errgo.ErrNicknameTooLong)
+  if nickname, ok := util.GetString(data, "nickname"); ok {
+    errgo.ErrorIfLenLessThen(nickname, 2, errgo.ErrNicknameTooShort)
+    errgo.ErrorIfLenMoreThen(nickname, 14, errgo.ErrNicknameTooLong)
   }
 
-  if departmentId, ok := data["department.$id"]; ok {
-    errgo.ErrorIfStringNotObjectId(departmentId.(string), errgo.ErrDepartmentIdError)
+  if id, ok := util.GetString(data, "department.$id"); ok {
+    errgo.ErrorIfStringNotObjectId(id, errgo.ErrDepartmentIdError)
   }
 
-  if title, ok := data["title"]; ok {
-    errgo.ErrorIfLenMoreThen(title.(string), 14, errgo.ErrUserTitleTooLong)
+  if title, ok := util.GetString(data, "title"); ok {
+    errgo.ErrorIfLenMoreThen(title, 14, errgo.ErrUserTitleTooLong)
   }
 
-  if role, ok := data["role"]; ok {
-    role := role.(int)
+  if role, ok := util.GetInt(data, "role"); ok {
     if role != 1 && role != 2 && role != 3 {
       return errors.New(errgo.ErrUserRoleError)
     }
@@ -139,7 +160,7 @@ func UpdateUser(ctx *context.New, id string, data bson.M) error {
   }
 
   // 姓名唯一
-  if nickname, ok := data["nickname"]; ok {
+  if nickname, ok := util.GetString(data, "nickname"); ok {
     count, err := ctx.MgoDB.C(model.UserCollection).Find(bson.M{
       "nickname": nickname,
       "exist":    true,
@@ -158,21 +179,21 @@ func UpdateUser(ctx *context.New, id string, data bson.M) error {
   }
 
   // 部门必须存在
-  if departmentId, ok := data["department.$id"]; ok {
-    _, err := GetDepartmentInfoById(ctx, departmentId.(string))
+  if departmentId, ok := util.GetString(data, "department.$id"); ok {
+    _, err := GetDepartmentInfoById(ctx, departmentId)
 
     if err != nil {
       return err
     }
 
-    data["department.$id"] = bson.ObjectIdHex(departmentId.(string))
+    data["department.$id"] = bson.ObjectIdHex(departmentId)
   }
 
   // 先要清缓存，清成功后才可以更新数据
   err := cache.UserDel(ctx.Redis, id)
 
   if err != nil {
-    if exist, ok := data["exist"]; ok && exist.(bool) == false {
+    if exist, ok := util.GetBool(data, "exist"); ok && exist == false {
       return errors.New(errgo.ErrDeleteUserFailed)
     }
     return errors.New(errgo.ErrUpdateUserFailed)
@@ -191,7 +212,7 @@ func UpdateUser(ctx *context.New, id string, data bson.M) error {
     if err == mgo.ErrNotFound {
       return errors.New(errgo.ErrUserNotFound)
     }
-    if exist, ok := data["exist"]; ok && exist.(bool) == false {
+    if exist, ok := util.GetBool(data, "exist"); ok && exist == false {
       return errors.New(errgo.ErrDeleteUserFailed)
     }
     return errors.New(errgo.ErrUpdateUserFailed)

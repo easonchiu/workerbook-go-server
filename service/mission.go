@@ -10,6 +10,7 @@ import (
   "workerbook/context"
   "workerbook/errgo"
   "workerbook/model"
+  "workerbook/util"
 )
 
 // 创建任务
@@ -30,6 +31,12 @@ func CreateMission(ctx *context.New, data model.Mission, projectId string, userI
   }
   data.ChartTime = "19900101"
   data.EditTime = time.Now()
+
+  // 修改任务结束时间到今天的最晚时间，即23:59:59
+  {
+    y1, m1, d1 := data.Deadline.Local().Date()
+    data.Deadline = time.Date(y1, m1, d1, 23, 59, 59, 0, time.Local)
+  }
 
   // check
   errgo.ErrorIfStringIsEmpty(data.Name, errgo.ErrMissionNameEmpty)
@@ -109,31 +116,41 @@ func CreateMission(ctx *context.New, data model.Mission, projectId string, userI
 func UpdateMission(ctx *context.New, id string, data bson.M) error {
 
   if data == nil {
-    return nil
+    return errors.New(errgo.ErrServerError)
   }
+
+  // 限制更新字段
+  util.Only(
+    data,
+    util.Keys{
+      "name":        util.TypeString,
+      "preProgress": util.TypeInt,
+      "progress":    util.TypeInt,
+      "chartTime":   util.TypeTime,
+      "user":        util.TypeBsonM,
+      "deadline":    util.TypeTime,
+      "status":      util.TypeInt,
+      "project":     util.TypeBsonM,
+      "exist":       util.TypeBool,
+      "editor":      util.TypeBsonM,
+      "editTime":    util.TypeTime,
+    },
+  )
 
   // check
   errgo.ErrorIfStringNotObjectId(id, errgo.ErrMissionIdError)
 
-  if name, ok := data["name"]; ok {
-    errgo.ErrorIfLenMoreThen(name.(string), 15, errgo.ErrMissionNameTooLong)
+  if name, ok := util.GetString(data, "name"); ok {
+    errgo.ErrorIfLenMoreThen(name, 15, errgo.ErrMissionNameTooLong)
   }
 
-  if deadline, ok := data["deadline"]; ok {
-    errgo.ErrorIfTimeEarlierThen(deadline.(time.Time), time.Now(), errgo.ErrMissionDeadlineTooSoon)
+  if userId, ok := util.GetString(data, "userId"); ok {
+    errgo.ErrorIfStringNotObjectId(userId, errgo.ErrUserIdError)
   }
 
-  if userId, ok := data["userId"]; ok {
-    errgo.ErrorIfStringNotObjectId(userId.(string), errgo.ErrUserIdError)
-  }
-
-  if projectId, ok := data["projectId"]; ok {
-    errgo.ErrorIfStringNotObjectId(projectId.(string), errgo.ErrProjectIdError)
-  }
-
-  if progress, ok := data["progress"]; ok {
-    errgo.ErrorIfIntLessThen(progress.(int), 0, errgo.ErrMissionProgressRange)
-    errgo.ErrorIfIntMoreThen(progress.(int), 100, errgo.ErrMissionProgressRange)
+  if progress, ok := util.GetInt(data, "progress"); ok {
+    errgo.ErrorIfIntLessThen(progress, 0, errgo.ErrMissionProgressRange)
+    errgo.ErrorIfIntMoreThen(progress, 100, errgo.ErrMissionProgressRange)
   }
 
   // check
@@ -142,31 +159,36 @@ func UpdateMission(ctx *context.New, id string, data bson.M) error {
     return err
   }
 
-  // 查找项目
-  if projectId, ok := data["projectId"]; ok {
-    if !bson.IsObjectIdHex(projectId.(string)) {
-      return errors.New(errgo.ErrProjectIdError)
-    }
-
-    var project = new(model.Project)
-    err := ctx.MgoDB.C(model.ProjectCollection).Find(bson.M{
-      "_id":   bson.ObjectIdHex(projectId.(string)),
-      "exist": true,
-    }).One(project)
+  // 找到这个任务和项目
+  if deadline, ok := util.GetTime(data, "deadline"); ok {
+    mission, err := GetMissionInfoById(ctx, id)
 
     if err != nil {
-      return errors.New(errgo.ErrProjectNotFound)
+      return err
     }
 
-    // 任务截至时间不能晚于项目截至时间
-    if deadline, ok := data["deadline"]; ok {
-      errgo.ErrorIfTimeLaterThen(deadline.(time.Time), project.Deadline, errgo.ErrMissionDeadlineTooLate)
+    project, err := FindProjectRef(ctx, &mission.Project)
+
+    if err != nil {
+      return err
     }
+
+    // 如果有设置结束时间，将时间改为这天的最晚时间，即23:59:59
+    // 任务截至时间不能晚于项目截至时间，不能早于当前时间
+    y1, m1, d1 := deadline.Local().Date()
+    t := time.Date(y1, m1, d1, 23, 59, 59, 0, time.Local)
+    data["deadline"] = t
+
+    errgo.ErrorIfTimeEarlierThen(t, time.Now(), errgo.ErrMissionDeadlineTooSoon)
+    errgo.ErrorIfTimeLaterThen(t, project.Deadline, errgo.ErrMissionDeadlineTooLate)
+  } else {
+    // 没有项目id时不允许修改任务结束时间
+    delete(data, "deadline")
   }
 
   // 查找执行人
-  if userId, ok := data["userId"]; ok {
-    _, err := GetUserInfoById(ctx, userId.(string))
+  if userId, ok := util.GetString(data, "userId"); ok {
+    _, err := GetUserInfoById(ctx, userId)
 
     if err != nil {
       return err
@@ -175,7 +197,7 @@ func UpdateMission(ctx *context.New, id string, data bson.M) error {
     data["user"] = mgo.DBRef{
       Database:   conf.MgoDBName,
       Collection: model.UserCollection,
-      Id:         bson.ObjectIdHex(userId.(string)),
+      Id:         bson.ObjectIdHex(userId),
     }
   }
 
@@ -189,7 +211,7 @@ func UpdateMission(ctx *context.New, id string, data bson.M) error {
   err := cache.MissionDel(ctx.Redis, id)
 
   if err != nil {
-    if exist, ok := data["exist"]; ok && exist.(bool) == false {
+    if exist, ok := util.GetBool(data, "exist"); ok && exist == false {
       return errors.New(errgo.ErrDeleteMissionFailed)
     }
     return errors.New(errgo.ErrUpdateMissionFailed)
@@ -208,7 +230,7 @@ func UpdateMission(ctx *context.New, id string, data bson.M) error {
     if err == mgo.ErrNotFound {
       return errors.New(errgo.ErrMissionNotFound)
     }
-    if exist, ok := data["exist"]; ok && exist.(bool) == false {
+    if exist, ok := util.GetBool(data, "exist"); ok && exist == false {
       return errors.New(errgo.ErrDeleteMissionFailed)
     }
     return errors.New(errgo.ErrUpdateMissionFailed)

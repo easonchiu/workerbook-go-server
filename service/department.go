@@ -10,6 +10,7 @@ import (
   "workerbook/context"
   "workerbook/errgo"
   "workerbook/model"
+  "workerbook/util"
 )
 
 // 创建部门
@@ -180,8 +181,20 @@ func UpdateDepartmentsUserCount(ctx *context.New) error {
 func UpdateDepartment(ctx *context.New, id string, data bson.M) error {
 
   if data == nil {
-    return nil
+    return errors.New(errgo.ErrServerError)
   }
+
+  // 限制更新字段
+  util.Only(
+    data,
+    util.Keys{
+      "name":      util.TypeString,
+      "userCount": util.TypeInt,
+      "exist":     util.TypeBool,
+      "editor":    util.TypeBsonM,
+      "editTime":  util.TypeTime,
+    },
+  )
 
   // check
   errgo.ErrorIfStringNotObjectId(id, errgo.ErrDepartmentIdError)
@@ -192,7 +205,7 @@ func UpdateDepartment(ctx *context.New, id string, data bson.M) error {
   }
 
   // 名称唯一
-  if name, ok := data["name"]; ok {
+  if name, ok := util.GetString(data, "name"); ok {
     count, err := ctx.MgoDB.C(model.DepartmentCollection).Find(bson.M{
       "name":  name,
       "exist": true,
@@ -268,32 +281,34 @@ func DelDepartmentById(ctx *context.New, id string) error {
   ownUserId, _ := ctx.Get(conf.OWN_USER_ID)
 
   // 删除项目里相关的部门，和缓存
-  var projests []model.Project
+  projects := new([]model.Project)
 
   err = ctx.MgoDB.C(model.ProjectCollection).Find(bson.M{
     "departments.$id": bson.ObjectIdHex(id),
-  }).All(projests)
+  }).All(projects)
 
-  if err != nil && err != mgo.ErrNotFound {
+  if err != nil {
     return errors.New(errgo.ErrDeleteDepartmentFailed)
   }
 
-  for _, item := range projests {
+  for _, item := range *projects {
     cache.ProjectDel(ctx.Redis, item.Id.Hex())
   }
 
-  err = ctx.MgoDB.C(model.ProjectCollection).Update(bson.M{
-    "departments.$id": bson.ObjectIdHex(id),
-  }, bson.M{
-    "$pull": bson.M{
-      "departments": bson.M{
-        "$id": bson.ObjectIdHex(id),
+  if len(*projects) > 0 {
+    err = ctx.MgoDB.C(model.ProjectCollection).Update(bson.M{
+      "departments.$id": bson.ObjectIdHex(id),
+    }, bson.M{
+      "$pull": bson.M{
+        "departments": bson.M{
+          "$id": bson.ObjectIdHex(id),
+        },
       },
-    },
-  })
+    })
 
-  if err != nil && err != mgo.ErrNotFound {
-    return errors.New(errgo.ErrDeleteDepartmentFailed)
+    if err != nil {
+      return errors.New(errgo.ErrDeleteDepartmentFailed)
+    }
   }
 
   // 删除部门

@@ -62,6 +62,7 @@ func (p Project) GetMap(forgets ... string) gin.H {
     "createTime":  p.CreateTime,
     "progress":    p.Progress,
     "weight":      p.Weight,
+    "isTimeout":   p.Deadline.Before(time.Now()),
   }
 
   // departments
