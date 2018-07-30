@@ -40,11 +40,11 @@ func GetDepartmentUserSummary(ctx *context.New, departmentId string) (gin.H, err
     userIdList = append(userIdList, item.Id)
   }
 
-  // 获取所有正常任务
+  // 获取所有和该部门用户相关的正常任务
   missionList, err := GetMissionsList(ctx, 0, 20, bson.M{
-    // "user.$id": bson.M{
-    //   "$in": userIdList,
-    // },
+    "user.$id": bson.M{
+      "$in": userIdList,
+    },
     "status": 1,
   })
 
@@ -53,37 +53,56 @@ func GetDepartmentUserSummary(ctx *context.New, departmentId string) (gin.H, err
   }
 
   // 返回结果的数据结构
-  type resultType map[mgo.DBRef][]model.Mission
-  var result = make(resultType)
+  type resultStruct struct {
+    user     mgo.DBRef
+    missions []model.Mission
+  }
+  var result = make([]resultStruct, 0)
 
+  // 初始化返回数据的列表
   for _, item := range *userList.List {
     ref := mgo.DBRef{
       Database:   conf.MgoDBName,
       Collection: model.UserCollection,
       Id:         item.Id,
     }
-    result[ref] = []model.Mission{}
+    result = append(result, resultStruct{
+      user:     ref,
+      missions: []model.Mission{},
+    })
   }
 
+  // 判断用户在该结构体列表内的索引
+  var indexOf = func(list []resultStruct, user mgo.DBRef) int {
+    i := -1
+    for index, item := range list {
+      if item.user == user {
+        return index
+      }
+    }
+    return i
+  }
+
+  // 把任务放到相应的用户内
   for _, item := range *missionList.List {
-    if _, ok := result[item.User]; ok {
-      result[item.User] = append(result[item.User], item)
+    if index := indexOf(result, item.User); index != -1 {
+      result[index].missions = append(result[index].missions, item)
     }
   }
 
   // 解析返回数据
   var list []gin.H
-  for user, missions := range result {
-    u, err := FindUserRef(ctx, &user)
+  for _, item := range result {
+    u, err := FindUserRef(ctx, &item.user)
 
     if err != nil {
       break
     }
 
-    item := u.GetMap(model.REMEMBER, "id", "nickname")
+    each := u.GetMap(model.REMEMBER, "id", "nickname")
 
     ms := []gin.H{}
-    for _, m := range missions {
+    for _, m := range item.missions {
       data := m.GetMap(model.REMEMBER, "deadline", "id", "name", "project", "progress", "isTimeout")
       project, err := FindProjectRef(ctx, &m.Project)
       if err == nil {
@@ -91,13 +110,13 @@ func GetDepartmentUserSummary(ctx *context.New, departmentId string) (gin.H, err
       }
       ms = append(ms, data)
     }
-    item["missions"] = ms
+    each["missions"] = ms
 
-    list = append(list, item)
+    list = append(list, each)
   }
 
   return gin.H{
     "department": department.GetMap(model.REMEMBER, "name", "id"),
-    "list": list,
+    "list":       list,
   }, nil
 }
