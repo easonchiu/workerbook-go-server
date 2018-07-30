@@ -35,6 +35,7 @@ func UserSet(r redis.Conn, user *model.User) {
 
   n := fmt.Sprintf("%v:%v:%v", conf.MgoDBName, model.UserCollection, user.Id.Hex())
   r.Do("SET", n, bytes)
+  r.Do("EXPIRE", n, conf.RedisExpireTime)
 
   if gin.IsDebugging() {
     fmt.Println("[RDS] ✨ Set |", n)

@@ -48,10 +48,10 @@ func GetProjectsList(ctx *context.New) {
       for _, ref := range item.Missions {
         mission, err := service.FindMissionRef(ctx, &ref)
         if err == nil {
-          m := mission.GetMap()
+          m := mission.GetMap("editor", "editTime", "exist")
           user, err := service.FindUserRef(ctx, &mission.User)
           if err == nil {
-            m["user"] = user.GetMap("username", "department")
+            m["user"] = user.GetMap("username", "department", "editor", "editTime")
             missions = append(missions, m)
           }
         }

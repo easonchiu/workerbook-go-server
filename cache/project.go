@@ -35,6 +35,7 @@ func ProjectSet(r redis.Conn, project *model.Project) {
 
   n := fmt.Sprintf("%v:%v:%v", conf.MgoDBName, model.ProjectCollection, project.Id.Hex())
   r.Do("SET", n, bytes)
+  r.Do("EXPIRE", n, conf.RedisExpireTime)
 
   if gin.IsDebugging() {
     fmt.Println("[RDS] ✨ Set |", n)
@@ -108,6 +109,16 @@ func ProjectGet(r redis.Conn, id string, project *model.Project) bool {
       }
     }
   }
+
+  editorId := res.Get("editor.id").String()
+  if bson.IsObjectIdHex(editorId) {
+    project.Editor = mgo.DBRef{
+      Database:   conf.MgoDBName,
+      Collection: model.UserCollection,
+      Id:         bson.ObjectIdHex(editorId),
+    }
+  }
+  project.EditTime = res.Get("editTime").Time()
 
   if gin.IsDebugging() {
     fmt.Println("[RDS] ⚡️ Get |", n)

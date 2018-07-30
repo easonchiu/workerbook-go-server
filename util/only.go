@@ -2,6 +2,7 @@ package util
 
 import (
   "gopkg.in/mgo.v2/bson"
+  "log"
   "reflect"
   "time"
 )
@@ -18,18 +19,18 @@ const (
   TypeAny      T = "*"
 )
 
-type Keys map[string]T
-
-func isType(key interface{}, t T) bool {
+func (t T) of(key interface{}) bool {
   if t == TypeAny {
     return true
   }
   return reflect.TypeOf(key).String() == reflect.ValueOf(t).String()
 }
 
-func exist(t Keys, k string, v interface{}) bool {
+type Keys map[string]T
+
+func (t Keys) exist(k string, v interface{}) bool {
   for key, types := range t {
-    if k == key && isType(v, types) {
+    if k == key && types.of(v) {
       return true
     }
   }
@@ -39,9 +40,10 @@ func exist(t Keys, k string, v interface{}) bool {
 // bson.M只允许部分key，其他都删除
 func Only(m bson.M, t Keys) {
   for k, v := range m {
-    b := exist(t, k, v)
+    b := t.exist(k, v)
     if !b {
       delete(m, k)
+      log.Println("[TIPS] 出现不允许字段: ", k, "，已经删除")
     }
   }
 }
@@ -49,7 +51,7 @@ func Only(m bson.M, t Keys) {
 // 从bson.M中获取string类型的值
 func GetString(m bson.M, key string) (string, bool) {
   if res, ok := m[key]; ok {
-    if isType(res, TypeString) {
+    if TypeString.of(res) {
       return res.(string), true
     }
     return "", false
@@ -60,7 +62,7 @@ func GetString(m bson.M, key string) (string, bool) {
 // 从bson.M中获取int类型的值
 func GetInt(m bson.M, key string) (int, bool) {
   if res, ok := m[key]; ok {
-    if isType(res, TypeInt) {
+    if TypeInt.of(res) {
       return res.(int), true
     }
     return 0, false
@@ -71,7 +73,7 @@ func GetInt(m bson.M, key string) (int, bool) {
 // 从bson.M中获取time类型的值
 func GetTime(m bson.M, key string) (*time.Time, bool) {
   if res, ok := m[key]; ok {
-    if isType(res, TypeTime) {
+    if TypeTime.of(res) {
       t := res.(time.Time)
       return &t, true
     }
@@ -83,7 +85,7 @@ func GetTime(m bson.M, key string) (*time.Time, bool) {
 // 从bson.M中获取bool类型的值
 func GetBool(m bson.M, key string) (bool, bool) {
   if res, ok := m[key]; ok {
-    if isType(res, TypeBool) {
+    if TypeBool.of(res) {
       return res.(bool), true
     }
     return false, false
@@ -94,7 +96,7 @@ func GetBool(m bson.M, key string) (bool, bool) {
 // 从bson.M中获取objectId类型的值
 func GetObjectId(m bson.M, key string) (*bson.ObjectId, bool) {
   if res, ok := m[key]; ok {
-    if isType(res, TypeObjectId) {
+    if TypeObjectId.of(res) {
       id := res.(bson.ObjectId)
       return &id, true
     }
@@ -106,7 +108,7 @@ func GetObjectId(m bson.M, key string) (*bson.ObjectId, bool) {
 // 从bson.M中获取bson.M类型的值
 func GetBsonM(m bson.M, key string) (bson.M, bool) {
   if res, ok := m[key]; ok {
-    if isType(res, TypeObjectId) {
+    if TypeBsonM.of(res) {
       return res.(bson.M), true
     }
     return nil, false

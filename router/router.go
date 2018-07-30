@@ -32,4 +32,7 @@ func Register(g *gin.Engine) {
   registerMissionRouter(g.Group("/missions"))
   registerConsoleMissionRouter(console.Group("/missions"))
 
+  // 注册数据统计相关的路由
+  registerChartRouter(g.Group("/chart"))
+
 }

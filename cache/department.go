@@ -6,6 +6,7 @@ import (
   "github.com/gin-gonic/gin"
   "github.com/gomodule/redigo/redis"
   "github.com/tidwall/gjson"
+  "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
   "workerbook/conf"
   "workerbook/model"
@@ -34,6 +35,7 @@ func DepartmentSet(r redis.Conn, department *model.Department) {
 
   n := fmt.Sprintf("%v:%v:%v", conf.MgoDBName, model.DepartmentCollection, department.Id.Hex())
   r.Do("SET", n, bytes)
+  r.Do("EXPIRE", n, conf.RedisExpireTime)
 
   if gin.IsDebugging() {
     fmt.Println("[RDS] ✨ Set |", n)
@@ -72,6 +74,16 @@ func DepartmentGet(r redis.Conn, id string, department *model.Department) bool {
   department.Name = res.Get("name").String()
   department.UserCount = int(res.Get("userCount").Int())
   department.Exist = res.Get("exist").Bool()
+
+  editorId := res.Get("editor.id").String()
+  if bson.IsObjectIdHex(editorId) {
+    department.Editor = mgo.DBRef{
+      Database:   conf.MgoDBName,
+      Collection: model.UserCollection,
+      Id:         bson.ObjectIdHex(editorId),
+    }
+  }
+  department.EditTime = res.Get("editTime").Time()
 
   if gin.IsDebugging() {
     fmt.Println("[RDS] ⚡️ Get |", n)

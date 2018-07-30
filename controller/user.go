@@ -124,3 +124,38 @@ func GetSubUsersList(ctx *context.New) {
   // 未匹配中角色
   ctx.Error(errgo.ErrForbidden)
 }
+
+// 获取用户列表
+func GetUsersList(ctx *context.New) {
+
+  // get
+  departmentId, didExist := ctx.GetQuery("departmentId")
+  skip := ctx.GetQueryIntDefault("skip", 0)
+  limit := ctx.GetQueryIntDefault("limit", 10)
+
+  // query
+  var query = bson.M{}
+  if didExist {
+    // check id
+    if !bson.IsObjectIdHex(departmentId) {
+      ctx.Error(errgo.ErrDepartmentIdError)
+      return
+    }
+    query["department.$id"] = bson.ObjectIdHex(departmentId)
+  }
+
+  data, err := service.GetUsersList(ctx, skip, limit, query)
+
+  // check
+  if err != nil {
+    ctx.Error(err)
+    return
+  }
+
+  // return
+  ctx.Success(gin.H{
+    "data": data.Each(func(item model.User) gin.H {
+      return item.GetMap("editor", "editTime", "exist", "department", "username")
+    }),
+  })
+}

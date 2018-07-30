@@ -5,7 +5,6 @@ import (
   "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
   "time"
-  "workerbook/util"
 )
 
 // collection name
@@ -73,10 +72,21 @@ func (u User) GetMap(forgets ... string) gin.H {
     "createTime": u.CreateTime,
     "username":   u.UserName,
     "status":     u.Status,
-    "exist":      u.Exist,
+
+    "exist": u.Exist,
+    "editor": bson.M{
+      "id": u.Editor.Id,
+    },
+    "editTime": u.EditTime,
   }
 
-  util.Forget(data, forgets...)
+  if forgets != nil {
+    if forgets[0] == REMEMBER {
+      remember(data, forgets[1:]...)
+    } else {
+      forget(data, forgets...)
+    }
+  }
 
   return data
 }

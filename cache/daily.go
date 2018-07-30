@@ -35,6 +35,7 @@ func DailySet(r redis.Conn, uid string, day string, daily *model.Daily) {
 
   n := fmt.Sprintf("%v:%v:%v", conf.MgoDBName, model.DailyCollection, day)
   r.Do("HSET", n, uid, bytes)
+  r.Do("EXPIRE", n, conf.RedisExpireTime)
 
   if gin.IsDebugging() {
     fmt.Println("[RDS] ✨ Set |", n)

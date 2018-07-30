@@ -127,7 +127,7 @@ func UpdateMission(ctx *context.New, id string, data bson.M) error {
       "preProgress": util.TypeInt,
       "progress":    util.TypeInt,
       "chartTime":   util.TypeTime,
-      "user":        util.TypeBsonM,
+      "userId":      util.TypeString,
       "deadline":    util.TypeTime,
       "status":      util.TypeInt,
       "project":     util.TypeBsonM,

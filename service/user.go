@@ -287,7 +287,10 @@ func UserLogin(ctx *context.New, username string, password string) (string, erro
   } else {
 
     // create jwt
-    departmentId := data.Department.Id.(bson.ObjectId)
+    departmentId := bson.NewObjectId()
+    if data.Department.Id != nil {
+      departmentId = data.Department.Id.(bson.ObjectId)
+    }
     token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
       "iss":                  "WorkerBook",
       "iat":                  time.Now().Unix(),

@@ -43,4 +43,7 @@ func registerUserRouter(g *gin.RouterGroup) {
     middleware.Jwt,
     middleware.AllowRole(conf.RoleLeader, conf.RolePM, conf.RoleAdmin),
     context.CreateCtx(controller.GetSubUsersList))
+
+  // 获取用户列表
+  g.GET("", context.CreateCtx(controller.GetUsersList))
 }

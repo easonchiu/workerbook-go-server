@@ -124,6 +124,8 @@ func CreateDaily(ctx *context.New, data model.DailyItem, missionId string) error
     }
     dailyList = append(dailyList, item)
   }
+
+  // 这次的这条放在最后
   dailyList = append(dailyList, data)
 
   // 把修改好的数据塞回去
@@ -396,6 +398,70 @@ func DelDailyContent(ctx *context.New, id string) error {
       })
     }
   }
+
+  return nil
+}
+
+// 更新日报的任务进度
+func UpdateDailyMissionProgress(ctx *context.New, missionId string, progress int) error {
+  ownUserId, _ := ctx.Get(conf.OWN_USER_ID)
+
+  // check
+  errgo.ErrorIfIntLessThen(progress, 0, errgo.ErrDailyProgressRange)
+  errgo.ErrorIfIntMoreThen(progress, 100, errgo.ErrDailyProgressRange)
+  errgo.ErrorIfStringNotObjectId(missionId, errgo.ErrDailyIdError)
+
+  if err := errgo.PopError(); err != nil {
+    errgo.ClearErrorStack()
+    return err
+  }
+
+  // find
+  var data = new(model.Daily)
+  err := ctx.MgoDB.C(model.DailyCollection).Find(bson.M{
+    "user.$id": bson.ObjectIdHex(ownUserId),
+    "day":      time.Now().Format("20060102"),
+  }).One(data)
+
+  if err != nil {
+    if err == mgo.ErrNotFound {
+      return errors.New(errgo.ErrDailyNotFound)
+    }
+    return errors.New(errgo.ErrUpdateDailyFailed)
+  }
+
+  // 更新前必须成功清空缓存
+  err = cache.DailyDel(ctx.Redis, ownUserId, data.Day)
+
+  if err != nil {
+    return errors.New(errgo.ErrUpdateDailyFailed)
+  }
+
+  // 同步所有相同任务的进度
+  var dailyList []model.DailyItem
+  for _, item := range data.Dailies {
+    if item.MissionId.Hex() == missionId {
+      item.Progress = progress
+    }
+    dailyList = append(dailyList, item)
+  }
+
+  // 把修改好的数据塞回去
+  err = ctx.MgoDB.C(model.DailyCollection).UpdateId(data.Id, bson.M{
+    "$set": bson.M{
+      "dailies":    dailyList,
+      "updateTime": time.Now(),
+    },
+  })
+
+  if err != nil {
+    return errors.New(errgo.ErrUpdateDailyFailed)
+  }
+
+  // 更新任务进度（不管是否成功）
+  UpdateMission(ctx, missionId, bson.M{
+    "progress": progress,
+  })
 
   return nil
 }

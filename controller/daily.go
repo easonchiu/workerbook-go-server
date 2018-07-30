@@ -37,7 +37,7 @@ func CreateDaily(ctx *context.New) {
   ctx.Success(nil)
 }
 
-// 修改日报
+// 修改日报内容
 func UpdateDaily(ctx *context.New) {
 
   // get
@@ -129,4 +129,22 @@ func GetDailiesListByDay(ctx *context.New) {
       return each
     }),
   })
+}
+
+// 独立更新今天日报的任务进度
+func UpdateDailyMissionProgress(ctx *context.New) {
+  // get
+  progress, _ := ctx.GetRawInt("progress")
+  missionId, _ := ctx.GetParam("id")
+
+  err := service.UpdateDailyMissionProgress(ctx, missionId, progress)
+
+  // check
+  if err != nil {
+    ctx.Error(err)
+    return
+  }
+
+  // return
+  ctx.Success(nil)
 }

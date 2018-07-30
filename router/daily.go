@@ -25,4 +25,7 @@ func registerDailyRouter(g *gin.RouterGroup) {
 
   // 删除一条日报数据
   g.DELETE("/today", context.CreateCtx(controller.DelDaily))
+
+  // 单独更新今天日报的任务进度
+  g.PATCH("/today/mission/:id", context.CreateCtx(controller.UpdateDailyMissionProgress))
 }

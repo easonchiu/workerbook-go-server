@@ -3,9 +3,8 @@ package model
 import (
   "github.com/gin-gonic/gin"
   "gopkg.in/mgo.v2"
-  `gopkg.in/mgo.v2/bson`
-  `time`
-  "workerbook/util"
+  "gopkg.in/mgo.v2/bson"
+  "time"
 )
 
 // collection name
@@ -89,7 +88,13 @@ func (d Daily) GetMap(forgets ... string) gin.H {
 
   data["dailies"] = dailies
 
-  util.Forget(data, forgets...)
+  if forgets != nil {
+    if forgets[0] == REMEMBER {
+      remember(data, forgets[1:]...)
+    } else {
+      forget(data, forgets...)
+    }
+  }
 
   return data
 }

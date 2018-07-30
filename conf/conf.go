@@ -4,11 +4,12 @@ const (
   MgoDBName = "workerbook"
   MgoDBUrl  = "mongodb://localhost:27017/workerbook"
 
-  RedisDBUrl = "localhost:6379"
+  RedisDBUrl      = "localhost:6379"
+  RedisExpireTime = 60
 
-  OWN_USER_ID = "USER_ID"
+  OWN_USER_ID       = "USER_ID"
   OWN_DEPARTMENT_ID = "DEPARTMENT_ID"
-  OWN_ROLE = "ROLE"
+  OWN_ROLE          = "ROLE"
 )
 
 var JwtSecret = []byte("wb2018_qweasdzxc!@#")

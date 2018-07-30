@@ -5,7 +5,6 @@ import (
   "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
   "time"
-  "workerbook/util"
 )
 
 // collection name
@@ -63,6 +62,11 @@ func (p Project) GetMap(forgets ... string) gin.H {
     "progress":    p.Progress,
     "weight":      p.Weight,
     "isTimeout":   p.Deadline.Before(time.Now()),
+    "exist": p.Exist,
+    "editor": bson.M{
+      "id": p.Editor.Id,
+    },
+    "editTime": p.EditTime,
   }
 
   // departments
@@ -91,7 +95,13 @@ func (p Project) GetMap(forgets ... string) gin.H {
 
   data["missions"] = missions
 
-  util.Forget(data, forgets...)
+  if forgets != nil {
+    if forgets[0] == REMEMBER {
+      remember(data, forgets[1:]...)
+    } else {
+      forget(data, forgets...)
+    }
+  }
 
   return data
 }

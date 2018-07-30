@@ -27,7 +27,7 @@ func GetDepartmentsList(ctx *context.New) {
   // return
   ctx.Success(gin.H{
     "data": data.Each(func(item model.Department) gin.H {
-      return item.GetMap("createTime")
+      return item.GetMap("createTime", "editor", "editTime", "exist")
     }),
   })
 }

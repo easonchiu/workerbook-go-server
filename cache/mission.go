@@ -35,6 +35,7 @@ func MissionSet(r redis.Conn, mission *model.Mission) {
 
   n := fmt.Sprintf("%v:%v:%v", conf.MgoDBName, model.MissionCollection, mission.Id.Hex())
   r.Do("SET", n, bytes)
+  r.Do("EXPIRE", n, conf.RedisExpireTime)
 
   if gin.IsDebugging() {
     fmt.Println("[RDS] ✨ Set |", n)
@@ -96,6 +97,16 @@ func MissionGet(r redis.Conn, id string, mission *model.Mission) bool {
 
   mission.CreateTime = res.Get("createTime").Time()
   mission.Exist = res.Get("exist").Bool()
+
+  editorId := res.Get("editor.id").String()
+  if bson.IsObjectIdHex(editorId) {
+    mission.Editor = mgo.DBRef{
+      Database:   conf.MgoDBName,
+      Collection: model.UserCollection,
+      Id:         bson.ObjectIdHex(editorId),
+    }
+  }
+  mission.EditTime = res.Get("editTime").Time()
 
   if gin.IsDebugging() {
     fmt.Println("[RDS] ⚡️ Get |", n)
