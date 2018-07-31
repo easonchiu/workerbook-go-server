@@ -69,7 +69,6 @@ func (m Mission) GetMap(forgets ... string) gin.H {
     "user": gin.H{
       "id": m.User.Id,
     },
-
     "exist": m.Exist,
     "editor": bson.M{
       "id": m.Editor.Id,

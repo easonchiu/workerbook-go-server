@@ -17,6 +17,7 @@ func GetProjectsList(ctx *context.New) {
   // query
   data, err := service.GetProjectsList(ctx, 0, 0, bson.M{
     "departments.$id": bson.ObjectIdHex(departmentId),
+    "status":          1,
   })
 
   // check
@@ -51,8 +52,11 @@ func GetProjectsList(ctx *context.New) {
           m := mission.GetMap("editor", "editTime", "exist")
           user, err := service.FindUserRef(ctx, &mission.User)
           if err == nil {
-            m["user"] = user.GetMap("username", "department", "editor", "editTime")
-            missions = append(missions, m)
+            // 只获取正常状态的任务
+            if m["status"] == 1 {
+              m["user"] = user.GetMap("username", "department", "editor", "editTime")
+              missions = append(missions, m)
+            }
           }
         }
       }

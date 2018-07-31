@@ -8,10 +8,10 @@ import (
 
 func registerChartRouter(g *gin.RouterGroup) {
 
-  // 整体部门概要（各个部门的任务数，完成情况以及任务饱和指标）
-  g.GET("/department/summary")
+  // 整体部门概要（各个部门的人数，任务数，任务完成情况）
+  g.GET("/departments/summary", context.CreateCtx(controller.GetDepartmentsListChart))
 
-  // 部门成员概要（每个成员的任务数，完成情况）
-  g.GET("/department/summary/:id", context.CreateCtx(controller.GetDepartmentUserSummary))
+  // 部门成员概要（每个成员的任务数，任务完成情况）
+  g.GET("/departments/summary/:id", context.CreateCtx(controller.GetUsersSummaryChart))
 
 }
