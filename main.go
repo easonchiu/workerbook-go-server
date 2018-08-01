@@ -5,6 +5,7 @@ import (
   "github.com/gin-gonic/gin"
   "workerbook/db"
   "workerbook/router"
+  "workerbook/schedule"
 )
 
 func init() {
@@ -18,6 +19,9 @@ func main() {
   defer db.CloseMgoDB()
 
   defer db.RedisPool.Close()
+
+  // 定时器，异步执行
+  go schedule.Start()
 
   // initialization
   // Default With the Logger and Recovery middleware already attached

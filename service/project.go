@@ -44,6 +44,11 @@ func CreateProject(ctx *context.New, data model.Project, departments []gjson.Res
     return errors.New(errgo.ErrProjectWeightError)
   }
 
+  if err := errgo.PopError(); err != nil {
+    errgo.ClearErrorStack()
+    return err
+  }
+
   // 验证每个部门是否正常
   var departmentsRef []mgo.DBRef
   for _, item := range departments {
@@ -121,6 +126,11 @@ func UpdateProject(ctx *context.New, id string, data bson.M) error {
     if weight != 1 && weight != 2 && weight != 3 {
       return errors.New(errgo.ErrProjectWeightError)
     }
+  }
+
+  if err := errgo.PopError(); err != nil {
+    errgo.ClearErrorStack()
+    return err
   }
 
   // 验证每个部门是否正常

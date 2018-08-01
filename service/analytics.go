@@ -2,14 +2,18 @@ package service
 
 import (
   "github.com/gin-gonic/gin"
+  "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
+  "math"
+  "time"
   "workerbook/context"
   "workerbook/errgo"
   "workerbook/model"
+  "workerbook/util"
 )
 
 // 获取用户的的基础数据
-func GetUsersSummaryChartByDepartmentId(ctx *context.New, departmentId string) (gin.H, error) {
+func GetDepartmentAnalysisById(ctx *context.New, departmentId string) (gin.H, error) {
   // catch
   errgo.ErrorIfStringNotObjectId(departmentId, errgo.ErrDepartmentIdError)
 
@@ -102,14 +106,15 @@ func GetUsersSummaryChartByDepartmentId(ctx *context.New, departmentId string) (
     list = append(list, each)
   }
 
-  return gin.H{
-    "department": department.GetMap(model.REMEMBER, "name", "id"),
-    "list":       list,
-  }, nil
+  // 返回的数据
+  data := department.GetMap(model.REMEMBER, "name", "id")
+  data["users"] = list
+
+  return data, nil
 }
 
 // 获取部门列表的基础数据
-func GetDepartmentsListChart(ctx *context.New, skip int, limit int) (gin.H, error) {
+func GetDepartmentsAnalysis(ctx *context.New, skip int, limit int) (gin.H, error) {
 
   // 返回数据的结构
   type missionStruct struct {
@@ -226,4 +231,150 @@ func GetDepartmentsListChart(ctx *context.New, skip int, limit int) (gin.H, erro
     "limit": limit,
     "count": len(list),
   }, nil
+}
+
+// 获取项目列表的基础信息
+func GetProjectsAnalysis(ctx *context.New, skip int, limit int) (gin.H, error) {
+  projectsList, err := GetProjectsList(ctx, skip, limit, bson.M{})
+
+  if err != nil {
+    return nil, err
+  }
+
+  // 返回数据
+  return projectsList.Each(func(p model.Project) gin.H {
+    each := p.GetMap(model.REMEMBER, "isTimeout", "progress", "deadline", "createTime", "name", "id")
+
+    total := p.Deadline.Unix() - p.CreateTime.Unix()
+    past := time.Now().Unix() - p.CreateTime.Unix()
+
+    each["totalDay"] = math.Ceil(float64(total) / 60 / 60 / 24)
+    each["costDay"] = math.Floor(float64(past) / 60 / 60 / 24)
+    each["missionCount"] = len(p.Missions)
+
+    return each
+  }), nil
+}
+
+// 存用户的数据
+func SaveUserAnalysis(m *mgo.Database, day string) error {
+
+  // 找到这天的所有日报
+  dailies := new([]model.Daily)
+
+  err := m.C(model.DailyCollection).Find(bson.M{
+    "day": day,
+  }).All(dailies)
+
+  if err != nil {
+    return err
+  }
+
+  // 找到所有的人员
+  users := new([]model.User)
+
+  err = m.C(model.UserCollection).Find(bson.M{
+    "exist": true,
+  }).All(users)
+
+  if err != nil {
+    return err
+  }
+
+  // 找到所有的任务
+  missions := new([]model.Mission)
+
+  err = m.C(model.UserCollection).Find(nil).All(missions)
+
+  if err != nil {
+    return err
+  }
+
+  // 根据用户id找用户
+  var findUserById = func(id bson.ObjectId, list *[]model.User) *model.User {
+    for _, u := range *list {
+      if u.Id == id {
+        return &u
+      }
+    }
+    return nil
+  }
+
+  // 根据任务id找任务
+  var findMissionById = func(id bson.ObjectId, list *[]model.Mission) *model.Mission {
+    for _, u := range *list {
+      if u.Id == id {
+        return &u
+      }
+    }
+    return nil
+  }
+
+  // 整理数据
+  for _, item := range *dailies {
+    user := findUserById(item.User.Id.(bson.ObjectId), users)
+    if user != nil {
+
+      dailies := make([]model.UserAnalyticsDaily, 0)
+
+      for _, item := range item.Dailies {
+        m := findMissionById(item.MissionId, missions)
+        isTimeout := false
+        if m != nil {
+          isTimeout = m.Deadline.Before(time.Now())
+        }
+        i := model.UserAnalyticsDaily{
+          MissionId:   item.MissionId,
+          MissionName: item.MissionName,
+          Progress:    item.Progress,
+          IsTimeout:   isTimeout,
+        }
+        dailies = append(dailies, i)
+      }
+
+      analysis := model.UserAnalytics{
+        User:       item.User,
+        Department: user.Department,
+        Day:        day,
+        Dailies:    dailies,
+        CreateTime: time.Now(),
+      }
+
+      // 储存出错的话将会一直执行
+      util.Forever(func(count int) (done bool) {
+
+        // 超过5次存储，结束
+        if count > 5 {
+          return true
+        }
+
+        c, err := m.C(model.UserAnalyticsCollection).Find(bson.M{
+          "day":      day,
+          "user.$id": user.Id,
+        }).Count()
+
+        if c > 0 {
+          m.C(model.UserAnalyticsCollection).Update(bson.M{
+            "day":      day,
+            "user.$id": user.Id,
+          }, analysis)
+          // 如果有找着数据，不能重复存
+          return true
+        } else {
+          // 存数据
+          err = m.C(model.UserAnalyticsCollection).Insert(analysis)
+          // 如果存失败，重来
+          if err != nil {
+            return false
+          }
+          return true
+        }
+
+        // 其他错误，继续尝试
+        return false
+      })
+    }
+  }
+
+  return nil
 }

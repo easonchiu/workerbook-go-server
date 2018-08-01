@@ -3,22 +3,33 @@ package controller
 import (
   "github.com/gin-gonic/gin"
   "gopkg.in/mgo.v2/bson"
+  "workerbook/conf"
   "workerbook/context"
   "workerbook/model"
   "workerbook/service"
 )
 
 // 获取用户相关的项目列表
+// 如果是开发者或是leader，则拉取和自己部门有关的任务
 func GetProjectsList(ctx *context.New) {
 
   // get
-  departmentId, _ := ctx.Get("DEPARTMENT_ID")
+  departmentId, _ := ctx.Get(conf.OWN_DEPARTMENT_ID)
+  role, _ := ctx.GetInt(conf.OWN_ROLE)
+
+  skip := ctx.GetQueryIntDefault("skip", 0)
+  limit := ctx.GetQueryIntDefault("limit", 9)
 
   // query
-  data, err := service.GetProjectsList(ctx, 0, 0, bson.M{
-    "departments.$id": bson.ObjectIdHex(departmentId),
-    "status":          1,
-  })
+  query := bson.M{
+    "status": 1,
+  }
+
+  if role == conf.RoleDev || role == conf.RoleLeader {
+    query["departments.$id"] = bson.ObjectIdHex(departmentId)
+  }
+
+  data, err := service.GetProjectsList(ctx, skip, limit, query)
 
   // check
   if err != nil {

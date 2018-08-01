@@ -186,9 +186,9 @@ func UpdateMission(ctx *context.New, id string, data bson.M) error {
     delete(data, "deadline")
   }
 
-  // 查找执行人
+  // 查找执行人并存入执行人ref
   if userId, ok := util.GetString(data, "userId"); ok {
-    _, err := GetUserInfoById(ctx, userId)
+    user, err := GetUserInfoById(ctx, userId)
 
     if err != nil {
       return err
@@ -197,7 +197,7 @@ func UpdateMission(ctx *context.New, id string, data bson.M) error {
     data["user"] = mgo.DBRef{
       Database:   conf.MgoDBName,
       Collection: model.UserCollection,
-      Id:         bson.ObjectIdHex(userId),
+      Id:         user.Id,
     }
   }
 

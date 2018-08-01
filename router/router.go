@@ -33,6 +33,6 @@ func Register(g *gin.Engine) {
   registerConsoleMissionRouter(console.Group("/missions"))
 
   // 注册数据统计相关的路由
-  registerChartRouter(g.Group("/chart"))
+  registerAnalyticsRouter(g.Group("/analytics"))
 
 }
