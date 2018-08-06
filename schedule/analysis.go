@@ -19,8 +19,7 @@ func SaveAnalysis() error {
   defer closer()
 
   // 获取日期
-  day := time.Now()
-  // day := time.Now().Add(-time.Hour * 24).Format("2006-01-02")
+  day := time.Now().Add(-time.Hour * 24)
 
   // 根据日期获取相关的日报数据
   err = service.SaveAnalysisByDay(m, day)

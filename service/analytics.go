@@ -258,7 +258,7 @@ func GetProjectSummaryAnalysisById(ctx *context.New, projectId string) (*model.P
     })
   }
 
-  // 遍历查到的日报数据
+  // 遍历查到的数据
   for _, item := range *analytics {
     // 找到任务
     res := result.Find(item.MissionId)
@@ -267,13 +267,13 @@ func GetProjectSummaryAnalysisById(ctx *context.New, projectId string) (*model.P
       // 添加数据
       res.Append(&model.MissionChartData{
         Progress:  item.Progress,
+        ChartTime: item.CreateTime,
         Day:       item.Day,
       })
     }
   }
 
   return result, nil
-
 }
 
 // 存数据

@@ -100,6 +100,7 @@ func (d *DepartmentUsersAnalytics) Find(id bson.ObjectId) (user *UserAnalytics) 
 // 任务单天的数据
 type MissionChartData struct {
   Progress  int
+  ChartTime time.Time
   Day       string
 }
 
@@ -139,8 +140,8 @@ func (p *MissionChartAnalytics) GetMap() gin.H {
 
   for _, item := range p.Data {
     chartData = append(chartData, gin.H{
-      "day":       item.Day,
-      "progress":  item.Progress,
+      "day":      item.Day,
+      "progress": item.Progress,
     })
   }
 
