@@ -20,8 +20,8 @@ func main() {
 
   defer db.RedisPool.Close()
 
-  // 定时器，异步执行
-  go schedule.Start()
+  // 定时器
+  schedule.Start()
 
   // initialization
   // Default With the Logger and Recovery middleware already attached

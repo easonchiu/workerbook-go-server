@@ -34,8 +34,11 @@ func DepartmentSet(r redis.Conn, department *model.Department) {
   bytes, _ := json.Marshal(m)
 
   n := fmt.Sprintf("%v:%v:%v", conf.MgoDBName, model.DepartmentCollection, department.Id.Hex())
-  r.Do("SET", n, bytes)
-  r.Do("EXPIRE", n, conf.RedisExpireTime)
+  if conf.RedisExpireTime != 0 {
+    r.Do("SETEX", n, conf.RedisExpireTime, bytes)
+  } else {
+    r.Do("SET", n, bytes)
+  }
 
   if gin.IsDebugging() {
     fmt.Println("[RDS] ✨ Set |", n)

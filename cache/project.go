@@ -8,6 +8,8 @@ import (
   "github.com/tidwall/gjson"
   "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
+  "reflect"
+  "strconv"
   "workerbook/conf"
   "workerbook/model"
 )
@@ -34,8 +36,11 @@ func ProjectSet(r redis.Conn, project *model.Project) {
   bytes, _ := json.Marshal(m)
 
   n := fmt.Sprintf("%v:%v:%v", conf.MgoDBName, model.ProjectCollection, project.Id.Hex())
-  r.Do("SET", n, bytes)
-  r.Do("EXPIRE", n, conf.RedisExpireTime)
+  if conf.RedisExpireTime != 0 {
+    r.Do("SETEX", n, conf.RedisExpireTime, bytes)
+  } else {
+    r.Do("SET", n, bytes)
+  }
 
   if gin.IsDebugging() {
     fmt.Println("[RDS] ✨ Set |", n)
@@ -125,4 +130,53 @@ func ProjectGet(r redis.Conn, id string, project *model.Project) bool {
   }
 
   return true
+}
+
+// redis存项目进度
+func ProjectProgressSet(r redis.Conn, id string, progress int) {
+
+  n := fmt.Sprintf("%v:%v:%v:%v", conf.MgoDBName, model.ProjectCollection, "progress", id)
+
+  if conf.RedisExpireTime != 0 {
+    r.Do("SETEX", n, conf.RedisExpireTime, progress)
+  } else {
+    r.Do("SET", n, progress)
+  }
+
+  if gin.IsDebugging() {
+    fmt.Println("[RDS] ✨ Set |", n)
+  }
+}
+
+// redis获取项目进度
+func ProjectProgressGet(r redis.Conn, id string) (int, bool) {
+
+  n := fmt.Sprintf("%v:%v:%v:%v", conf.MgoDBName, model.ProjectCollection, "progress", id)
+
+  data, _ := r.Do("GET", n)
+
+  t := reflect.TypeOf(data)
+
+  if t == nil {
+    return 0, false
+  }
+
+  // 如果是整数类型，返回该值
+  if t.String() == "[]uint8" {
+    str := string(data.([]uint8))
+    i, err := strconv.Atoi(str)
+    return i, err == nil
+  }
+
+  return 0, false
+}
+
+// redis删除项目进度
+func ProjectProgressDel(r redis.Conn, id string) error {
+
+  n := fmt.Sprintf("%v:%v:%v:%v", conf.MgoDBName, model.ProjectCollection, "progress", id)
+
+  _, err := r.Do("DEL", n)
+
+  return err
 }

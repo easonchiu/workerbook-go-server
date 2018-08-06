@@ -33,22 +33,21 @@ func CreateUser(ctx *context.New, data model.User, departmentId string) error {
   data.Status = 1
 
   // check
-  errgo.ErrorIfStringIsEmpty(data.NickName, errgo.ErrNicknameEmpty)
-  errgo.ErrorIfLenLessThen(data.NickName, 2, errgo.ErrNicknameTooShort)
-  errgo.ErrorIfLenMoreThen(data.NickName, 14, errgo.ErrNicknameTooLong)
-  errgo.ErrorIfStringNotObjectId(departmentId, errgo.ErrDepartmentIdError)
-  errgo.ErrorIfStringIsEmpty(data.Title, errgo.ErrUserTitleIsEmpty)
-  errgo.ErrorIfLenMoreThen(data.Title, 14, errgo.ErrUserTitleTooLong)
+  ctx.Errgo.ErrorIfStringIsEmpty(data.NickName, errgo.ErrNicknameEmpty)
+  ctx.Errgo.ErrorIfLenLessThen(data.NickName, 2, errgo.ErrNicknameTooShort)
+  ctx.Errgo.ErrorIfLenMoreThen(data.NickName, 14, errgo.ErrNicknameTooLong)
+  ctx.Errgo.ErrorIfStringNotObjectId(departmentId, errgo.ErrDepartmentIdError)
+  ctx.Errgo.ErrorIfStringIsEmpty(data.Title, errgo.ErrUserTitleIsEmpty)
+  ctx.Errgo.ErrorIfLenMoreThen(data.Title, 14, errgo.ErrUserTitleTooLong)
   if data.Role != 1 && data.Role != 2 && data.Role != 3 {
     return errors.New(errgo.ErrUserRoleError)
   }
-  errgo.ErrorIfStringIsEmpty(data.UserName, errgo.ErrUsernameEmpty)
-  errgo.ErrorIfLenLessThen(data.UserName, 6, errgo.ErrUsernameTooShort)
-  errgo.ErrorIfLenMoreThen(data.UserName, 14, errgo.ErrUsernameTooLong)
-  errgo.ErrorIfStringIsEmpty(data.Password, errgo.ErrPasswordEmpty)
+  ctx.Errgo.ErrorIfStringIsEmpty(data.UserName, errgo.ErrUsernameEmpty)
+  ctx.Errgo.ErrorIfLenLessThen(data.UserName, 6, errgo.ErrUsernameTooShort)
+  ctx.Errgo.ErrorIfLenMoreThen(data.UserName, 14, errgo.ErrUsernameTooLong)
+  ctx.Errgo.ErrorIfStringIsEmpty(data.Password, errgo.ErrPasswordEmpty)
 
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
+  if err := ctx.Errgo.PopError(); err != nil {
     return err
   }
 
@@ -133,19 +132,19 @@ func UpdateUser(ctx *context.New, id string, data bson.M) error {
   fmt.Println(data)
 
   // check
-  errgo.ErrorIfStringNotObjectId(id, errgo.ErrUserIdError)
+  ctx.Errgo.ErrorIfStringNotObjectId(id, errgo.ErrUserIdError)
 
   if nickname, ok := util.GetString(data, "nickname"); ok {
-    errgo.ErrorIfLenLessThen(nickname, 2, errgo.ErrNicknameTooShort)
-    errgo.ErrorIfLenMoreThen(nickname, 14, errgo.ErrNicknameTooLong)
+    ctx.Errgo.ErrorIfLenLessThen(nickname, 2, errgo.ErrNicknameTooShort)
+    ctx.Errgo.ErrorIfLenMoreThen(nickname, 14, errgo.ErrNicknameTooLong)
   }
 
   if id, ok := util.GetString(data, "department.$id"); ok {
-    errgo.ErrorIfStringNotObjectId(id, errgo.ErrDepartmentIdError)
+    ctx.Errgo.ErrorIfStringNotObjectId(id, errgo.ErrDepartmentIdError)
   }
 
   if title, ok := util.GetString(data, "title"); ok {
-    errgo.ErrorIfLenMoreThen(title, 14, errgo.ErrUserTitleTooLong)
+    ctx.Errgo.ErrorIfLenMoreThen(title, 14, errgo.ErrUserTitleTooLong)
   }
 
   if role, ok := util.GetInt(data, "role"); ok {
@@ -154,8 +153,7 @@ func UpdateUser(ctx *context.New, id string, data bson.M) error {
     }
   }
 
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
+  if err := ctx.Errgo.PopError(); err != nil {
     return err
   }
 
@@ -228,10 +226,9 @@ func UpdateUser(ctx *context.New, id string, data bson.M) error {
 func GetUserInfoById(ctx *context.New, id string) (*model.User, error) {
 
   // check
-  errgo.ErrorIfStringNotObjectId(id, errgo.ErrUserIdError)
+  ctx.Errgo.ErrorIfStringNotObjectId(id, errgo.ErrUserIdError)
 
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
+  if err := ctx.Errgo.PopError(); err != nil {
     return nil, err
   }
 
@@ -263,11 +260,10 @@ func GetUserInfoById(ctx *context.New, id string) (*model.User, error) {
 func UserLogin(ctx *context.New, username string, password string) (string, error) {
 
   // check
-  errgo.ErrorIfStringIsEmpty(username, errgo.ErrUsernameEmpty)
-  errgo.ErrorIfStringIsEmpty(password, errgo.ErrPasswordEmpty)
+  ctx.Errgo.ErrorIfStringIsEmpty(username, errgo.ErrUsernameEmpty)
+  ctx.Errgo.ErrorIfStringIsEmpty(password, errgo.ErrPasswordEmpty)
 
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
+  if err := ctx.Errgo.PopError(); err != nil {
     return "", err
   }
 
@@ -310,17 +306,16 @@ func GetUsersList(ctx *context.New, skip int, limit int, query bson.M) (*model.U
 
   // check
   if skip != 0 {
-    errgo.ErrorIfIntLessThen(skip, 0, errgo.ErrSkipRange)
-    errgo.ErrorIfIntLessThen(limit, 1, errgo.ErrLimitRange)
-    errgo.ErrorIfIntMoreThen(limit, 100, errgo.ErrLimitRange)
+    ctx.Errgo.ErrorIfIntLessThen(skip, 0, errgo.ErrSkipRange)
+    ctx.Errgo.ErrorIfIntLessThen(limit, 1, errgo.ErrLimitRange)
+    ctx.Errgo.ErrorIfIntMoreThen(limit, 100, errgo.ErrLimitRange)
   }
 
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
+  if err := ctx.Errgo.PopError(); err != nil {
     return nil, err
   }
 
-  data := new([]model.User)
+  data := new([]*model.User)
   query["exist"] = true
 
   // find it
@@ -341,7 +336,8 @@ func GetUsersList(ctx *context.New, skip int, limit int, query bson.M) (*model.U
   // result
   if skip == 0 && limit == 0 {
     return &model.UserList{
-      List: data,
+      Count: len(*data),
+      List:  *data,
     }, nil
   }
 
@@ -353,7 +349,7 @@ func GetUsersList(ctx *context.New, skip int, limit int, query bson.M) (*model.U
   }
 
   return &model.UserList{
-    List:  data,
+    List:  *data,
     Count: count,
     Skip:  skip,
     Limit: limit,

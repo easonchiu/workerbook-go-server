@@ -75,7 +75,7 @@ func DailyGet(r redis.Conn, uid string, day string, daily *model.Daily) bool {
   daily.UpdateTime = res.Get("updateTime").Time()
   daily.DepartmentName = res.Get("departmentName").String()
 
-  var dailies []model.DailyItem
+  var dailies []*model.DailyItem
   if res.Get("dailies").IsArray() {
     arr := res.Get("dailies").Array()
     for _, item := range arr {
@@ -97,7 +97,7 @@ func DailyGet(r redis.Conn, uid string, day string, daily *model.Daily) bool {
         di.ProjectName = projectName
         di.ProjectId = bson.ObjectIdHex(projectId)
 
-        dailies = append(dailies, *di)
+        dailies = append(dailies, di)
       }
     }
   }

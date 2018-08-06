@@ -1,24 +1,135 @@
 package service
 
 import (
+  "github.com/easonchiu/repego"
   "github.com/gin-gonic/gin"
   "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
-  "math"
   "time"
   "workerbook/context"
   "workerbook/errgo"
   "workerbook/model"
-  "workerbook/util"
 )
 
-// 获取用户的的基础数据
-func GetDepartmentAnalysisById(ctx *context.New, departmentId string) (gin.H, error) {
-  // catch
-  errgo.ErrorIfStringNotObjectId(departmentId, errgo.ErrDepartmentIdError)
+// 获取部门列表的基础数据
+func GetDepartmentsListAnalysis(ctx *context.New, skip int, limit int) (*model.DepartmentAnalyticsList, error) {
 
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
+  // 初始化返回值结构体
+  var result = new(model.DepartmentAnalyticsList)
+
+  // 获取对应数量的部门
+  departmentList, err := GetDepartmentsList(ctx, skip, limit, bson.M{})
+
+  if err != nil {
+    return nil, err
+  }
+
+  // 根据这批部门找用户
+  userList, err := GetUsersList(ctx, 0, 0, bson.M{
+    "department.$id": bson.M{
+      "$in": departmentList.Ids(),
+    },
+    "exist": true,
+  })
+
+  if err != nil {
+    return nil, err
+  }
+
+  // 根据这批用户查找任务
+  missionList, err := GetMissionsList(ctx, 0, 0, bson.M{
+    "user.$id": bson.M{
+      "$in": userList.Ids(),
+    },
+    "status": 1,
+  })
+
+  if err != nil {
+    return nil, err
+  }
+
+  // 初始化返回结果
+  departmentList.Each(func(department *model.Department) gin.H {
+    result.List = append(result.List, &model.DepartmentAnalytics{
+      Department: department,
+      Missions:   []*model.Mission{},
+    })
+    return nil
+  })
+
+  // 根据任务查到用户，然后再把任务数据追加到相应用户的统计数据中
+  missionList.Each(func(mission *model.Mission) gin.H {
+    // 从用户列表中找相应的用户
+    if user := userList.Find(mission.User.Id.(bson.ObjectId)); user != nil {
+      // 从部门列表中找到相应的部门
+      if department := departmentList.Find(user.Department.Id.(bson.ObjectId)); department != nil {
+        // 找到部门并追加任务数据
+        if d := result.Find(department.Id); d != nil {
+          if d.Missions == nil {
+            d.Missions = []*model.Mission{}
+          }
+
+          d.Missions = append(d.Missions, mission)
+        }
+      }
+    }
+
+    return nil
+  })
+
+  result.Skip = skip
+  result.Limit = limit
+  result.Count = departmentList.Count
+
+  return result, nil
+}
+
+// 获取项目列表的基础信息
+func GetProjectsListAnalysis(ctx *context.New, skip int, limit int) (*model.ProjectListAnalytics, error) {
+
+  // 初始化返回结果的结构体
+  var result = new(model.ProjectListAnalytics)
+
+  // 找到相应数量的项目
+  projectsList, err := GetProjectsList(ctx, skip, limit, bson.M{})
+
+  if err != nil {
+    return nil, err
+  }
+
+  // 返回数据
+  projectsList.Each(func(p *model.Project) gin.H {
+
+    item := model.ProjectAnalytics{
+      Project:  p,
+      Missions: make([]*model.Mission, 0, len(p.Missions)),
+    }
+
+    for _, m := range p.Missions {
+      mission, err := FindMissionRef(ctx, &m)
+      if err == nil {
+        item.Missions = append(item.Missions, mission)
+      }
+    }
+
+    result.List = append(result.List, &item)
+
+    return nil
+  })
+
+  result.Skip = skip
+  result.Limit = limit
+  result.Count = projectsList.Count
+
+  return result, nil
+}
+
+// 获取部门的概要数据
+func GetDepartmentSummaryAnalysisById(ctx *context.New, departmentId string) (*model.DepartmentUsersAnalytics, error) {
+  // catch
+  ctx.Errgo.ErrorIfStringNotObjectId(departmentId, errgo.ErrDepartmentIdError)
+
+  if err := ctx.Errgo.PopError(); err != nil {
     return nil, err
   }
 
@@ -38,128 +149,10 @@ func GetDepartmentAnalysisById(ctx *context.New, departmentId string) (gin.H, er
     return nil, err
   }
 
-  var userIdList []bson.ObjectId
-  for _, item := range *userList.List {
-    userIdList = append(userIdList, item.Id)
-  }
-
   // 获取所有和该部门用户相关的正常任务
-  missionList, err := GetMissionsList(ctx, 0, 20, bson.M{
-    "user.$id": bson.M{
-      "$in": userIdList,
-    },
-    "status": 1,
-  })
-
-  if err != nil {
-    return nil, err
-  }
-
-  // 返回结果的数据结构
-  type resultStruct struct {
-    user     model.User
-    missions []model.Mission
-  }
-  var result = make([]resultStruct, 0)
-
-  // 初始化返回数据的列表
-  for _, item := range *userList.List {
-    result = append(result, resultStruct{
-      user:     item,
-      missions: []model.Mission{},
-    })
-  }
-
-  // 判断用户在该结构体列表内的索引
-  var indexOf = func(list []resultStruct, userId bson.ObjectId) int {
-    for i, item := range list {
-      if item.user.Id == userId {
-        return i
-      }
-    }
-    return -1
-  }
-
-  // 把任务放到相应的用户内
-  for _, item := range *missionList.List {
-    if index := indexOf(result, item.User.Id.(bson.ObjectId)); index != -1 {
-      result[index].missions = append(result[index].missions, item)
-    }
-  }
-
-  // 解析返回数据
-  var list []gin.H
-  for _, item := range result {
-    each := item.user.GetMap(model.REMEMBER, "id", "nickname")
-
-    ms := make([]gin.H, 0)
-    for _, m := range item.missions {
-      data := m.GetMap(model.REMEMBER, "deadline", "id", "name", "project", "progress", "isTimeout")
-      project, err := FindProjectRef(ctx, &m.Project)
-      if err == nil {
-        data["project"] = project.GetMap(model.REMEMBER, "name", "weight")
-      }
-      ms = append(ms, data)
-    }
-    each["missions"] = ms
-
-    list = append(list, each)
-  }
-
-  // 返回的数据
-  data := department.GetMap(model.REMEMBER, "name", "id")
-  data["users"] = list
-
-  return data, nil
-}
-
-// 获取部门列表的基础数据
-func GetDepartmentsAnalysis(ctx *context.New, skip int, limit int) (gin.H, error) {
-
-  // 返回数据的结构
-  type missionStruct struct {
-    department model.Department
-    missions   []model.Mission
-  }
-
-  var result = make([]missionStruct, 0)
-
-  // 获取对应数量的部门
-  departmentList, err := GetDepartmentsList(ctx, skip, limit, bson.M{})
-
-  if err != nil {
-    return nil, err
-  }
-
-  var departmentIdList []bson.ObjectId
-  for _, item := range *departmentList.List {
-    result = append(result, missionStruct{
-      department: item,
-      missions:   []model.Mission{},
-    })
-    departmentIdList = append(departmentIdList, item.Id)
-  }
-
-  // 根据这批部门找用户
-  userList, err := GetUsersList(ctx, 0, 0, bson.M{
-    "department.$id": bson.M{
-      "$in": departmentIdList,
-    },
-  })
-
-  if err != nil {
-    return nil, err
-  }
-
-  var userIdList []bson.ObjectId
-  for _, item := range *userList.List {
-    userIdList = append(userIdList, item.Id)
-  }
-
-  // 根据这批用户查找任务
   missionList, err := GetMissionsList(ctx, 0, 0, bson.M{
     "user.$id": bson.M{
-      "$in": userIdList,
+      "$in": userList.Ids(),
     },
     "status": 1,
   })
@@ -168,213 +161,225 @@ func GetDepartmentsAnalysis(ctx *context.New, skip int, limit int) (gin.H, error
     return nil, err
   }
 
-  // 根据任务查到用户
-  var findUser = func(mission *model.Mission, userList *model.UserList) *model.User {
-    for _, item := range *userList.List {
-      if mission.User.Id.(bson.ObjectId) == item.Id {
-        return &item
-      }
-    }
+  // 初始化返回数据的列表
+  var result = new(model.DepartmentUsersAnalytics)
+
+  result.Department = department
+
+  userList.Each(func(user *model.User) gin.H {
+    result.Users = append(result.Users, &model.UserAnalytics{
+      User:     user,
+      Missions: []*model.Mission{},
+    })
+
     return nil
-  }
+  })
 
-  // 根据用户查找部门
-  var findDepartment = func(user *model.User, departmentList *model.DepartmentList) *model.Department {
-    for _, item := range *departmentList.List {
-      if user.Department.Id.(bson.ObjectId) == item.Id {
-        return &item
-      }
+  // 把任务放到相应的用户内
+  missionList.Each(func(mission *model.Mission) gin.H {
+    if u := result.Find(mission.User.Id.(bson.ObjectId)); u != nil {
+      u.Missions = append(u.Missions, mission)
     }
+
     return nil
-  }
+  })
 
-  // 从返回结果的结构体中找到相应部门的索引
-  var indexOf = func(result []missionStruct, departmentId bson.ObjectId) int {
-    for i, item := range result {
-      if item.department.Id == departmentId {
-        return i
-      }
-    }
-    return -1
-  }
-
-  for _, item := range *missionList.List {
-    if user := findUser(&item, userList); user != nil {
-      department := findDepartment(user, departmentList)
-      index := indexOf(result, department.Id)
-      if result[index].missions == nil {
-        result[index].missions = []model.Mission{}
-      }
-      result[index].missions = append(result[index].missions, item)
-    }
-  }
-
-  // 返回数据
-  list := make([]gin.H, 0)
-  for _, item := range result {
-    each := item.department.GetMap(model.REMEMBER, "id", "name", "userCount")
-
-    missions := make([]gin.H, 0)
-    for _, item := range item.missions {
-      each := item.GetMap(model.REMEMBER, "deadline", "id", "name", "progress", "isTimeout")
-      missions = append(missions, each)
-    }
-
-    each["missions"] = missions
-
-    list = append(list, each)
-  }
-
-  return gin.H{
-    "list":  list,
-    "skip":  skip,
-    "limit": limit,
-    "count": len(list),
-  }, nil
+  return result, nil
 }
 
-// 获取项目列表的基础信息
-func GetProjectsAnalysis(ctx *context.New, skip int, limit int) (gin.H, error) {
-  projectsList, err := GetProjectsList(ctx, skip, limit, bson.M{})
+// 获取部门的详细数据
+func GetDepartmentDetailAnalysisById(ctx *context.New, departmentId string) (gin.H, error) {
+  // catch
+  ctx.Errgo.ErrorIfStringNotObjectId(departmentId, errgo.ErrDepartmentIdError)
+
+  if err := ctx.Errgo.PopError(); err != nil {
+    return nil, err
+  }
+
+  analytics := new([]model.Analytics)
+  err := ctx.MgoDB.C(model.AnalyticsCollection).Find(bson.M{
+    "departmentId": bson.ObjectIdHex(departmentId),
+  }).All(analytics)
 
   if err != nil {
     return nil, err
   }
 
-  // 返回数据
-  return projectsList.Each(func(p model.Project) gin.H {
-    each := p.GetMap(model.REMEMBER, "isTimeout", "progress", "deadline", "createTime", "name", "id")
-
-    total := p.Deadline.Unix() - p.CreateTime.Unix()
-    past := time.Now().Unix() - p.CreateTime.Unix()
-
-    each["totalDay"] = math.Ceil(float64(total) / 60 / 60 / 24)
-    each["costDay"] = math.Floor(float64(past) / 60 / 60 / 24)
-    each["missionCount"] = len(p.Missions)
-
-    return each
-  }), nil
+  return nil, nil
 }
 
-// 存用户的数据
-func SaveUserAnalysis(m *mgo.Database, day string) error {
+// 获取项目的概要数据
+func GetProjectSummaryAnalysisById(ctx *context.New, projectId string) (*model.ProjectChartAnalytics, error) {
+  // catch
+  ctx.Errgo.ErrorIfStringNotObjectId(projectId, errgo.ErrDepartmentIdError)
 
-  // 找到这天的所有日报
-  dailies := new([]model.Daily)
+  if err := ctx.Errgo.PopError(); err != nil {
+    return nil, err
+  }
 
-  err := m.C(model.DailyCollection).Find(bson.M{
-    "day": day,
-  }).All(dailies)
+  // 找到项目数据
+  project, err := GetProjectInfoById(ctx, projectId)
+
+  if err != nil {
+    return nil, err
+  }
+
+  // 找到这个项目的所有任务
+  missions, err := GetMissionsList(ctx, 0, 0, bson.M{
+    "project.$id": project.Id,
+  })
+
+  if err != nil {
+    return nil, err
+  }
+
+  // 找到数据
+  analytics := new([]model.Analytics)
+  err = ctx.MgoDB.C(model.AnalyticsCollection).Find(bson.M{
+    "projectId": project.Id,
+  }).Sort("-createTime").All(analytics)
+
+  if err != nil {
+    return nil, err
+  }
+
+  // 初始化返回数据的结构
+  var result = new(model.ProjectChartAnalytics)
+
+  result.Project = project
+
+  for _, item := range missions.List {
+    result.Missions = append(result.Missions, &model.MissionChartAnalytics{
+      Id:        item.Id,
+      Name:      item.Name,
+      Deadline:  item.Deadline,
+      IsTimeout: item.Deadline.Before(time.Now()),
+      Data:      []*model.MissionChartData{},
+    })
+  }
+
+  // 遍历查到的日报数据
+  for _, item := range *analytics {
+    // 找到任务
+    res := result.Find(item.MissionId)
+
+    if res != nil {
+      // 添加数据
+      res.Append(&model.MissionChartData{
+        Progress:  item.Progress,
+        Day:       item.Day,
+      })
+    }
+  }
+
+  return result, nil
+
+}
+
+// 存数据
+func SaveAnalysisByDay(m *mgo.Database, day time.Time) error {
+
+  // 找到所有未结束的项目
+  var projects model.ProjectList
+
+  err := m.C(model.ProjectCollection).Find(bson.M{
+    "exist":  true,
+    "status": 1,
+  }).All(&projects.List)
+
+  if err != nil {
+    return err
+  }
+
+  // 根据这些项目筛选出相应的任务
+  var missions model.MissionList
+
+  err = m.C(model.MissionCollection).Find(bson.M{
+    "project.$id": bson.M{
+      "$in": projects.Ids(),
+    },
+    "chartTime": bson.M{
+      "$ne": day.Format("2006-01-02"),
+    },
+    "exist": true,
+  }).All(&missions.List)
 
   if err != nil {
     return err
   }
 
   // 找到所有的人员
-  users := new([]model.User)
+  var users model.UserList
 
   err = m.C(model.UserCollection).Find(bson.M{
     "exist": true,
-  }).All(users)
+  }).All(&users.List)
 
   if err != nil {
     return err
   }
 
-  // 找到所有的任务
-  missions := new([]model.Mission)
+  // 存数据
+  missions.Each(func(mission *model.Mission) gin.H {
 
-  err = m.C(model.UserCollection).Find(nil).All(missions)
+    // 找到用户数据
+    user := users.Find(mission.User.Id.(bson.ObjectId))
 
-  if err != nil {
-    return err
-  }
-
-  // 根据用户id找用户
-  var findUserById = func(id bson.ObjectId, list *[]model.User) *model.User {
-    for _, u := range *list {
-      if u.Id == id {
-        return &u
-      }
-    }
-    return nil
-  }
-
-  // 根据任务id找任务
-  var findMissionById = func(id bson.ObjectId, list *[]model.Mission) *model.Mission {
-    for _, u := range *list {
-      if u.Id == id {
-        return &u
-      }
-    }
-    return nil
-  }
-
-  // 整理数据
-  for _, item := range *dailies {
-    user := findUserById(item.User.Id.(bson.ObjectId), users)
     if user != nil {
-
-      dailies := make([]model.UserAnalyticsDaily, 0)
-
-      for _, item := range item.Dailies {
-        m := findMissionById(item.MissionId, missions)
-        isTimeout := false
-        if m != nil {
-          isTimeout = m.Deadline.Before(time.Now())
-        }
-        i := model.UserAnalyticsDaily{
-          MissionId:   item.MissionId,
-          MissionName: item.MissionName,
-          Progress:    item.Progress,
-          IsTimeout:   isTimeout,
-        }
-        dailies = append(dailies, i)
+      analytics := model.Analytics{
+        UserId:       user.Id,
+        DepartmentId: user.Department.Id.(bson.ObjectId),
+        MissionId:    mission.Id,
+        Progress:     mission.Progress,
+        ProjectId:    mission.Project.Id.(bson.ObjectId),
+        Day:          day.Format("2006-01-02"),
+        CreateTime:   time.Now(),
       }
 
-      analysis := model.UserAnalytics{
-        User:       item.User,
-        Department: user.Department,
-        Day:        day,
-        Dailies:    dailies,
-        CreateTime: time.Now(),
-      }
-
-      // 储存出错的话将会一直执行
-      util.Forever(func(count int) (done bool) {
+      // 储存出错的话将会连续执行5次，5次过后，写错误日志
+      repego.Call(func(r *repego.R) {
 
         // 超过5次存储，结束
-        if count > 5 {
-          return true
+        if r.Count > 5 {
+          r.Done()
+          return
         }
 
-        c, err := m.C(model.UserAnalyticsCollection).Find(bson.M{
-          "day":      day,
-          "user.$id": user.Id,
-        }).Count()
+        // 存数据
+        err := m.C(model.AnalyticsCollection).Insert(analytics)
 
-        if c > 0 {
-          m.C(model.UserAnalyticsCollection).Update(bson.M{
-            "day":      day,
-            "user.$id": user.Id,
-          }, analysis)
-          // 如果有找着数据，不能重复存
-          return true
-        } else {
-          // 存数据
-          err = m.C(model.UserAnalyticsCollection).Insert(analysis)
-          // 如果存失败，重来
-          if err != nil {
-            return false
-          }
-          return true
+        // ok
+        if err == nil {
+
+          // 这里要想办法确保更新不出问题
+          repego.Call(func(r *repego.R) {
+            // 超过5次存储，结束
+            if r.Count > 5 {
+              r.Done()
+              return
+            }
+
+            err := m.C(model.MissionCollection).UpdateId(analytics.MissionId, bson.M{
+              "$set": bson.M{
+                "chartTime":   day,
+                "preProgress": mission.Progress,
+              },
+            })
+
+            // ok
+            if err == nil {
+              r.Done()
+            }
+          }).Do(time.Second) // 间隔时间为1s
+
+          r.Done()
         }
 
-        // 其他错误，继续尝试
-        return false
-      })
+      }).Do(time.Second) // 间隔时间为1s
+
     }
-  }
+    return nil
+  })
 
   return nil
 }

@@ -30,7 +30,7 @@ func GetOwnsMissionsList(ctx *context.New) {
 
   // return
   ctx.Success(gin.H{
-    "data": data.Each(func(item model.Mission) gin.H {
+    "data": data.Each(func(item *model.Mission) gin.H {
       each := item.GetMap("createTime", "user", "preProgress", "chartTime", "editor", "editTime", "exist")
       project, err := service.FindProjectRef(ctx, &item.Project)
       if err == nil {
@@ -69,9 +69,9 @@ func GetMissionOne(ctx *context.New) {
   user, err := service.FindUserRef(ctx, &mission.User)
 
   // return
-  data := mission.GetMap("preProgress", "chartTime", "editor", "editTime", "exist")
-  data["project"] = project.GetMap("departments", "missions", "editor", "editTime", "exist")
-  data["user"] = user.GetMap("username", "department", "editor", "editTime")
+  data := mission.GetMap(model.REMEMBER, "title", "progress", "id", "isTimeout", "deadline")
+  data["project"] = project.GetMap(model.REMEMBER, "id", "name", "isTimeout")
+  data["user"] = user.GetMap(model.REMEMBER, "nickname", "role", "status", "title", "exist")
 
   ctx.Success(gin.H{
     "data": data,

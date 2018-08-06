@@ -28,10 +28,9 @@ func CreateDepartment(ctx *context.New, data model.Department) error {
   data.EditTime = time.Now()
 
   // check
-  errgo.ErrorIfStringIsEmpty(data.Name, errgo.ErrDepartmentNameEmpty)
+  ctx.Errgo.ErrorIfStringIsEmpty(data.Name, errgo.ErrDepartmentNameEmpty)
 
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
+  if err := ctx.Errgo.PopError(); err != nil {
     return err
   }
 
@@ -60,10 +59,9 @@ func CreateDepartment(ctx *context.New, data model.Department) error {
 func GetDepartmentInfoById(ctx *context.New, id string) (*model.Department, error) {
 
   // check
-  errgo.ErrorIfStringNotObjectId(id, errgo.ErrDepartmentIdError)
+  ctx.Errgo.ErrorIfStringNotObjectId(id, errgo.ErrDepartmentIdError)
 
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
+  if err := ctx.Errgo.PopError(); err != nil {
     return nil, err
   }
 
@@ -93,17 +91,16 @@ func GetDepartmentsList(ctx *context.New, skip int, limit int, query bson.M) (*m
 
   // check
   if limit != 0 {
-    errgo.ErrorIfIntLessThen(skip, 0, errgo.ErrSkipRange)
-    errgo.ErrorIfIntLessThen(limit, 1, errgo.ErrLimitRange)
-    errgo.ErrorIfIntMoreThen(limit, 100, errgo.ErrLimitRange)
+    ctx.Errgo.ErrorIfIntLessThen(skip, 0, errgo.ErrSkipRange)
+    ctx.Errgo.ErrorIfIntLessThen(limit, 1, errgo.ErrLimitRange)
+    ctx.Errgo.ErrorIfIntMoreThen(limit, 100, errgo.ErrLimitRange)
   }
 
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
+  if err := ctx.Errgo.PopError(); err != nil {
     return nil, err
   }
 
-  data := new([]model.Department)
+  data := new([]*model.Department)
   query["exist"] = true
 
   // find it
@@ -122,10 +119,10 @@ func GetDepartmentsList(ctx *context.New, skip int, limit int, query bson.M) (*m
   }
 
   // result
-
   if skip == 0 && limit == 0 {
     return &model.DepartmentList{
-      List: data,
+      Count: len(*data),
+      List:  *data,
     }, nil
   }
 
@@ -137,7 +134,7 @@ func GetDepartmentsList(ctx *context.New, skip int, limit int, query bson.M) (*m
   }
 
   return &model.DepartmentList{
-    List:  data,
+    List:  *data,
     Count: count,
     Skip:  skip,
     Limit: limit,
@@ -197,10 +194,9 @@ func UpdateDepartment(ctx *context.New, id string, data bson.M) error {
   )
 
   // check
-  errgo.ErrorIfStringNotObjectId(id, errgo.ErrDepartmentIdError)
+  ctx.Errgo.ErrorIfStringNotObjectId(id, errgo.ErrDepartmentIdError)
 
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
+  if err := ctx.Errgo.PopError(); err != nil {
     return err
   }
 
@@ -253,10 +249,9 @@ func UpdateDepartment(ctx *context.New, id string, data bson.M) error {
 func DelDepartmentById(ctx *context.New, id string) error {
 
   // check
-  errgo.ErrorIfStringNotObjectId(id, errgo.ErrDepartmentIdError)
+  ctx.Errgo.ErrorIfStringNotObjectId(id, errgo.ErrDepartmentIdError)
 
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
+  if err := ctx.Errgo.PopError(); err != nil {
     return err
   }
 

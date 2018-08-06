@@ -34,8 +34,11 @@ func MissionSet(r redis.Conn, mission *model.Mission) {
   bytes, _ := json.Marshal(m)
 
   n := fmt.Sprintf("%v:%v:%v", conf.MgoDBName, model.MissionCollection, mission.Id.Hex())
-  r.Do("SET", n, bytes)
-  r.Do("EXPIRE", n, conf.RedisExpireTime)
+  if conf.RedisExpireTime != 0 {
+    r.Do("SETEX", n, conf.RedisExpireTime, bytes)
+  } else {
+    r.Do("SET", n, bytes)
+  }
 
   if gin.IsDebugging() {
     fmt.Println("[RDS] ✨ Set |", n)
@@ -74,7 +77,6 @@ func MissionGet(r redis.Conn, id string, mission *model.Mission) bool {
   mission.PreProgress = int(res.Get("preProgress").Int())
   mission.Progress = int(res.Get("progress").Int())
   mission.Deadline = res.Get("deadline").Time()
-  mission.Status = int(res.Get("status").Int())
   mission.ChartTime = res.Get("chartTime").String()
 
   projectId := res.Get("project.id").String()

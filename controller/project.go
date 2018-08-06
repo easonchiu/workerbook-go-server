@@ -39,8 +39,14 @@ func GetProjectsList(ctx *context.New) {
 
   // return
   ctx.Success(gin.H{
-    "data": data.Each(func(item model.Project) gin.H {
-      each := item.GetMap()
+    "data": data.Each(func(item *model.Project) gin.H {
+      each := item.GetMap("editor", "exist", "editTime")
+
+      // progress
+      if len(item.Missions) > 0 {
+        progress := service.GetProjectProgress(ctx, item.Id)
+        each["progress"] = progress
+      }
 
       // departments
       var departments []gin.H
@@ -48,7 +54,7 @@ func GetProjectsList(ctx *context.New) {
       for _, ref := range item.Departments {
         department, err := service.FindDepartmentRef(ctx, &ref)
         if err == nil {
-          departments = append(departments, department.GetMap())
+          departments = append(departments, department.GetMap(model.REMEMBER, "id", "name"))
         }
       }
 
@@ -60,14 +66,11 @@ func GetProjectsList(ctx *context.New) {
       for _, ref := range item.Missions {
         mission, err := service.FindMissionRef(ctx, &ref)
         if err == nil {
-          m := mission.GetMap("editor", "editTime", "exist")
+          m := mission.GetMap("editor", "editTime", "exist", "project")
           user, err := service.FindUserRef(ctx, &mission.User)
           if err == nil {
-            // 只获取正常状态的任务
-            if m["status"] == 1 {
-              m["user"] = user.GetMap("username", "department", "editor", "editTime")
-              missions = append(missions, m)
-            }
+            m["user"] = user.GetMap(model.REMEMBER, "id", "nickname", "exist", "status", "title", "role")
+            missions = append(missions, m)
           }
         }
       }

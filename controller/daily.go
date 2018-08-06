@@ -80,7 +80,7 @@ func GetTodayDaily(ctx *context.New) {
   // get
   ownUserId, _ := ctx.Get(conf.OWN_USER_ID)
 
-  daily, err := service.GetDailyByDay(ctx, ownUserId, time.Now().Format("20060102"))
+  daily, err := service.GetDailyByDay(ctx, ownUserId, time.Now().Format("2006-01-02"))
 
   // 该接口不管有没有数据都不能返回报错
   if err != nil {
@@ -103,7 +103,7 @@ func GetDailiesListByDay(ctx *context.New) {
   limit, _ := ctx.GetQueryInt("limit")
 
   data, err := service.GetDailiesList(ctx, skip, limit, bson.M{
-    "day": time.Now().Format("20060102"),
+    "day": time.Now().Format("2006-01-02"),
   })
 
   // 该接口不管有没有数据都不能返回报错
@@ -120,7 +120,7 @@ func GetDailiesListByDay(ctx *context.New) {
   }
 
   ctx.Success(gin.H{
-    "data": data.Each(func(item model.Daily) gin.H {
+    "data": data.Each(func(item *model.Daily) gin.H {
       each := item.GetMap()
       user, err := service.FindUserRef(ctx, &item.User)
       if err == nil {

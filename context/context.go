@@ -21,6 +21,7 @@ type New struct {
   MgoDB       *mgo.Database
   MgoDBCloser func()
   Redis       redis.Conn
+  Errgo       *errgo.Stack
 }
 
 func CreateCtx(fn func(*New)) func(*gin.Context) {
@@ -69,6 +70,7 @@ func NewCtx(c *gin.Context) (*New, error) {
     mg,
     closer,
     rds,
+    errgo.Create(),
   }, nil
 }
 
@@ -78,6 +80,7 @@ func NewBaseCtx(c *gin.Context) *New {
   return &New{
     Ctx:     c,
     RawData: bytes,
+    Errgo:   errgo.Create(),
   }
 }
 
@@ -135,7 +138,7 @@ func (c *New) Error(errNo interface{}) {
   fmt.Println()
 
   // 清除错误栈
-  errgo.ClearErrorStack()
+  c.Errgo.ClearErrorStack()
 
   c.Ctx.JSON(err.Status, gin.H{
     "msg":  err.Message,

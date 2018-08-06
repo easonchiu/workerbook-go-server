@@ -21,7 +21,6 @@ func CreateMission(ctx *context.New, data model.Mission, projectId string, userI
 
   data.Progress = 0
   data.PreProgress = 0
-  data.Status = 1
   data.CreateTime = time.Now()
   ownUserId, _ := ctx.Get(conf.OWN_USER_ID)
   data.Editor = mgo.DBRef{
@@ -39,14 +38,13 @@ func CreateMission(ctx *context.New, data model.Mission, projectId string, userI
   }
 
   // check
-  errgo.ErrorIfStringIsEmpty(data.Name, errgo.ErrMissionNameEmpty)
-  errgo.ErrorIfLenMoreThen(data.Name, 30, errgo.ErrMissionNameTooLong)
-  errgo.ErrorIfTimeEarlierThen(data.Deadline, time.Now(), errgo.ErrMissionDeadlineTooSoon)
-  errgo.ErrorIfStringNotObjectId(projectId, errgo.ErrProjectIdError)
-  errgo.ErrorIfStringNotObjectId(userId, errgo.ErrUserIdError)
+  ctx.Errgo.ErrorIfStringIsEmpty(data.Name, errgo.ErrMissionNameEmpty)
+  ctx.Errgo.ErrorIfLenMoreThen(data.Name, 30, errgo.ErrMissionNameTooLong)
+  ctx.Errgo.ErrorIfTimeEarlierThen(data.Deadline, time.Now(), errgo.ErrMissionDeadlineTooSoon)
+  ctx.Errgo.ErrorIfStringNotObjectId(projectId, errgo.ErrProjectIdError)
+  ctx.Errgo.ErrorIfStringNotObjectId(userId, errgo.ErrUserIdError)
 
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
+  if err := ctx.Errgo.PopError(); err != nil {
     return err
   }
 
@@ -58,10 +56,9 @@ func CreateMission(ctx *context.New, data model.Mission, projectId string, userI
   }
 
   // 任务结束时间不能晚于项目结束时间
-  errgo.ErrorIfTimeLaterThen(data.Deadline, project.Deadline, errgo.ErrMissionDeadlineTooLate)
+  ctx.Errgo.ErrorIfTimeLaterThen(data.Deadline, project.Deadline, errgo.ErrMissionDeadlineTooLate)
 
-  if err = errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
+  if err = ctx.Errgo.PopError(); err != nil {
     return err
   }
 
@@ -70,6 +67,13 @@ func CreateMission(ctx *context.New, data model.Mission, projectId string, userI
     Database:   conf.MgoDBName,
     Collection: model.ProjectCollection,
     Id:         bson.ObjectIdHex(projectId),
+  }
+
+  // 清除项目进度的缓存
+  err = cache.ProjectProgressDel(ctx.Redis, projectId)
+
+  if err != nil {
+    return errors.New(errgo.ErrCreateMissionFailed)
   }
 
   // find user
@@ -138,35 +142,35 @@ func UpdateMission(ctx *context.New, id string, data bson.M) error {
   )
 
   // check
-  errgo.ErrorIfStringNotObjectId(id, errgo.ErrMissionIdError)
+  ctx.Errgo.ErrorIfStringNotObjectId(id, errgo.ErrMissionIdError)
 
   if name, ok := util.GetString(data, "name"); ok {
-    errgo.ErrorIfLenMoreThen(name, 15, errgo.ErrMissionNameTooLong)
+    ctx.Errgo.ErrorIfLenMoreThen(name, 15, errgo.ErrMissionNameTooLong)
   }
 
   if userId, ok := util.GetString(data, "userId"); ok {
-    errgo.ErrorIfStringNotObjectId(userId, errgo.ErrUserIdError)
+    ctx.Errgo.ErrorIfStringNotObjectId(userId, errgo.ErrUserIdError)
   }
 
   if progress, ok := util.GetInt(data, "progress"); ok {
-    errgo.ErrorIfIntLessThen(progress, 0, errgo.ErrMissionProgressRange)
-    errgo.ErrorIfIntMoreThen(progress, 100, errgo.ErrMissionProgressRange)
+    ctx.Errgo.ErrorIfIntLessThen(progress, 0, errgo.ErrMissionProgressRange)
+    ctx.Errgo.ErrorIfIntMoreThen(progress, 100, errgo.ErrMissionProgressRange)
   }
 
   // check
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
+  if err := ctx.Errgo.PopError(); err != nil {
     return err
   }
 
-  // 找到这个任务和项目
+  // 找到任务
+  mission, err := GetMissionInfoById(ctx, id)
+
+  if err != nil {
+    return err
+  }
+
+  // 如果有修改结束时间，要找相关的项目
   if deadline, ok := util.GetTime(data, "deadline"); ok {
-    mission, err := GetMissionInfoById(ctx, id)
-
-    if err != nil {
-      return err
-    }
-
     project, err := FindProjectRef(ctx, &mission.Project)
 
     if err != nil {
@@ -179,8 +183,8 @@ func UpdateMission(ctx *context.New, id string, data bson.M) error {
     t := time.Date(y1, m1, d1, 23, 59, 59, 0, time.Local)
     data["deadline"] = t
 
-    errgo.ErrorIfTimeEarlierThen(t, time.Now(), errgo.ErrMissionDeadlineTooSoon)
-    errgo.ErrorIfTimeLaterThen(t, project.Deadline, errgo.ErrMissionDeadlineTooLate)
+    ctx.Errgo.ErrorIfTimeEarlierThen(t, time.Now(), errgo.ErrMissionDeadlineTooSoon)
+    ctx.Errgo.ErrorIfTimeLaterThen(t, project.Deadline, errgo.ErrMissionDeadlineTooLate)
   } else {
     // 没有项目id时不允许修改任务结束时间
     delete(data, "deadline")
@@ -202,13 +206,19 @@ func UpdateMission(ctx *context.New, id string, data bson.M) error {
   }
 
   // check
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
+  if err := ctx.Errgo.PopError(); err != nil {
     return err
   }
 
+  // 清除项目进度的缓存
+  err = cache.ProjectProgressDel(ctx.Redis, mission.Project.Id.(bson.ObjectId).Hex())
+
+  if err != nil {
+    return errors.New(errgo.ErrUpdateMissionFailed)
+  }
+
   // 先要清缓存，清成功后才可以更新数据
-  err := cache.MissionDel(ctx.Redis, id)
+  err = cache.MissionDel(ctx.Redis, id)
 
   if err != nil {
     if exist, ok := util.GetBool(data, "exist"); ok && exist == false {
@@ -244,17 +254,16 @@ func GetMissionsList(ctx *context.New, skip int, limit int, query bson.M) (*mode
 
   // check
   if limit != 0 {
-    errgo.ErrorIfIntLessThen(skip, 0, errgo.ErrSkipRange)
-    errgo.ErrorIfIntLessThen(limit, 1, errgo.ErrLimitRange)
-    errgo.ErrorIfIntMoreThen(limit, 100, errgo.ErrLimitRange)
+    ctx.Errgo.ErrorIfIntLessThen(skip, 0, errgo.ErrSkipRange)
+    ctx.Errgo.ErrorIfIntLessThen(limit, 1, errgo.ErrLimitRange)
+    ctx.Errgo.ErrorIfIntMoreThen(limit, 100, errgo.ErrLimitRange)
   }
 
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
+  if err := ctx.Errgo.PopError(); err != nil {
     return nil, err
   }
 
-  data := new([]model.Mission)
+  data := new([]*model.Mission)
   query["exist"] = true
 
   // find it
@@ -276,7 +285,8 @@ func GetMissionsList(ctx *context.New, skip int, limit int, query bson.M) (*mode
 
   if skip == 0 && limit == 0 {
     return &model.MissionList{
-      List: data,
+      Count: len(*data),
+      List:  *data,
     }, nil
   }
 
@@ -288,7 +298,7 @@ func GetMissionsList(ctx *context.New, skip int, limit int, query bson.M) (*mode
   }
 
   return &model.MissionList{
-    List:  data,
+    List:  *data,
     Count: count,
     Skip:  skip,
     Limit: limit,
@@ -299,10 +309,9 @@ func GetMissionsList(ctx *context.New, skip int, limit int, query bson.M) (*mode
 func GetMissionInfoById(ctx *context.New, id string) (*model.Mission, error) {
 
   // check
-  errgo.ErrorIfStringNotObjectId(id, errgo.ErrMissionIdError)
+  ctx.Errgo.ErrorIfStringNotObjectId(id, errgo.ErrMissionIdError)
 
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
+  if err := ctx.Errgo.PopError(); err != nil {
     return nil, err
   }
 

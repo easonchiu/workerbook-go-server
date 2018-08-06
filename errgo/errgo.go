@@ -7,7 +7,7 @@ import (
 )
 
 // 错误栈
-var errStack []error
+type Stack []error
 
 // 根据错误码换取错误信息
 func Get(no interface{}) errType {
@@ -29,117 +29,115 @@ func Get(no interface{}) errType {
   return DefaultError
 }
 
+// 创建
+func Create() *Stack {
+  return new(Stack)
+}
+
 // 判断int是否小于一个值
-func ErrorIfIntLessThen(val int, min int, errNo string) error {
+func (s *Stack) ErrorIfIntLessThen(val int, min int, errNo string) error {
   if val < min {
     err := errors.New(errNo)
-    errStack = append(errStack, err)
+    *s = append(*s, err)
     return err
   }
   return nil
 }
 
 // 判断int是否大于一个值
-func ErrorIfIntMoreThen(val int, max int, errNo string) error {
+func (s *Stack) ErrorIfIntMoreThen(val int, max int, errNo string) error {
   if val > max {
     err := errors.New(errNo)
-    errStack = append(errStack, err)
+    *s = append(*s, err)
     return err
   }
   return nil
 }
 
 // 判断一个值是否为objectId
-func ErrorIfStringNotObjectId(id string, errNo string) error {
+func (s *Stack) ErrorIfStringNotObjectId(id string, errNo string) error {
   if !bson.IsObjectIdHex(id) {
     err := errors.New(errNo)
-    errStack = append(errStack, err)
+    *s = append(*s, err)
     return err
   }
   return nil
 }
 
 // 判断字符串是否为空
-func ErrorIfStringIsEmpty(str string, errNo string) error {
+func (s *Stack) ErrorIfStringIsEmpty(str string, errNo string) error {
   if str == "" {
     err := errors.New(errNo)
-    errStack = append(errStack, err)
+    *s = append(*s, err)
     return err
   }
   return nil
 }
 
 // 判断int是否为0
-func ErrorIfIntIsZero(val int, errNo string) error {
+func (s *Stack) ErrorIfIntIsZero(val int, errNo string) error {
   if val == 0 {
     err := errors.New(errNo)
-    errStack = append(errStack, err)
+    *s = append(*s, err)
     return err
   }
   return nil
 }
 
 // 判断length是否小于
-func ErrorIfLenLessThen(str string, length int, errNo string) error {
+func (s *Stack) ErrorIfLenLessThen(str string, length int, errNo string) error {
   if len([]rune(str)) < length {
     err := errors.New(errNo)
-    errStack = append(errStack, err)
+    *s = append(*s, err)
     return err
   }
   return nil
 }
 
 // 判断length是否大于
-func ErrorIfLenMoreThen(str string, length int, errNo string) error {
+func (s *Stack) ErrorIfLenMoreThen(str string, length int, errNo string) error {
   if len([]rune(str)) > length {
     err := errors.New(errNo)
-    errStack = append(errStack, err)
+    *s = append(*s, err)
     return err
   }
   return nil
 }
 
 // 判断时间是否早于
-func ErrorIfTimeEarlierThen(t time.Time, t2 time.Time, errNo string) error {
+func (s *Stack) ErrorIfTimeEarlierThen(t time.Time, t2 time.Time, errNo string) error {
   if t.Before(t2) == true {
     err := errors.New(errNo)
-    errStack = append(errStack, err)
+    *s = append(*s, err)
     return err
   }
   return nil
 }
 
 // 判断时间是否晚于
-func ErrorIfTimeLaterThen(t time.Time, t2 time.Time, errNo string) error {
+func (s *Stack) ErrorIfTimeLaterThen(t time.Time, t2 time.Time, errNo string) error {
   if t.After(t2) == true {
     err := errors.New(errNo)
-    errStack = append(errStack, err)
+    *s = append(*s, err)
     return err
   }
   return nil
 }
 
-// // 处理ErrorIf相关的错误
-// func HandleError(handle func(err interface{})) bool {
-//   if len(errStack) > 0 {
-//     first := errStack[0]
-//     errStack = errStack[1:]
-//     handle(first)
-//     return true
-//   }
-//   return false
-// }
-
 // 清空错误栈
-func ClearErrorStack() {
-  errStack = nil
+func (s *Stack) ClearErrorStack() {
+  *s = nil
 }
 
-// 弹出栈中的第一个错误
-func PopError() error {
-  if len(errStack) > 0 {
-    first := errStack[0]
-    errStack = errStack[1:]
+// 弹出栈中的第一个错误(默认情况下弹出后就清空栈了)
+func (s *Stack) PopError(clear ... bool) error {
+  if len(*s) > 0 {
+    first := (*s)[0]
+    if clear != nil && clear[0] == false {
+      *s = (*s)[1:]
+    } else {
+      s.ClearErrorStack()
+    }
     return first
   }
   return nil

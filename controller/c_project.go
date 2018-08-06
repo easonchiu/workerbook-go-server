@@ -68,8 +68,12 @@ func C_GetProjectsList(ctx *context.New) {
 
   // return
   ctx.Success(gin.H{
-    "data": data.Each(func(item model.Project) gin.H {
-      return item.GetMap()
+    "data": data.Each(func(item *model.Project) gin.H {
+      each := item.GetMap()
+      if len(item.Missions) > 0 {
+        each["progress"] = service.GetProjectProgress(ctx, item.Id)
+      }
+      return each
     }),
   })
 }

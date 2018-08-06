@@ -69,7 +69,7 @@ func C_GetDepartmentsList(ctx *context.New) {
 
   // return
   ctx.Success(gin.H{
-    "data": data.Each(func(item model.Department) gin.H {
+    "data": data.Each(func(item *model.Department) gin.H {
       return item.GetMap()
     }),
   })

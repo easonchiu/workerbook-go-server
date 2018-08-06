@@ -33,9 +33,6 @@ type Project struct {
   // 创建时间
   CreateTime time.Time `bson:"createTime"`
 
-  // 进度
-  Progress int `bson:"progress"`
-
   // 权重 1. 红(紧急) 2. 黄(重要) 3. 绿(一般)
   Weight int `bson:"weight"`
 
@@ -52,17 +49,17 @@ type Project struct {
   EditTime time.Time `bson:"editTime,omitempty"`
 }
 
-func (p Project) GetMap(forgets ... string) gin.H {
+func (p *Project) GetMap(forgets ... string) gin.H {
   data := gin.H{
     "id":          p.Id,
     "name":        p.Name,
     "deadline":    p.Deadline,
     "description": p.Description,
     "createTime":  p.CreateTime,
-    "progress":    p.Progress,
     "weight":      p.Weight,
+    "progress":    0,
     "isTimeout":   p.Deadline.Before(time.Now()),
-    "exist": p.Exist,
+    "exist":       p.Exist,
     "editor": bson.M{
       "id": p.Editor.Id,
     },
@@ -108,14 +105,14 @@ func (p Project) GetMap(forgets ... string) gin.H {
 
 // 项目列表结构
 type ProjectList struct {
-  List  *[]Project
+  List  []*Project
   Count int
   Limit int
   Skip  int
 }
 
 // 列表的迭代器
-func (d ProjectList) Each(fn func(Project) gin.H) gin.H {
+func (d *ProjectList) Each(fn func(*Project) gin.H) gin.H {
   data := gin.H{}
 
   if d.Limit != 0 {
@@ -127,11 +124,31 @@ func (d ProjectList) Each(fn func(Project) gin.H) gin.H {
   }
 
   var list []gin.H
-  for _, item := range *d.List {
+  for _, item := range d.List {
     list = append(list, fn(item))
   }
 
   data["list"] = list
 
   return data
+}
+
+func (d *ProjectList) Find(id bson.ObjectId) *Project {
+  if d.List == nil {
+    return nil
+  }
+  for _, item := range d.List {
+    if item.Id == id {
+      return item
+    }
+  }
+  return nil
+}
+
+func (d *ProjectList) Ids() []bson.ObjectId {
+  var list []bson.ObjectId
+  for _, item := range d.List {
+    list = append(list, item.Id)
+  }
+  return list
 }

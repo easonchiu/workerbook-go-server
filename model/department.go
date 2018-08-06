@@ -34,7 +34,7 @@ type Department struct {
   EditTime time.Time `bson:"editTime,omitempty"`
 }
 
-func (d Department) GetMap(forgets ... string) gin.H {
+func (d *Department) GetMap(forgets ... string) gin.H {
   data := gin.H{
     "id":         d.Id,
     "name":       d.Name,
@@ -61,14 +61,14 @@ func (d Department) GetMap(forgets ... string) gin.H {
 
 // 部门列表结构
 type DepartmentList struct {
-  List  *[]Department
+  List  []*Department
   Count int
   Limit int
   Skip  int
 }
 
 // 列表的迭代器
-func (d DepartmentList) Each(fn func(Department) gin.H) gin.H {
+func (d *DepartmentList) Each(fn func(*Department) gin.H) gin.H {
   data := gin.H{}
 
   if d.Limit != 0 {
@@ -80,11 +80,31 @@ func (d DepartmentList) Each(fn func(Department) gin.H) gin.H {
   }
 
   var list []gin.H
-  for _, item := range *d.List {
+  for _, item := range d.List {
     list = append(list, fn(item))
   }
 
   data["list"] = list
 
   return data
+}
+
+func (d *DepartmentList) Find(id bson.ObjectId) *Department {
+  if d.List == nil {
+    return nil
+  }
+  for _, item := range d.List {
+    if item.Id == id {
+      return item
+    }
+  }
+  return nil
+}
+
+func (d *DepartmentList) Ids() []bson.ObjectId {
+  var list []bson.ObjectId
+  for _, item := range d.List {
+    list = append(list, item.Id)
+  }
+  return list
 }

@@ -2,6 +2,7 @@ package service
 
 import (
   "errors"
+  "github.com/gin-gonic/gin"
   "github.com/tidwall/gjson"
   "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
@@ -35,17 +36,16 @@ func CreateProject(ctx *context.New, data model.Project, departments []gjson.Res
   }
 
   // check
-  errgo.ErrorIfStringIsEmpty(data.Name, errgo.ErrProjectNameEmpty)
-  errgo.ErrorIfLenLessThen(data.Name, 4, errgo.ErrProjectNameTooShort)
-  errgo.ErrorIfLenMoreThen(data.Name, 15, errgo.ErrProjectNameTooLong)
-  errgo.ErrorIfTimeEarlierThen(data.Deadline, time.Now(), errgo.ErrProjectDeadlineTooSoon)
-  errgo.ErrorIfIntIsZero(len(departments), errgo.ErrProjectDepartmentsEmpty)
+  ctx.Errgo.ErrorIfStringIsEmpty(data.Name, errgo.ErrProjectNameEmpty)
+  ctx.Errgo.ErrorIfLenLessThen(data.Name, 4, errgo.ErrProjectNameTooShort)
+  ctx.Errgo.ErrorIfLenMoreThen(data.Name, 15, errgo.ErrProjectNameTooLong)
+  ctx.Errgo.ErrorIfTimeEarlierThen(data.Deadline, time.Now(), errgo.ErrProjectDeadlineTooSoon)
+  ctx.Errgo.ErrorIfIntIsZero(len(departments), errgo.ErrProjectDepartmentsEmpty)
   if data.Weight != 1 && data.Weight != 2 && data.Weight != 3 {
     return errors.New(errgo.ErrProjectWeightError)
   }
 
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
+  if err := ctx.Errgo.PopError(); err != nil {
     return err
   }
 
@@ -107,11 +107,11 @@ func UpdateProject(ctx *context.New, id string, data bson.M) error {
   )
 
   // check
-  errgo.ErrorIfStringNotObjectId(id, errgo.ErrProjectIdError)
+  ctx.Errgo.ErrorIfStringNotObjectId(id, errgo.ErrProjectIdError)
 
   if name, ok := util.GetString(data, "name"); ok {
-    errgo.ErrorIfLenLessThen(name, 4, errgo.ErrProjectNameTooShort)
-    errgo.ErrorIfLenMoreThen(name, 15, errgo.ErrProjectNameTooLong)
+    ctx.Errgo.ErrorIfLenLessThen(name, 4, errgo.ErrProjectNameTooShort)
+    ctx.Errgo.ErrorIfLenMoreThen(name, 15, errgo.ErrProjectNameTooLong)
   }
 
   // 如果有设置结束时间，将时间改为这天的最晚时间，即23:59:59
@@ -119,7 +119,7 @@ func UpdateProject(ctx *context.New, id string, data bson.M) error {
     y1, m1, d1 := deadline.Local().Date()
     t := time.Date(y1, m1, d1, 23, 59, 59, 0, time.Local)
     data["deadline"] = t
-    errgo.ErrorIfTimeEarlierThen(t, time.Now(), errgo.ErrProjectDeadlineTooSoon)
+    ctx.Errgo.ErrorIfTimeEarlierThen(t, time.Now(), errgo.ErrProjectDeadlineTooSoon)
   }
 
   if weight, ok := util.GetInt(data, "weight"); ok {
@@ -128,8 +128,7 @@ func UpdateProject(ctx *context.New, id string, data bson.M) error {
     }
   }
 
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
+  if err := ctx.Errgo.PopError(); err != nil {
     return err
   }
 
@@ -158,8 +157,7 @@ func UpdateProject(ctx *context.New, id string, data bson.M) error {
     data["departments"] = departmentsRef
   }
 
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
+  if err := ctx.Errgo.PopError(); err != nil {
     return err
   }
 
@@ -199,10 +197,9 @@ func UpdateProject(ctx *context.New, id string, data bson.M) error {
 func GetProjectInfoById(ctx *context.New, id string) (*model.Project, error) {
 
   // check
-  errgo.ErrorIfStringNotObjectId(id, errgo.ErrProjectIdError)
+  ctx.Errgo.ErrorIfStringNotObjectId(id, errgo.ErrProjectIdError)
 
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
+  if err := ctx.Errgo.PopError(); err != nil {
     return nil, err
   }
 
@@ -236,17 +233,16 @@ func GetProjectsList(ctx *context.New, skip int, limit int, query bson.M) (*mode
 
   // check
   if skip != 0 {
-    errgo.ErrorIfIntLessThen(skip, 0, errgo.ErrSkipRange)
-    errgo.ErrorIfIntLessThen(limit, 1, errgo.ErrLimitRange)
-    errgo.ErrorIfIntMoreThen(limit, 100, errgo.ErrLimitRange)
+    ctx.Errgo.ErrorIfIntLessThen(skip, 0, errgo.ErrSkipRange)
+    ctx.Errgo.ErrorIfIntLessThen(limit, 1, errgo.ErrLimitRange)
+    ctx.Errgo.ErrorIfIntMoreThen(limit, 100, errgo.ErrLimitRange)
   }
 
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
+  if err := ctx.Errgo.PopError(); err != nil {
     return nil, err
   }
 
-  data := new([]model.Project)
+  data := new([]*model.Project)
   query["exist"] = true
 
   // find it
@@ -267,7 +263,8 @@ func GetProjectsList(ctx *context.New, skip int, limit int, query bson.M) (*mode
   // result
   if skip == 0 && limit == 0 {
     return &model.ProjectList{
-      List: data,
+      Count: len(*data),
+      List:  *data,
     }, nil
   }
 
@@ -279,9 +276,40 @@ func GetProjectsList(ctx *context.New, skip int, limit int, query bson.M) (*mode
   }
 
   return &model.ProjectList{
-    List:  data,
+    List:  *data,
     Count: count,
     Skip:  skip,
     Limit: limit,
   }, nil
+}
+
+// 获取项目的进度（进度的算法为：项目的任务进度总和 / 项目的任务数），如果出错则返回0
+func GetProjectProgress(ctx *context.New, projectId bson.ObjectId) int {
+
+  // 先从缓存找
+  if i, exist := cache.ProjectProgressGet(ctx.Redis, projectId.Hex()); exist {
+    return i
+  }
+
+  missions, err := GetMissionsList(ctx, 0, 0, bson.M{
+    "project.$id": projectId,
+  })
+
+  progress := 0
+
+  if err != nil || len(missions.List) == 0 {
+    return progress
+  }
+
+  // 计算进度
+  missions.Each(func(mission *model.Mission) gin.H {
+    progress += mission.Progress
+    return nil
+  })
+  progress = progress / len(missions.List)
+
+  // 存缓存
+  cache.ProjectProgressSet(ctx.Redis, projectId.Hex(), progress)
+
+  return progress
 }

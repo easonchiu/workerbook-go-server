@@ -58,7 +58,7 @@ type User struct {
   EditTime time.Time `bson:"editTime,omitempty"`
 }
 
-func (u User) GetMap(forgets ... string) gin.H {
+func (u *User) GetMap(forgets ... string) gin.H {
   data := gin.H{
     "id":       u.Id,
     "nickname": u.NickName,
@@ -107,14 +107,14 @@ func (u User) GetMap(forgets ... string) gin.H {
 
 // 用户列表结构
 type UserList struct {
-  List  *[]User
+  List  []*User
   Count int
   Limit int
   Skip  int
 }
 
 // 列表的迭代器
-func (d UserList) Each(fn func(User) gin.H) gin.H {
+func (d *UserList) Each(fn func(*User) gin.H) gin.H {
   data := gin.H{}
 
   if d.Limit != 0 {
@@ -126,11 +126,31 @@ func (d UserList) Each(fn func(User) gin.H) gin.H {
   }
 
   var list []gin.H
-  for _, item := range *d.List {
+  for _, item := range d.List {
     list = append(list, fn(item))
   }
 
   data["list"] = list
 
   return data
+}
+
+func (d *UserList) Find(id bson.ObjectId) *User {
+  if d.List == nil {
+    return nil
+  }
+  for _, item := range d.List {
+    if item.Id == id {
+      return item
+    }
+  }
+  return nil
+}
+
+func (d *UserList) Ids() []bson.ObjectId {
+  var list []bson.ObjectId
+  for _, item := range d.List {
+    list = append(list, item.Id)
+  }
+  return list
 }

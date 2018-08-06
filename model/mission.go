@@ -21,7 +21,7 @@ type Mission struct {
   // 之前的进度
   PreProgress int `bson:"preProgress"`
 
-  // 统计时间(20060102格式)
+  // 统计时间(2006-01-02格式)
   ChartTime string `bson:"chartTime"`
 
   // 进度
@@ -32,9 +32,6 @@ type Mission struct {
 
   // 截至时间
   Deadline time.Time `bson:"deadline"`
-
-  // 状态 1. 正常 2. 停止
-  Status int `bson:"status"`
 
   // 创建时间
   CreateTime time.Time `bson:"createTime"`
@@ -63,7 +60,6 @@ func (m Mission) GetMap(forgets ... string) gin.H {
     "project": gin.H{
       "id": m.Project.Id,
     },
-    "status":      m.Status,
     "preProgress": m.PreProgress,
     "progress":    m.Progress,
     "user": gin.H{
@@ -89,14 +85,14 @@ func (m Mission) GetMap(forgets ... string) gin.H {
 
 // 任务列表结构
 type MissionList struct {
-  List  *[]Mission
+  List  []*Mission
   Count int
   Limit int
   Skip  int
 }
 
 // 列表的迭代器
-func (d MissionList) Each(fn func(Mission) gin.H) gin.H {
+func (d *MissionList) Each(fn func(*Mission) gin.H) gin.H {
   data := gin.H{}
 
   if d.Limit != 0 {
@@ -108,11 +104,31 @@ func (d MissionList) Each(fn func(Mission) gin.H) gin.H {
   }
 
   var list []gin.H
-  for _, item := range *d.List {
+  for _, item := range d.List {
     list = append(list, fn(item))
   }
 
   data["list"] = list
 
   return data
+}
+
+func (d *MissionList) Find(id bson.ObjectId) *Mission {
+  if d.List == nil {
+    return nil
+  }
+  for _, item := range d.List {
+    if item.Id == id {
+      return item
+    }
+  }
+  return nil
+}
+
+func (d *MissionList) Ids() []bson.ObjectId {
+  var list []bson.ObjectId
+  for _, item := range d.List {
+    list = append(list, item.Id)
+  }
+  return list
 }

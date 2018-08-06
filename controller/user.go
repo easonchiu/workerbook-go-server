@@ -50,10 +50,10 @@ func GetProfile(ctx *context.New) {
   // return
   ctx.Success(gin.H{
     "data": func() gin.H {
-      data := user.GetMap("username", "exist")
+      data := user.GetMap(model.REMEMBER, "nickname", "id", "role", "status", "title")
       department, err := service.FindDepartmentRef(ctx, &user.Department)
       if err == nil {
-        data["department"] = department.GetMap("userCount", "createTime")
+        data["department"] = department.GetMap(model.REMEMBER, "name", "id")
       }
       return data
     }(),
@@ -98,8 +98,8 @@ func GetSubUsersList(ctx *context.New) {
       ctx.Error(err)
     } else {
       ctx.Success(gin.H{
-        "data": users.Each(func(item model.User) gin.H {
-          return item.GetMap("username")
+        "data": users.Each(func(item *model.User) gin.H {
+          return item.GetMap(model.REMEMBER, "id", "nickname", "title")
         }),
       })
     }
@@ -113,8 +113,8 @@ func GetSubUsersList(ctx *context.New) {
       ctx.Error(err)
     } else {
       ctx.Success(gin.H{
-        "data": users.Each(func(item model.User) gin.H {
-          return item.GetMap("username")
+        "data": users.Each(func(item *model.User) gin.H {
+          return item.GetMap(model.REMEMBER, "id", "nickname", "title")
         }),
       })
     }
@@ -154,7 +154,7 @@ func GetUsersList(ctx *context.New) {
 
   // return
   ctx.Success(gin.H{
-    "data": data.Each(func(item model.User) gin.H {
+    "data": data.Each(func(item *model.User) gin.H {
       return item.GetMap("editor", "editTime", "exist", "department", "username")
     }),
   })

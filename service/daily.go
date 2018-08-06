@@ -19,13 +19,12 @@ func CreateDaily(ctx *context.New, data model.DailyItem, missionId string) error
   ownUserId, _ := ctx.Get(conf.OWN_USER_ID)
   ownDepartmentId, _ := ctx.Get(conf.OWN_DEPARTMENT_ID)
 
-  errgo.ErrorIfStringIsEmpty(data.Content, errgo.ErrDailyContentEmpty)
-  errgo.ErrorIfIntLessThen(data.Progress, 0, errgo.ErrDailyProgressRange)
-  errgo.ErrorIfIntMoreThen(data.Progress, 100, errgo.ErrDailyProgressRange)
-  errgo.ErrorIfStringNotObjectId(missionId, errgo.ErrDailyIdError)
+  ctx.Errgo.ErrorIfStringIsEmpty(data.Content, errgo.ErrDailyContentEmpty)
+  ctx.Errgo.ErrorIfIntLessThen(data.Progress, 0, errgo.ErrDailyProgressRange)
+  ctx.Errgo.ErrorIfIntMoreThen(data.Progress, 100, errgo.ErrDailyProgressRange)
+  ctx.Errgo.ErrorIfStringNotObjectId(missionId, errgo.ErrDailyIdError)
 
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
+  if err := ctx.Errgo.PopError(); err != nil {
     return err
   }
 
@@ -58,7 +57,7 @@ func CreateDaily(ctx *context.New, data model.DailyItem, missionId string) error
   // 先查找该用户今天是否有写日报
   count, err := ctx.MgoDB.C(model.DailyCollection).Find(bson.M{
     "user.$id": bson.ObjectIdHex(ownUserId),
-    "day":      time.Now().Format("20060102"),
+    "day":      time.Now().Format("2006-01-02"),
   }).Count()
 
   // 没有写的话，插入一条完整日报数据
@@ -78,8 +77,8 @@ func CreateDaily(ctx *context.New, data model.DailyItem, missionId string) error
         Id:         bson.ObjectIdHex(ownUserId),
       },
       DepartmentName: department.Name,
-      Day:            time.Now().Format("20060102"),
-      Dailies:        []model.DailyItem{data},
+      Day:            time.Now().Format("2006-01-02"),
+      Dailies:        []*model.DailyItem{&data},
       CreateTime:     time.Now(),
       UpdateTime:     time.Now(),
     }
@@ -102,7 +101,7 @@ func CreateDaily(ctx *context.New, data model.DailyItem, missionId string) error
   daily := new(model.Daily)
   err = ctx.MgoDB.C(model.DailyCollection).Find(bson.M{
     "user.$id": bson.ObjectIdHex(ownUserId),
-    "day":      time.Now().Format("20060102"),
+    "day":      time.Now().Format("2006-01-02"),
   }).One(daily)
 
   if err != nil {
@@ -110,7 +109,7 @@ func CreateDaily(ctx *context.New, data model.DailyItem, missionId string) error
   }
 
   // 清缓存
-  err = cache.DailyDel(ctx.Redis, ownUserId, time.Now().Format("20060102"))
+  err = cache.DailyDel(ctx.Redis, ownUserId, time.Now().Format("2006-01-02"))
 
   if err != nil {
     return errors.New(errgo.ErrCreateDailyFailed)
@@ -122,7 +121,7 @@ func CreateDaily(ctx *context.New, data model.DailyItem, missionId string) error
     if item.MissionId == data.MissionId {
       item.Progress = data.Progress
     }
-    dailyList = append(dailyList, item)
+    dailyList = append(dailyList, *item)
   }
 
   // 这次的这条放在最后
@@ -151,11 +150,10 @@ func CreateDaily(ctx *context.New, data model.DailyItem, missionId string) error
 // 获取用户某一天的日报数据
 func GetDailyByDay(ctx *context.New, userId string, day string) (*model.Daily, error) {
 
-  errgo.ErrorIfStringNotObjectId(userId, errgo.ErrUserIdError)
-  errgo.ErrorIfStringIsEmpty(day, errgo.ErrDayError)
+  ctx.Errgo.ErrorIfStringNotObjectId(userId, errgo.ErrUserIdError)
+  ctx.Errgo.ErrorIfStringIsEmpty(day, errgo.ErrDayError)
 
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
+  if err := ctx.Errgo.PopError(); err != nil {
     return nil, err
   }
 
@@ -195,13 +193,12 @@ func UpdateDailyContent(ctx *context.New, id string, content string) error {
   ownUserId, _ := ctx.Get(conf.OWN_USER_ID)
 
   // 只允许更新今天写的
-  day := time.Now().Format("20060102")
+  day := time.Now().Format("2006-01-02")
 
   // check
-  errgo.ErrorIfStringNotObjectId(id, errgo.ErrDailyIdError)
+  ctx.Errgo.ErrorIfStringNotObjectId(id, errgo.ErrDailyIdError)
 
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
+  if err := ctx.Errgo.PopError(); err != nil {
     return err
   }
 
@@ -263,17 +260,16 @@ func GetDailiesList(ctx *context.New, skip int, limit int, query bson.M) (*model
 
   // check
   if limit != 0 {
-    errgo.ErrorIfIntLessThen(skip, 0, errgo.ErrSkipRange)
-    errgo.ErrorIfIntLessThen(limit, 1, errgo.ErrLimitRange)
-    errgo.ErrorIfIntMoreThen(limit, 100, errgo.ErrLimitRange)
+    ctx.Errgo.ErrorIfIntLessThen(skip, 0, errgo.ErrSkipRange)
+    ctx.Errgo.ErrorIfIntLessThen(limit, 1, errgo.ErrLimitRange)
+    ctx.Errgo.ErrorIfIntMoreThen(limit, 100, errgo.ErrLimitRange)
   }
 
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
+  if err := ctx.Errgo.PopError(); err != nil {
     return nil, err
   }
 
-  data := new([]model.Daily)
+  data := new([]*model.Daily)
 
   // find it
   var err error
@@ -293,7 +289,8 @@ func GetDailiesList(ctx *context.New, skip int, limit int, query bson.M) (*model
   // result
   if skip == 0 && limit == 0 {
     return &model.DailyList{
-      List: data,
+      Count: len(*data),
+      List:  *data,
     }, nil
   }
 
@@ -305,7 +302,7 @@ func GetDailiesList(ctx *context.New, skip int, limit int, query bson.M) (*model
   }
 
   return &model.DailyList{
-    List:  data,
+    List:  *data,
     Count: count,
     Skip:  skip,
     Limit: limit,
@@ -319,13 +316,12 @@ func DelDailyContent(ctx *context.New, id string) error {
   ownUserId, _ := ctx.Get(conf.OWN_USER_ID)
 
   // 只允许删除今天写的
-  day := time.Now().Format("20060102")
+  day := time.Now().Format("2006-01-02")
 
   // check
-  errgo.ErrorIfStringNotObjectId(id, errgo.ErrDailyIdError)
+  ctx.Errgo.ErrorIfStringNotObjectId(id, errgo.ErrDailyIdError)
 
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
+  if err := ctx.Errgo.PopError(); err != nil {
     return err
   }
 
@@ -407,12 +403,11 @@ func UpdateDailyMissionProgress(ctx *context.New, missionId string, progress int
   ownUserId, _ := ctx.Get(conf.OWN_USER_ID)
 
   // check
-  errgo.ErrorIfIntLessThen(progress, 0, errgo.ErrDailyProgressRange)
-  errgo.ErrorIfIntMoreThen(progress, 100, errgo.ErrDailyProgressRange)
-  errgo.ErrorIfStringNotObjectId(missionId, errgo.ErrDailyIdError)
+  ctx.Errgo.ErrorIfIntLessThen(progress, 0, errgo.ErrDailyProgressRange)
+  ctx.Errgo.ErrorIfIntMoreThen(progress, 100, errgo.ErrDailyProgressRange)
+  ctx.Errgo.ErrorIfStringNotObjectId(missionId, errgo.ErrDailyIdError)
 
-  if err := errgo.PopError(); err != nil {
-    errgo.ClearErrorStack()
+  if err := ctx.Errgo.PopError(); err != nil {
     return err
   }
 
@@ -420,7 +415,7 @@ func UpdateDailyMissionProgress(ctx *context.New, missionId string, progress int
   var data = new(model.Daily)
   err := ctx.MgoDB.C(model.DailyCollection).Find(bson.M{
     "user.$id": bson.ObjectIdHex(ownUserId),
-    "day":      time.Now().Format("20060102"),
+    "day":      time.Now().Format("2006-01-02"),
   }).One(data)
 
   if err != nil {
@@ -443,7 +438,7 @@ func UpdateDailyMissionProgress(ctx *context.New, missionId string, progress int
     if item.MissionId.Hex() == missionId {
       item.Progress = progress
     }
-    dailyList = append(dailyList, item)
+    dailyList = append(dailyList, *item)
   }
 
   // 把修改好的数据塞回去

@@ -5,7 +5,7 @@ const (
   MgoDBUrl  = "mongodb://localhost:27017/workerbook"
 
   RedisDBUrl      = "localhost:6379"
-  RedisExpireTime = 60
+  RedisExpireTime = 600
 
   OWN_USER_ID       = "USER_ID"
   OWN_DEPARTMENT_ID = "DEPARTMENT_ID"

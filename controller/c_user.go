@@ -113,7 +113,7 @@ func C_GetUsersList(ctx *context.New) {
 
   // return
   ctx.Success(gin.H{
-    "data": data.Each(func(item model.User) gin.H {
+    "data": data.Each(func(item *model.User) gin.H {
       each := item.GetMap()
       department, err := service.FindDepartmentRef(ctx, &item.Department)
       if err == nil {

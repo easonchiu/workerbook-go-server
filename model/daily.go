@@ -49,7 +49,7 @@ type Daily struct {
   Day string `bson:"day"`
 
   // 日报数据
-  Dailies []DailyItem `bson:"dailies"`
+  Dailies []*DailyItem `bson:"dailies"`
 
   // 发布时间
   CreateTime time.Time `bson:"createTime"`
@@ -58,7 +58,7 @@ type Daily struct {
   UpdateTime time.Time `bson:"updateTime"`
 }
 
-func (d Daily) GetMap(forgets ... string) gin.H {
+func (d *Daily) GetMap(forgets ... string) gin.H {
   data := gin.H{
     "id": d.Id,
     "user": gin.H{
@@ -101,14 +101,14 @@ func (d Daily) GetMap(forgets ... string) gin.H {
 
 // 日报列表结构
 type DailyList struct {
-  List  *[]Daily
+  List  []*Daily
   Count int
   Limit int
   Skip  int
 }
 
 // 列表的迭代器
-func (d DailyList) Each(fn func(Daily) gin.H) gin.H {
+func (d *DailyList) Each(fn func(*Daily) gin.H) gin.H {
   data := gin.H{}
 
   if d.Limit != 0 {
@@ -120,11 +120,19 @@ func (d DailyList) Each(fn func(Daily) gin.H) gin.H {
   }
 
   var list []gin.H
-  for _, item := range *d.List {
+  for _, item := range d.List {
     list = append(list, fn(item))
   }
 
   data["list"] = list
 
   return data
+}
+
+func (d *DailyList) Ids() []bson.ObjectId {
+  var list []bson.ObjectId
+  for _, item := range d.List {
+    list = append(list, item.Id)
+  }
+  return list
 }

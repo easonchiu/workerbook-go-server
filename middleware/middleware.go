@@ -30,17 +30,17 @@ func Jwt(c *gin.Context) {
       role := int(tokenMap[conf.OWN_ROLE].(float64))
 
       // 验证token内的关键字段
-      errgo.ErrorIfStringNotObjectId(departmentId, errgo.ErrServerError)
-      errgo.ErrorIfStringNotObjectId(userId, errgo.ErrServerError)
+      ego := errgo.Create()
+      ego.ErrorIfStringNotObjectId(departmentId, errgo.ErrServerError)
+      ego.ErrorIfStringNotObjectId(userId, errgo.ErrServerError)
 
-      if err := errgo.PopError(); err != nil {
+      if err := ego.PopError(); err != nil {
         get := errgo.Get(err)
         c.JSON(200, gin.H{
           "msg":  get.Message,
           "code": get.Code,
           "data": nil,
         })
-        errgo.ClearErrorStack()
         return
       }
 
