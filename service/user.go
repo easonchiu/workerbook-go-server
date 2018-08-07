@@ -2,7 +2,6 @@ package service
 
 import (
   "errors"
-  "fmt"
   "github.com/jwt-go"
   "gopkg.in/mgo.v2"
   "gopkg.in/mgo.v2/bson"
@@ -110,7 +109,6 @@ func UpdateUser(ctx *context.New, id string, data bson.M) error {
   if data == nil {
     return errors.New(errgo.ErrServerError)
   }
-  fmt.Println(data)
 
   // 限制更新字段
   util.Only(
@@ -129,7 +127,6 @@ func UpdateUser(ctx *context.New, id string, data bson.M) error {
       "editTime":       util.TypeTime,
     },
   )
-  fmt.Println(data)
 
   // check
   ctx.Errgo.ErrorIfStringNotObjectId(id, errgo.ErrUserIdError)

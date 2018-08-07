@@ -10,7 +10,7 @@ import (
 )
 
 // 获取单个部门成员的概要信息
-func GetDepartmentOneAnalytics(ctx *context.New) {
+func GetDepartmentSummaryAnalytics(ctx *context.New) {
   // get
   departmentId, _ := ctx.GetParam("id")
 
@@ -47,7 +47,7 @@ func GetDepartmentOneAnalytics(ctx *context.New) {
 }
 
 // 获取部门列表的统计信息
-func GetDepartmentsAnalytics(ctx *context.New) {
+func GetDepartmentListAnalytics(ctx *context.New) {
   // get
   skip, _ := ctx.GetQueryInt("skip")
   limit, _ := ctx.GetQueryInt("limit")
@@ -95,8 +95,39 @@ func GetDepartmentsAnalytics(ctx *context.New) {
   })
 }
 
+// 获取部门的详细数据
+func GetDepartmentDetailAnalytics(ctx *context.New) {
+  // get
+  departmentId, _ := ctx.GetParam("id")
+
+  data, err := service.GetDepartmentDetailAnalysisById(ctx, departmentId)
+
+  if err != nil {
+    ctx.Error(err)
+  }
+
+  result := make([]gin.H, 0)
+
+  for _, item := range data {
+    each := item.User.GetMap(model.REMEMBER, "id", "nickname", "title")
+
+    charts := make([]gin.H, 0, len(item.Charts))
+    for _, i := range item.Charts {
+      charts = append(charts, i.GetMap())
+    }
+
+    each["missions"] = charts
+
+    result = append(result, each)
+  }
+
+  ctx.Success(gin.H{
+    "data": result,
+  })
+}
+
 // 获取项目列表的统计信息
-func GetProjectsAnalytics(ctx *context.New) {
+func GetProjectListAnalytics(ctx *context.New) {
   // get
   skip, _ := ctx.GetQueryInt("skip")
   limit, _ := ctx.GetQueryInt("limit")
@@ -152,7 +183,7 @@ func GetProjectsAnalytics(ctx *context.New) {
 }
 
 // 获取单个项目的任务概要信息
-func GetProjectOneAnalytics(ctx *context.New) {
+func GetProjectSummaryAnalytics(ctx *context.New) {
   // get
   projectId, _ := ctx.GetParam("id")
 
@@ -165,5 +196,30 @@ func GetProjectOneAnalytics(ctx *context.New) {
 
   ctx.Success(gin.H{
     "data": data.GetMap(),
+  })
+}
+
+// 获取项目的详细数据
+func GetProjectDetailAnalytics(ctx *context.New) {
+  // get
+  projectId, _ := ctx.GetParam("id")
+
+  data, err := service.GetProjectDetailAnalysisById(ctx, projectId)
+
+  if err != nil {
+    ctx.Error(err)
+  }
+
+  result := data.Project.GetMap(model.REMEMBER, "id", "name", "deadline")
+
+  charts := make([]gin.H, 0, len(data.Charts))
+  for _, i := range data.Charts {
+    charts = append(charts, i.GetMap())
+  }
+
+  result["missions"] = charts
+
+  ctx.Success(gin.H{
+    "data": result,
   })
 }

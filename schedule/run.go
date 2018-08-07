@@ -1,8 +1,8 @@
 package schedule
 
+import "github.com/jasonlvhit/gocron"
+
 func Start() {
-  // gocron.Every(1).Day().At("01:00").Do(SaveAnalysis)
-  // gocron.Every(5).Day().Do(SaveAnalysis)
-  // gocron.Start()
-  SaveAnalysis()
+  gocron.Every(1).Day().At("01:00").Do(SaveAnalysis)
+  gocron.Start()
 }

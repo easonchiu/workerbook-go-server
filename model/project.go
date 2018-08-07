@@ -49,6 +49,14 @@ type Project struct {
   EditTime time.Time `bson:"editTime,omitempty"`
 }
 
+func (p *Project) MIds() []bson.ObjectId {
+  var list []bson.ObjectId
+  for _, item := range p.Missions {
+    list = append(list, item.Id.(bson.ObjectId))
+  }
+  return list
+}
+
 func (p *Project) GetMap(forgets ... string) gin.H {
   data := gin.H{
     "id":          p.Id,

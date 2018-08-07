@@ -11,16 +11,22 @@ func registerAnalyticsRouter(g *gin.RouterGroup) {
   // jwt
   g.Use(middleware.Jwt)
 
-  // 整体部门概要（各个部门的人数，任务数，任务完成情况）
-  g.GET("/departments", context.CreateCtx(controller.GetDepartmentsAnalytics))
+  // 部门列表
+  g.GET("/departments", context.CreateCtx(controller.GetDepartmentListAnalytics))
 
-  // 部门成员概要（每个成员的任务数，任务完成情况）
-  g.GET("/departments/summary/:id", context.CreateCtx(controller.GetDepartmentOneAnalytics))
+  // 部门概要
+  g.GET("/departments/summary/:id", context.CreateCtx(controller.GetDepartmentSummaryAnalytics))
 
-  // 整体项目概要
-  g.GET("/projects", context.CreateCtx(controller.GetProjectsAnalytics))
+  // 部门详情
+  g.GET("/departments/detail/:id", context.CreateCtx(controller.GetDepartmentDetailAnalytics))
 
-  // 单个项目的任务概要(即项目的完成指标)
-  g.GET("/projects/summary/:id", context.CreateCtx(controller.GetProjectOneAnalytics))
+  // 项目列表
+  g.GET("/projects", context.CreateCtx(controller.GetProjectListAnalytics))
+
+  // 项目概要
+  g.GET("/projects/summary/:id", context.CreateCtx(controller.GetProjectSummaryAnalytics))
+
+  // 项目详情
+  g.GET("/projects/detail/:id", context.CreateCtx(controller.GetProjectDetailAnalytics))
 
 }

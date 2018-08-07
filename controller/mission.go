@@ -69,9 +69,9 @@ func GetMissionOne(ctx *context.New) {
   user, err := service.FindUserRef(ctx, &mission.User)
 
   // return
-  data := mission.GetMap(model.REMEMBER, "title", "progress", "id", "isTimeout", "deadline")
-  data["project"] = project.GetMap(model.REMEMBER, "id", "name", "isTimeout")
-  data["user"] = user.GetMap(model.REMEMBER, "nickname", "role", "status", "title", "exist")
+  data := mission.GetMap(model.REMEMBER, "title", "progress", "id", "isTimeout", "deadline", "name")
+  data["project"] = project.GetMap(model.REMEMBER, "id", "name", "isTimeout", "deadline")
+  data["user"] = user.GetMap(model.REMEMBER, "nickname", "status", "title", "exist", "id")
 
   ctx.Success(gin.H{
     "data": data,

@@ -188,7 +188,7 @@ func GetDepartmentSummaryAnalysisById(ctx *context.New, departmentId string) (*m
 }
 
 // 获取部门的详细数据
-func GetDepartmentDetailAnalysisById(ctx *context.New, departmentId string) (gin.H, error) {
+func GetDepartmentDetailAnalysisById(ctx *context.New, departmentId string) ([]*model.UserMissionsChart, error) {
   // catch
   ctx.Errgo.ErrorIfStringNotObjectId(departmentId, errgo.ErrDepartmentIdError)
 
@@ -196,20 +196,96 @@ func GetDepartmentDetailAnalysisById(ctx *context.New, departmentId string) (gin
     return nil, err
   }
 
+  // 获取所有部门成员
+  users, err := GetUsersList(ctx, 0, 0, bson.M{
+    "department.$id": bson.ObjectIdHex(departmentId),
+  })
+
+  if err != nil {
+    return nil, err
+  }
+
+  // 找到部门用户的所有任务
+  missions, err := GetMissionsList(ctx, 0, 0, bson.M{
+    "user.$id": bson.M{
+      "$in": users.Ids(),
+    },
+  })
+
+  if err != nil {
+    return nil, err
+  }
+
+  projects, err := GetProjectsList(ctx, 0, 0, bson.M{})
+
+  if err != nil {
+    return nil, err
+  }
+
+  // 查找所有任务相关的数据
   analytics := new([]model.Analytics)
-  err := ctx.MgoDB.C(model.AnalyticsCollection).Find(bson.M{
-    "departmentId": bson.ObjectIdHex(departmentId),
+  err = ctx.MgoDB.C(model.AnalyticsCollection).Find(bson.M{
+    "missionId": bson.M{
+      "$in": missions.Ids(),
+    },
   }).All(analytics)
 
   if err != nil {
     return nil, err
   }
 
-  return nil, nil
+  // 初始化返回数据
+  var result = make([]*model.UserMissionsChart, 0)
+
+  for _, item := range users.List {
+
+    // 初始化任务
+    mission := make([]*model.MissionChartData, 0)
+
+    for _, m := range missions.List {
+      if m.User.Id.(bson.ObjectId) == item.Id {
+
+        // 找到这个任务的项目
+        project := projects.Find(m.Project.Id.(bson.ObjectId))
+
+        if project != nil {
+          var mcd = &model.MissionChartData{
+            Id:          m.Id,
+            Name:        m.Name,
+            ProjectId:   project.Id,
+            ProjectName: project.Name,
+            IsTimeout:   m.Deadline.Before(time.Now()),
+            Deadline:    m.Deadline,
+            Data:        make([]*model.MissionChartDay, 0, 120),
+          }
+
+          // 遍历所有统计数据，把对应任务的放进去
+          for _, a := range *analytics {
+            if a.MissionId == m.Id {
+              mcd.Append(&model.MissionChartDay{
+                Progress:  a.Progress,
+                ChartTime: a.CreateTime,
+                Day:       a.Day,
+              })
+            }
+          }
+
+          mission = append(mission, mcd)
+        }
+      }
+    }
+
+    result = append(result, &model.UserMissionsChart{
+      User:   item,
+      Charts: mission,
+    })
+  }
+
+  return result, nil
 }
 
 // 获取项目的概要数据
-func GetProjectSummaryAnalysisById(ctx *context.New, projectId string) (*model.ProjectChartAnalytics, error) {
+func GetProjectSummaryAnalysisById(ctx *context.New, projectId string) (*model.ProjectMissionsChart, error) {
   // catch
   ctx.Errgo.ErrorIfStringNotObjectId(projectId, errgo.ErrDepartmentIdError)
 
@@ -244,17 +320,19 @@ func GetProjectSummaryAnalysisById(ctx *context.New, projectId string) (*model.P
   }
 
   // 初始化返回数据的结构
-  var result = new(model.ProjectChartAnalytics)
+  var result = new(model.ProjectMissionsChart)
 
   result.Project = project
 
   for _, item := range missions.List {
-    result.Missions = append(result.Missions, &model.MissionChartAnalytics{
-      Id:        item.Id,
-      Name:      item.Name,
-      Deadline:  item.Deadline,
-      IsTimeout: item.Deadline.Before(time.Now()),
-      Data:      []*model.MissionChartData{},
+    result.Charts = append(result.Charts, &model.MissionChartData{
+      Id:          item.Id,
+      Name:        item.Name,
+      Deadline:    item.Deadline,
+      ProjectId:   project.Id,
+      ProjectName: project.Name,
+      IsTimeout:   item.Deadline.Before(time.Now()),
+      Data:        []*model.MissionChartDay{},
     })
   }
 
@@ -265,13 +343,86 @@ func GetProjectSummaryAnalysisById(ctx *context.New, projectId string) (*model.P
 
     if res != nil {
       // 添加数据
-      res.Append(&model.MissionChartData{
+      res.Append(&model.MissionChartDay{
         Progress:  item.Progress,
         ChartTime: item.CreateTime,
         Day:       item.Day,
       })
     }
   }
+
+  return result, nil
+}
+
+// 获取项目的详细数据
+func GetProjectDetailAnalysisById(ctx *context.New, projectId string) (*model.ProjectMissionsChart, error) {
+  // catch
+  ctx.Errgo.ErrorIfStringNotObjectId(projectId, errgo.ErrDepartmentIdError)
+
+  if err := ctx.Errgo.PopError(); err != nil {
+    return nil, err
+  }
+
+  // 找到该项目
+  project, err := GetProjectInfoById(ctx, projectId)
+
+  if err != nil {
+    return nil, err
+  }
+
+  // 找到该项目的所有任务
+  missions, err := GetMissionsList(ctx, 0, 0, bson.M{
+    "project.$id": bson.ObjectIdHex(projectId),
+  })
+
+  if err != nil {
+    return nil, err
+  }
+
+  // 查找所有任务相关的数据
+  analytics := new([]model.Analytics)
+
+  err = ctx.MgoDB.C(model.AnalyticsCollection).Find(bson.M{
+    "projectId": bson.ObjectIdHex(projectId),
+  }).All(analytics)
+
+  if err != nil {
+    return nil, err
+  }
+
+  // 初始化返回数据
+  var result = new(model.ProjectMissionsChart)
+
+  // 初始化任务
+  mission := make([]*model.MissionChartData, 0)
+
+  for _, m := range missions.List {
+    var mcd = &model.MissionChartData{
+      Id:          m.Id,
+      Name:        m.Name,
+      ProjectId:   project.Id,
+      ProjectName: project.Name,
+      IsTimeout:   m.Deadline.Before(time.Now()),
+      Deadline:    m.Deadline,
+      Data:        make([]*model.MissionChartDay, 0, 120),
+    }
+
+    // 遍历所有统计数据，把对应任务的放进去
+    for _, a := range *analytics {
+      if a.MissionId == m.Id {
+        mcd.Append(&model.MissionChartDay{
+          Progress:  a.Progress,
+          ChartTime: a.CreateTime,
+          Day:       a.Day,
+        })
+      }
+    }
+
+    mission = append(mission, mcd)
+  }
+
+  result.Project = project
+  result.Charts = mission
 
   return result, nil
 }
@@ -291,12 +442,15 @@ func SaveAnalysisByDay(m *mgo.Database, day time.Time) error {
     return err
   }
 
-  // 根据这些项目筛选出相应的任务
+  // 根据这些项目筛选出相应的任务(进度为0的不存)
   var missions model.MissionList
 
   err = m.C(model.MissionCollection).Find(bson.M{
     "project.$id": bson.M{
       "$in": projects.Ids(),
+    },
+    "progress": bson.M{
+      "$ne": 0,
     },
     "chartTime": bson.M{
       "$ne": day.Format("2006-01-02"),
@@ -327,13 +481,11 @@ func SaveAnalysisByDay(m *mgo.Database, day time.Time) error {
 
     if user != nil {
       analytics := model.Analytics{
-        UserId:       user.Id,
-        DepartmentId: user.Department.Id.(bson.ObjectId),
-        MissionId:    mission.Id,
-        Progress:     mission.Progress,
-        ProjectId:    mission.Project.Id.(bson.ObjectId),
-        Day:          day.Format("2006-01-02"),
-        CreateTime:   time.Now(),
+        MissionId:  mission.Id,
+        Progress:   mission.Progress,
+        ProjectId:  mission.Project.Id.(bson.ObjectId),
+        Day:        day.Format("2006-01-02"),
+        CreateTime: time.Now(),
       }
 
       // 储存出错的话将会连续执行5次，5次过后，写错误日志

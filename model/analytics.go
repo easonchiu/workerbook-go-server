@@ -16,12 +16,6 @@ type Analytics struct {
   // id
   Id bson.ObjectId `bson:"_id,omitempty"`
 
-  // 用户名
-  UserId bson.ObjectId `bson:"userId"`
-
-  // department
-  DepartmentId bson.ObjectId `bson:"departmentId"`
-
   // 任务id
   MissionId bson.ObjectId `bson:"missionId"`
 
@@ -98,23 +92,25 @@ func (d *DepartmentUsersAnalytics) Find(id bson.ObjectId) (user *UserAnalytics) 
 }
 
 // 任务单天的数据
-type MissionChartData struct {
+type MissionChartDay struct {
   Progress  int
   ChartTime time.Time
   Day       string
 }
 
 // 任务数据
-type MissionChartAnalytics struct {
-  Id        bson.ObjectId
-  Name      string
-  IsTimeout bool
-  Deadline  time.Time
-  Data      []*MissionChartData
+type MissionChartData struct {
+  Id          bson.ObjectId
+  Name        string
+  IsTimeout   bool
+  Deadline    time.Time
+  ProjectId   bson.ObjectId
+  ProjectName string
+  Data        []*MissionChartDay
 }
 
 // 往任务中添加单天的数据（天去重）
-func (m *MissionChartAnalytics) Append(data *MissionChartData) {
+func (m *MissionChartData) Append(data *MissionChartDay) {
   exist := false
   for _, item := range m.Data {
     if item.Day == data.Day {
@@ -128,12 +124,14 @@ func (m *MissionChartAnalytics) Append(data *MissionChartData) {
 }
 
 // 获取任务数据的map
-func (p *MissionChartAnalytics) GetMap() gin.H {
+func (p *MissionChartData) GetMap() gin.H {
   data := gin.H{
-    "name":      p.Name,
-    "id":        p.Id,
-    "isTimeout": p.IsTimeout,
-    "deadline":  p.Deadline,
+    "id":          p.Id,
+    "name":        p.Name,
+    "projectId":   p.ProjectId,
+    "projectName": p.ProjectName,
+    "isTimeout":   p.IsTimeout,
+    "deadline":    p.Deadline,
   }
 
   chartData := make([]gin.H, 0, 120)
@@ -175,14 +173,14 @@ func (p *MissionChartAnalytics) GetMap() gin.H {
 }
 
 // 项目的数据
-type ProjectChartAnalytics struct {
-  Project  *Project
-  Missions []*MissionChartAnalytics
+type ProjectMissionsChart struct {
+  Project *Project
+  Charts  []*MissionChartData
 }
 
 // 项目数据中找到某个任务
-func (p *ProjectChartAnalytics) Find(id bson.ObjectId) (res *MissionChartAnalytics) {
-  for _, item := range p.Missions {
+func (p *ProjectMissionsChart) Find(id bson.ObjectId) (res *MissionChartData) {
+  for _, item := range p.Charts {
     if item.Id == id {
       return item
     }
@@ -191,14 +189,26 @@ func (p *ProjectChartAnalytics) Find(id bson.ObjectId) (res *MissionChartAnalyti
 }
 
 // 获取项目数据map
-func (p *ProjectChartAnalytics) GetMap() gin.H {
+func (p *ProjectMissionsChart) GetMap() gin.H {
   data := p.Project.GetMap(REMEMBER, "id", "name", "deadline", "createTime", "isTimeout")
 
-  missions := make([]gin.H, 0, len(p.Missions))
-  for _, item := range p.Missions {
+  missions := make([]gin.H, 0, len(p.Charts))
+  for _, item := range p.Charts {
     missions = append(missions, item.GetMap())
   }
   data["missions"] = missions
 
   return data
+}
+
+// 用户-用户的所有任务数据
+type UserMissionsChart struct {
+  User   *User
+  Charts []*MissionChartData
+}
+
+// 项目的每个任务数据
+type MissionChart struct {
+  Mission *Mission
+  Chart   *MissionChartData
 }

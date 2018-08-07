@@ -25,7 +25,10 @@ type User struct {
   UserName string `bson:"username"`
 
   // 公司
-  Company mgo.DBRef `bson:"company"`
+  CompanyName string `bson:"companyName"`
+
+  // 公司id
+  CompanyId string `bson:"companyId"`
 
   // 工号
   JobNumber string `bson:"jobNumber"`
